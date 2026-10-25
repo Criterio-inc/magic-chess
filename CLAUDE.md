@@ -93,6 +93,9 @@ tools/build_assets.sh --skip-blender   # komprimering till public/models (+ *_lo
 - Generering: `ELEVENLABS_API_KEY="$(security find-generic-password -s latresan-elevenlabs -w)" node tools/gen_audio.mjs`
   (nyckeln i nyckelringen, aldrig i filer). Filnamnen är en hash av röst och text, så befintliga filer genereras aldrig om.
 - Därefter `python3 tools/make_audio_manifest.py` -> `public/audio/manifest.json`.
+- **Talkanalen** (`Voice.speak`): bara en röst åt gången. Småprat (select, move, annoyed, bored) tystnar när något annat kommer
+  och väntar aldrig, dödsskrik och avhuggen arm avbryter stridsrop, och härolden (3,5 s), karolinen och bannbullan (6 s) väntar
+  på sin tur. En replik som skulle vänta längre stryks. Före rättningen talade två eller fler samtidigt 29 % av taltiden.
 - ElevenLabs kostar riktiga pengar: generera inte om utan att fråga. Saknas en fil spelas syntljudet i `src/audio.js`.
 - Kontroll utan att lyssna: ElevenLabs taligenkänning (`/v1/speech-to-text`, scribe_v1) säger språk och text.
 
@@ -122,7 +125,7 @@ check (kungen), bull (löparen).
 
 `npm run smoke` bygger till `build/smoke-dist`, startar `vite preview` (port 8250, ingen HMR som laddar om mitt i) och kör Chrome
 genom alla händelser: varje mattfinish, handen, älgen, karolinen, lemlästning, bannbullan, alla dödssätt, trumpojken med hovdans,
-hoppa över, repris, veteran, tips, legendparti, ångra/fotoläge, kvällens lågor, översiktsläget och fältslagen. Felar vid konsolfel.
+hoppa över, repris, veteran, tips, legendparti, ångra/fotoläge, kvällens lågor, översiktsläget, talkanalen och fältslagen. Felar vid konsolfel.
 Bilder i `build/smoke/`. `--no-build`, `--headed`, `--only hand,elk`.
 
 ## Titelskärmen

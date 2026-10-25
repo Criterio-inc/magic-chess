@@ -1,7 +1,7 @@
 // Röktest: bygger spelet, startar `vite preview` (ingen HMR som laddar om mitt i) och spelar igenom alla
 // händelser i en riktig Chrome: varje mattfinish, fältherrens hand, älgen, karolinen, lemlästning, bannbullan,
 // alla dödssätt, trumpojken, hovdansen, repris, hoppa över, tips, veteraner, legendparti, sammanfattning, ångra, fotoläge,
-// kvällens kandelabrar och översiktsläget i kartrummet, och fältslagen (Poltava utan torn, Narva i snöstorm).
+// kvällens kandelabrar och översiktsläget i kartrummet, talkanalen (en röst åt gången) och fältslagen.
 // Felar vid konsolfel, sidfel eller ett påstående som inte håller. Bilder hamnar i build/smoke/.
 //
 //   node tools/smoke.mjs                 # bygg + kör (huvudlöst)
@@ -295,6 +295,31 @@ await scenario('oversikt', async () => {
   await ev(async () => { BC.overview.set(false); await S.until(() => BC.overview.k === 0, 8000); });
   const off = await ev(() => ({ sel: BC.world.outline.selection.size, sepia: BC.world.sepia.blendMode.opacity.value, max: BC.world.controls.maxDistance }));
   assert(off.sel === 0 && off.sepia === 0 && off.max === 46, `översikten städade inte efter sig: ${JSON.stringify(off)}`);
+});
+
+// ---------------------------------------------------------------- talkanalen (voice.js): en röst åt gången
+await scenario('rostkanal', async () => {
+  await ev(() => S.fresh());
+  const r = await ev(async () => {
+    const v = BC.voice, ctx = v.sound.ctx, log = [];
+    await S.until(() => v.lines.every((l) => l.end <= ctx.currentTime), 15000); // härolden har sagt sitt om partiets början
+    const p = [...BC.game.pieces.values()].find((x) => x.type === 'n');
+    for (const u of [...v.manifest.voice[p.name].kill, ...v.manifest.voice.karolin.report]) await v.decode(u);
+    const orig = v.playBuffer.bind(v);
+    v.playBuffer = (buf, o = {}) => {
+      const src = orig(buf, o);
+      if (o.voice && src) { const t = ctx.currentTime + (o.delay || 0); log.push([t, t + buf.duration / (o.rate || 1)]); }
+      return src;
+    };
+    // allt på en gång: härold, pjäs, härold igen och karolinen
+    v.herald('firstCasualty'); v.piece(p, 'kill'); v.herald('check'); v.say('karolin', 'report');
+    v.playBuffer = orig;
+    log.sort((a, b) => a[0] - b[0]);
+    let end = -1, overlap = 0;
+    for (const [a, b] of log) { overlap += Math.max(0, end - a); end = Math.max(end, b); }
+    return { n: log.length, overlap };
+  });
+  assert(r.n >= 3 && r.overlap < 0.01, `rösterna krockar: ${JSON.stringify(r)}`);
 });
 
 // ---------------------------------------------------------------- fältslagen (src/faltslag/)
