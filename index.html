@@ -138,18 +138,20 @@
       <div class="captured" id="cap-white"></div>
     </div>
     <div id="toolbar">
-      <button class="icon" id="btn-menu" title="Nytt parti">☰</button>
-      <button class="icon" id="btn-undo" title="Ångra">↶</button>
-      <button class="icon mobile-only" id="btn-moves" title="Drag">≡</button>
-      <button class="icon" id="btn-flip" title="Vänd vyn">⟲</button>
-      <button class="icon offline-only" id="btn-hint" title="Tips">✧</button>
-      <button class="icon" id="btn-battle" title="Filmiska dueller på eller av">⚔</button>
-      <button class="icon" id="btn-sound" title="Ljud på eller av">♪</button>
-      <button class="icon hidden" id="btn-replay" title="Spela senaste duellen igen">⏮</button>
-      <button class="icon" id="btn-map" title="Kartbordet uppifrån (M)">⌖</button>
-      <button class="icon" id="btn-photo" title="Fotoläge">◎</button>
-      <button class="icon online-only" id="btn-draw" title="Erbjud remi">½</button>
-      <button class="icon online-only" id="btn-resign" title="Ge upp">⚐</button>
+      <!-- data-tip är förklaringen som syns direkt vid hovring (style.css); aria-label är namnet för skärmläsare -->
+      <button class="icon" id="btn-menu" aria-label="Meny" data-tip="Meny: starta ett nytt parti, välj fältslag eller ändra inställningarna">☰</button>
+      <button class="icon" id="btn-undo" aria-label="Ångra" data-tip="Ångra ditt senaste drag">↶</button>
+      <button class="icon mobile-only" id="btn-moves" aria-label="Drag" data-tip="Visa alla drag i partiet">≡</button>
+      <button class="icon" id="btn-flip" aria-label="Vänd vyn" data-tip="Vänd brädet och se det från andra sidan">⟲</button>
+      <button class="icon offline-only" id="btn-hint" aria-label="Tips" data-tip="Tips: Stockfish visar ett bra drag med en lysande pil">✧</button>
+      <button class="icon" id="btn-battle" aria-label="Dueller" data-tip="Filmiska dueller på eller av. Utan dem slår pjäserna varandra direkt">⚔</button>
+      <button class="icon" id="btn-sound" aria-label="Ljud" data-tip="Ljud och röster på eller av">♪</button>
+      <button class="icon hidden" id="btn-replay" aria-label="Repris" data-tip="Repris: spela senaste duellen en gång till">⏮</button>
+      <button class="icon" id="btn-map" aria-label="Översikt" data-tip="Översikt: kartbordet uppifrån som ett kopparstick (tangenten M)">⌖</button>
+      <button class="icon" id="btn-photo" aria-label="Fotoläge" data-tip="Fotoläge: frys bilden, flytta kameran fritt och spara en bild">◎</button>
+      <button class="icon online-only" id="btn-draw" aria-label="Erbjud remi" data-tip="Erbjud motståndaren remi">½</button>
+      <button class="icon online-only" id="btn-resign" aria-label="Ge upp" data-tip="Ge upp partiet">⚐</button>
+      <button class="icon" id="btn-exit" aria-label="Avsluta" data-tip="Avsluta spelet. Partiet sparas, så du kan fortsätta nästa gång">✕</button>
     </div>
     <button id="btn-skip" class="pill">Hoppa över ⏭</button>
   </div>

@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Saecula Kartbordet",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "identifier": "se.criteroconsulting.kartbordet",
   "build": {
     "frontendDist": "../dist",
@@ -25,7 +25,8 @@
     ],
     "security": {
       "csp": null
-    }
+    },
+    "withGlobalTauri": true
   },
   "bundle": {
     "active": true,

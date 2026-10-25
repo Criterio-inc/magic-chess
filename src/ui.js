@@ -64,6 +64,7 @@ export class UI {
     $('btn-hint').addEventListener('click', () => this.emit('hint'));
     $('btn-skip').addEventListener('click', () => this.emit('skip'));
     $('btn-resign').addEventListener('click', () => this.emit('resign'));
+    $('btn-exit').addEventListener('click', () => this.emit('exit'));
     $('over-rematch').addEventListener('click', () => this.emit('rematch'));
     $('start').addEventListener('click', () => this.emit('start', this.readSettings()));
     $('continue').addEventListener('click', () => this.emit('continue'));

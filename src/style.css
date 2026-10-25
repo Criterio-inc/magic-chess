@@ -96,7 +96,19 @@ body.battle #side, body.battle #toolbar { opacity: 0; pointer-events: none; }
 .icon { width: 46px; height: 46px; background: var(--glass); border: 1px solid var(--line); font-size: 21px; color: var(--ink);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: all 0.15s; }
 .icon:hover { border-color: var(--gold); color: var(--gold-hi); }
-.icon.off { opacity: 0.4; }
+/* avstängd: dämpad symbol (inte opacity på knappen, då bleks även förklaringen ovanför) */
+.icon.off { color: rgba(244, 239, 230, 0.35); border-color: rgba(244, 239, 230, 0.12); }
+/* Förklaringen vid hovring syns direkt, till skillnad från title-attributets ruta som dröjer och säger för lite.
+   Bara där det finns en mus; på pekskärmar finns ingen hovring. */
+#toolbar .icon[data-tip] { position: relative; }
+#toolbar .icon[data-tip]::after { content: attr(data-tip); position: absolute; left: 0; bottom: calc(100% + 10px); z-index: 30;
+  width: max-content; max-width: 280px; padding: 8px 12px; background: rgba(12, 10, 8, 0.94); border: 1px solid var(--gold);
+  color: var(--ink); font: 16px/1.35 'EB Garamond', serif; text-align: left; white-space: normal; pointer-events: none;
+  opacity: 0; transform: translateY(4px); transition: opacity 0.15s, transform 0.15s; }
+@media (hover: hover) {
+  #toolbar .icon[data-tip]:hover::after, #toolbar .icon[data-tip]:focus-visible::after { opacity: 1; transform: none; }
+}
+#btn-exit { margin-left: 10px; }
 body.overview #btn-map { border-color: var(--gold); color: var(--gold-hi); } /* översikten är på */
 
 .promo-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }

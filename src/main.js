@@ -11,6 +11,7 @@ import { Game } from './game.js';
 import { UI } from './ui.js';
 import { tier } from './quality.js';
 import { Online, ONLINE } from './online.js';
+import { APP, quit } from './desktop.js';
 import { setupOnlineExtras } from './online-extras.js';
 import { Title } from './title.js';
 import { Overview } from './kartrum/overview.js';
@@ -137,6 +138,13 @@ async function boot() {
   ui.on('onlineJoin', (s) => { applySettings(s); online.forget(); online.join(s.code); ui.onlineMsg('Ansluter…'); });
   ui.on('onlineCancel', () => { online.leave(); ui.hide('invite'); ui.show('menu'); });
   ui.on('offerDraw', () => { online.offerDraw(); ui.toast('Remi erbjuden'); });
+  // avsluta: ett tryck till inom tre sekunder, så att ingen råkar lämna mitt i ett parti (det sparas ändå)
+  if (!APP) document.getElementById('btn-exit').dataset.tip = 'Avsluta och gå tillbaka till spelsidan. Partiet sparas i webbläsaren';
+  let exitArmed = 0;
+  ui.on('exit', () => {
+    if (performance.now() - exitArmed > 3000) { exitArmed = performance.now(); ui.toast('Tryck ✕ igen för att avsluta', true); return; }
+    quit(); // partiet är redan sparat: game-save.js sparar efter varje drag
+  });
   let resignArmed = 0;
   ui.on('resign', () => {
     if (performance.now() - resignArmed < 3000) { online.resign(); resignArmed = 0; return; }

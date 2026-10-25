@@ -117,6 +117,9 @@ check (kungen), bull (löparen).
 - **Dragbedömning:** en andra Stockfish (`analyst`) värderar varje ställning; ?? (≥2,5 bönder förlorat), ? (≥1,1) och !! (korrekt
   offer) visas som märke över pjäsen och i draglistan; härolden kommenterar.
 - **Kyrkogård:** slagna pjäser står som små statyer på ramen, byggs om ur historiken.
+- **Verktygsraden:** varje knapp har en förklaring som syns direkt vid hovring (`data-tip` i index.html, CSS i style.css).
+  **Avsluta** (✕, två tryck inom tre sekunder) stänger Mac-appens fönster och därmed appen (`desktop.js`, behörigheten
+  `core:window:allow-close`), eller går tillbaka till spelsidan på webben. Partiet är redan sparat efter varje drag.
 - **Fotoläge** (◎), **repris** (⏮), **tips** (✧), **veteraner** (lagerkrans), **sammanfattning** (träffsäkerhet, värsta draget,
   främst i striden) och **legender** (Légal 1750, Det odödliga, Det eviggröna, Operapartiet) som i originalet.
 - **Hoppa över duellen:** tryck på brädet, mellanslag/Esc eller "Hoppa över" medan en strid pågår.

@@ -1,7 +1,12 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Spelet behöver inga systembehörigheter",
-  "windows": ["main"],
-  "permissions": ["core:default"]
+  "description": "Spelet behöver bara kunna stänga sitt eget fönster (Avsluta)",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:allow-close"
+  ]
 }
