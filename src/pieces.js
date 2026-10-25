@@ -22,11 +22,11 @@ export function ensureBakeColor(mesh) {
 
 export class PieceLibrary {
   async load(onProgress) {
-    this.meta = await fetch('/models/pieces.json').then((r) => r.json());
+    this.meta = await fetch('models/pieces.json').then((r) => r.json());
     this.mats = teamMaterials();
     this.models = {};
     await Promise.all(Object.values(TYPES).map(async (name) => {
-      const g = await gltfLoader.loadAsync(`/models/${name}${tier.lod}.glb`);
+      const g = await gltfLoader.loadAsync(`models/${name}${tier.lod}.glb`);
       this.models[name] = g;
       onProgress?.(name);
     }));
@@ -41,9 +41,9 @@ export class PieceLibrary {
   async loadExtras() {
     this.extras = {};
     await Promise.all(['elk', 'hand', 'drummer'].map(async (n) => {
-      try { this.extras[n] = await gltfLoader.loadAsync(`/models/${n}${tier.lod}.glb`); } catch { /* saknas */ }
+      try { this.extras[n] = await gltfLoader.loadAsync(`models/${n}${tier.lod}.glb`); } catch { /* saknas */ }
     }));
-    try { this.extras.drummerMeta = await fetch('/models/drummer.json').then((r) => (r.ok ? r.json() : null)); } catch { /* saknas */ }
+    try { this.extras.drummerMeta = await fetch('models/drummer.json').then((r) => (r.ok ? r.json() : null)); } catch { /* saknas */ }
   }
 
   /** Små statyer till kyrkogården vid brädkanten: förenklade modeller, stillastående pose. */
@@ -51,7 +51,7 @@ export class PieceLibrary {
     if (this.minis) return;
     this.minis = {};
     await Promise.all(Object.values(TYPES).map(async (name) => {
-      this.minis[name] = tier.lod ? this.models[name] : await gltfLoader.loadAsync(`/models/${name}_lo.glb`);
+      this.minis[name] = tier.lod ? this.models[name] : await gltfLoader.loadAsync(`models/${name}_lo.glb`);
     }));
   }
 

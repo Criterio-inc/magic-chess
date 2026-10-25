@@ -1,6 +1,6 @@
 // Stockfish 19 (WASM, en tråd) i en Web Worker via UCI.
 export class Engine {
-  constructor(url = '/engine/stockfish-19-lite-single.js') {
+  constructor(url = 'engine/stockfish-19-lite-single.js') {
     this.worker = new Worker(url);
     this.waiters = [];
     this.worker.onmessage = (e) => {

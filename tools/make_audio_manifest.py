@@ -21,7 +21,7 @@ for who, kinds in spec["lines"].items():
             name = f"{who}_{kind}_{i}_{h}.mp3"
             if not os.path.exists(os.path.join(AUD, "voice", name)):
                 continue
-            url = f"/audio/voice/{name}"
+            url = f"audio/voice/{name}"
             if who == "herald":
                 man["herald"].setdefault(kind, []).append(url)
             else:
@@ -33,7 +33,7 @@ for (k, p, d, l, n) in gen_sfx.SFX:
     for i in range(n):
         f = gen_sfx.fname(k, p, d, l, i)
         if os.path.exists(os.path.join(AUD, "sfx", f)):
-            man["sfx"].setdefault(k, []).append(f"/audio/sfx/{f}")
+            man["sfx"].setdefault(k, []).append(f"audio/sfx/{f}")
 
 with open(os.path.join(AUD, "manifest.json"), "w") as fp:
     json.dump(man, fp, indent=1)

@@ -55,8 +55,8 @@ export class World {
 
   async load(onProgress) {
     const [gltf, meta] = await Promise.all([
-      gltfLoader.loadAsync(`/models/arena${tier.lod}.glb`).then((g) => { onProgress?.('arena'); return g; }),
-      fetch('/models/arena.json').then((r) => r.json()),
+      gltfLoader.loadAsync(`models/arena${tier.lod}.glb`).then((g) => { onProgress?.('arena'); return g; }),
+      fetch('models/arena.json').then((r) => r.json()),
     ]);
     this.meta = meta;
     this.room = await MapRoom.create(this, gltf.scene);

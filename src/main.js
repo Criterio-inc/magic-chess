@@ -10,7 +10,7 @@ import { Engine } from './engine.js';
 import { Game } from './game.js';
 import { UI } from './ui.js';
 import { tier } from './quality.js';
-import { Online } from './online.js';
+import { Online, ONLINE } from './online.js';
 import { setupOnlineExtras } from './online-extras.js';
 import { Title } from './title.js';
 import { Overview } from './kartrum/overview.js';
@@ -70,13 +70,14 @@ async function boot() {
   world.renderer.compile(world.scene, world.camera);
 
   // Titelmusiken startar vid första interaktionen (webbläsare spärrar ljud dessförinnan)
-  sound.playMusic('/audio/music/title.mp3', 0.55, 3);
+  sound.playMusic('audio/music/title.mp3', 0.55, 3);
   const firstGesture = () => { sound.unlock(); window.removeEventListener('pointerdown', firstGesture); window.removeEventListener('keydown', firstGesture); };
   window.addEventListener('pointerdown', firstGesture);
   window.addEventListener('keydown', firstGesture);
 
-  const joinParam = new URLSearchParams(location.search).get('join');
-  const watchParam = new URLSearchParams(location.search).get('watch'); // åskådarlänk
+  if (!ONLINE) document.body.classList.add('no-online');
+  const joinParam = ONLINE && new URLSearchParams(location.search).get('join');
+  const watchParam = ONLINE && new URLSearchParams(location.search).get('watch'); // åskådarlänk
   ui.ready(async () => {
     sound.unlock();
     // dånande entré: vit blixt, åska, titelbilderna slutar och kameran svänger in över arenan
@@ -98,7 +99,7 @@ async function boot() {
       ui.toast('Ansluter…');
     } else if (watchParam) {
       extras.watch(watchParam);
-    } else if (online.session?.started) {
+    } else if (ONLINE && online.session?.started) {
       online.connect(); // återanslut till pågående onlineparti
       ui.toast('Återansluter…');
     } else {

@@ -11,7 +11,7 @@ export class Voice {
 
   async load() {
     try {
-      this.manifest = await fetch('/audio/manifest.json').then((r) => (r.ok ? r.json() : this.manifest));
+      this.manifest = await fetch('audio/manifest.json').then((r) => (r.ok ? r.json() : this.manifest));
     } catch { /* inga inspelningar ännu */ }
   }
 

@@ -31,6 +31,7 @@ npm install
 npm run dev            # http://localhost:8240
 npm run server         # onlinespelet (WebSocket :8241)
 npm run smoke          # spelar igenom varje händelse i riktig Chrome
+npm run release        # notariserad Mac-app som dmg på Skrivbordet
 node tools/shots.mjs   # bilder av dag, skymning, kväll och översikt till docs/stil/spel/
 ```
 
@@ -42,5 +43,6 @@ Se `CLAUDE.md` för hela tillgångskedjan.
 - Grunden: Marble & Mayhem av Anders Bjarby.
 - Stockfish.js (`public/engine/`), GPL-3.0, licenstexten i `public/engine/Copying.txt`.
 - Kartan ur Saecula, byggd på Natural Earth (allmän egendom) och höjddata från Terrain Tiles (Mapzen/AWS).
-- Svenska röster och ljudeffekter: ElevenLabs.
+- Svenska röster, ljudeffekter och titelmusik: ElevenLabs.
+- Typsnitten Cinzel och EB Garamond: SIL Open Font License.
 - three.js, postprocessing, n8ao och chess.js: MIT och BSD.

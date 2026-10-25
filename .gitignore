@@ -9,3 +9,7 @@ vault/
 server/data/
 blender/__pycache__/
 /docs/
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/

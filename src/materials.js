@@ -13,7 +13,7 @@ export function setAnisotropy(renderer) {
 }
 
 export function tex(url, { srgb = false, repeat = 1 } = {}) {
-  url = url.replace('/tex/', '/tex/' + tier.tex); // mobil: halv upplösning
+  url = url.replace('tex/', 'tex/' + tier.tex); // mobil: halv upplösning
   const key = url + srgb;
   let t = texCache.get(key);
   if (!t) {
@@ -278,10 +278,10 @@ export function gem(color, intensity = 4) {
 
 /** Lagens materialuppsättningar. Namnen motsvarar Blender-materialen. */
 export function teamMaterials() {
-  const wA = tex('/tex/marble_white_albedo.jpg', { srgb: true });
-  const wD = tex('/tex/marble_white_data.jpg');
-  const bA = tex('/tex/marble_black_albedo.jpg', { srgb: true });
-  const bD = tex('/tex/marble_black_data.jpg');
+  const wA = tex('tex/marble_white_albedo.jpg', { srgb: true });
+  const wD = tex('tex/marble_white_data.jpg');
+  const bA = tex('tex/marble_black_albedo.jpg', { srgb: true });
+  const bD = tex('tex/marble_black_data.jpg');
   const shared = {
     Steel: withBake(metal(0xd2d5db, 0.16), { dirt: 0.5, edge: 0.6 }),
     Wood: withBake(new THREE.MeshStandardMaterial({ color: 0x6b4527, roughness: 0.58 }), { dirt: 0.3, edge: 0.3 }),
@@ -312,23 +312,23 @@ export function teamMaterials() {
 
 /** Arenans material, nycklade på Blender-namn. UV:er är i meter. */
 export function arenaMaterials() {
-  const wA = tex('/tex/marble_white_albedo.jpg', { srgb: true, repeat: 0.42 });
-  const wD = tex('/tex/marble_white_data.jpg', { repeat: 0.42 });
-  const wN = tex('/tex/marble_white_normal.jpg', { repeat: 0.42 });
-  const bA = tex('/tex/marble_black_albedo.jpg', { srgb: true, repeat: 0.42 });
-  const bD = tex('/tex/marble_black_data.jpg', { repeat: 0.42 });
-  const bN = tex('/tex/marble_black_normal.jpg', { repeat: 0.42 });
+  const wA = tex('tex/marble_white_albedo.jpg', { srgb: true, repeat: 0.42 });
+  const wD = tex('tex/marble_white_data.jpg', { repeat: 0.42 });
+  const wN = tex('tex/marble_white_normal.jpg', { repeat: 0.42 });
+  const bA = tex('tex/marble_black_albedo.jpg', { srgb: true, repeat: 0.42 });
+  const bD = tex('tex/marble_black_data.jpg', { repeat: 0.42 });
+  const bN = tex('tex/marble_black_normal.jpg', { repeat: 0.42 });
   const set = (name, r, srgbRepeat) => ({
-    map: tex(`/tex/${name}_diff.jpg`, { srgb: true, repeat: r }),
-    normalMap: tex(`/tex/${name}_nor_gl.jpg`, { repeat: r }),
-    roughnessMap: tex(`/tex/${name}_rough.jpg`, { repeat: r }),
+    map: tex(`tex/${name}_diff.jpg`, { srgb: true, repeat: r }),
+    normalMap: tex(`tex/${name}_nor_gl.jpg`, { repeat: r }),
+    roughnessMap: tex(`tex/${name}_rough.jpg`, { repeat: r }),
   });
   const ground = set('monastery_stone_floor', 1 / 3.2);
   const wall = set('castle_wall_slates', 1 / 2.5);
   const rock = set('mossy_rock', 1 / 2.0);
   const grass = set('grass_ground', 1 / 3.5);
-  const leafy = tex('/tex/leafy_grass_diff.jpg', { srgb: true });
-  const tA = tex('/tex/marble_white_albedo.jpg', { srgb: true, repeat: 0.3 });
+  const leafy = tex('tex/leafy_grass_diff.jpg', { srgb: true });
+  const tA = tex('tex/marble_white_albedo.jpg', { srgb: true, repeat: 0.3 });
   return {
     BoardWhite: new THREE.MeshPhysicalMaterial({ map: wA, roughnessMap: wD, normalMap: wN, normalScale: new THREE.Vector2(0.4, 0.4),
       roughness: 1.15, color: 0xfffbf3, clearcoat: 0.35, clearcoatRoughness: 0.14 }),
@@ -337,16 +337,16 @@ export function arenaMaterials() {
     Frame: new THREE.MeshPhysicalMaterial({ map: tA, color: 0xb8a98f, roughness: 0.45, clearcoat: 0.3, clearcoatRoughness: 0.3 }),
     Trim: metal(0xe8b65a, 0.3),
     Bronze: metal(0x8a5a33, 0.45),
-    Plinth: new THREE.MeshStandardMaterial({ map: tex('/tex/marble_white_albedo.jpg', { srgb: true, repeat: 0.2 }), color: 0xa59a88, roughness: 0.75,
-      normalMap: tex('/tex/monastery_stone_floor_nor_gl.jpg', { repeat: 0.25 }), normalScale: new THREE.Vector2(0.25, 0.25) }),
-    Column: new THREE.MeshStandardMaterial({ map: tex('/tex/marble_white_albedo.jpg', { srgb: true, repeat: 0.25 }), color: 0xd9cfbf, roughness: 0.62,
+    Plinth: new THREE.MeshStandardMaterial({ map: tex('tex/marble_white_albedo.jpg', { srgb: true, repeat: 0.2 }), color: 0xa59a88, roughness: 0.75,
+      normalMap: tex('tex/monastery_stone_floor_nor_gl.jpg', { repeat: 0.25 }), normalScale: new THREE.Vector2(0.25, 0.25) }),
+    Column: new THREE.MeshStandardMaterial({ map: tex('tex/marble_white_albedo.jpg', { srgb: true, repeat: 0.25 }), color: 0xd9cfbf, roughness: 0.62,
       normalMap: wall.normalMap, normalScale: new THREE.Vector2(0.15, 0.15) }),
     Ground: new THREE.MeshStandardMaterial({ ...ground, roughness: 1 }),
     Wall: new THREE.MeshStandardMaterial({ ...wall, roughness: 1 }),
     Rock: new THREE.MeshStandardMaterial({ ...rock, roughness: 1 }),
     Grass: grassMaterial(grass, leafy),
     Coal: new THREE.MeshStandardMaterial({ color: 0x1a0d08, emissive: 0xff5a14, emissiveIntensity: 1.6, roughness: 0.9,
-      emissiveMap: tex('/tex/marble_black_albedo.jpg', { srgb: true, repeat: 2 }) }),
+      emissiveMap: tex('tex/marble_black_albedo.jpg', { srgb: true, repeat: 2 }) }),
     Dark: new THREE.MeshStandardMaterial({ color: 0x0b0908, roughness: 1 }),
   };
 }
@@ -354,7 +354,7 @@ export function arenaMaterials() {
 /** Gräs som blandar två skalor av samma textur så att upprepningen inte syns, plus makrovariation. */
 function grassMaterial(set, second) {
   const m = new THREE.MeshStandardMaterial({ ...set, roughness: 1, color: 0xa8b888 });
-  const noise = tex('/tex/marble_white_data.jpg');
+  const noise = tex('tex/marble_white_data.jpg');
   m.onBeforeCompile = (sh) => {
     sh.uniforms.macroNoise = { value: noise };
     sh.uniforms.secondMap = { value: second };

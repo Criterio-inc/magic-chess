@@ -31,6 +31,7 @@ body.online #btn-undo { display: none; }
 .waiting::after { content: ''; display: inline-block; width: 1.2em; text-align: left; animation: dots 1.4s steps(4) infinite; }
 @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
 #mode { grid-template-columns: repeat(4, 1fr); grid-auto-flow: row; }
+body.no-online #mode [data-v="online"] { display: none; } /* ingen server i appen och på webbplatsen */
 #toast { white-space: nowrap; text-align: center; }
 button { font: inherit; color: inherit; cursor: pointer; }
 .hidden { display: none !important; }

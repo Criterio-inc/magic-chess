@@ -2,6 +2,7 @@
 import { GLYPH } from './pieces.js';
 import { LEGENDS } from './legends.js';
 import { SLAG, slagById } from './faltslag/slag.js';
+import { ONLINE } from './online.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -149,7 +150,7 @@ export class UI {
     try { s = JSON.parse(localStorage.getItem('bc.settings')); } catch { return; }
     if (!s) return;
     const set = (id, v) => { for (const b of $(id).children) b.classList.toggle('on', b.dataset.v === String(v)); };
-    if (s.mode) set('mode', s.mode);
+    if (s.mode && (ONLINE || s.mode !== 'online')) set('mode', s.mode);
     if (s.battles) set('battles', s.battles);
     if (s.pace) set('pace', s.pace);
     if (s.ocolor) set('ocolor', s.ocolor);

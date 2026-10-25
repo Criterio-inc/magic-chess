@@ -1,0 +1,25 @@
+[package]
+name = "kartbordet"
+version = "1.0.0"
+description = "Saecula: Kartbordet, schack vid Saeculas kartbord"
+authors = ["Pär Levander"]
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "kartbordet_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.2", features = [] }
+
+[dependencies]
+tauri = { version = "2.11.2", features = [] }
+
+# Xcode 27:s strip lämnar Rusts makrobibliotek (proc-macro-dylibbar) med en
+# feljusterad LINKEDIT-tabell som dyld vägrar ladda. Strippa därför inte.
+[profile.release]
+strip = false
+
+[profile.release.build-override]
+strip = false

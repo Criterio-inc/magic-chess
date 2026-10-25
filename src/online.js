@@ -3,6 +3,10 @@
 // Åskådare (watch) har ingen session: bara koden, i minnet.
 const KEY = 'bc.online';
 
+/** Onlinespelet kräver servern (npm run server). Mac-appen och webbplatsens bygge har ingen, så läget visas bara i
+ *  utvecklingsläget eller i ett bygge med VITE_ONLINE=1. */
+export const ONLINE = import.meta.env.DEV || import.meta.env.VITE_ONLINE === '1';
+
 export class Online {
   constructor() {
     this.handlers = {};

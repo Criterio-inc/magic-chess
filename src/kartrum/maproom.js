@@ -66,7 +66,7 @@ function extractBoard(root) {
 export class MapRoom {
   /** Ladda kartan och bygg rummet runt arenans bräde. */
   static async create(world, arenaRoot) {
-    const map = await new THREE.TextureLoader().loadAsync('/kartrum/karta.jpg');
+    const map = await new THREE.TextureLoader().loadAsync('kartrum/karta.jpg');
     map.colorSpace = THREE.SRGBColorSpace;
     map.anisotropy = world.renderer.capabilities.getMaxAnisotropy();
     return new MapRoom(world, arenaRoot, map);

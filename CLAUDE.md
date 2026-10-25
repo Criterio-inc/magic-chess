@@ -16,8 +16,13 @@ npm run build          # dist/ (statisk, base './')
 npm run smoke          # röktest i riktig Chrome mot ett preview-bygge (se nedan)
 npm run check:legends  # legendpartierna är lagliga och slutar i matt
 npm run check:slag     # fältslagens kort: format, uppställning, slagplats bredvid brädet, häroldens repliker
+npm run release        # Mac-appen: Tauri-bygge, signering, notarisering -> ~/Desktop/Saecula-Kartbordet-<version>.dmg
 node tools/shots.mjs   # bilder av titel, dag, skymning, kväll och översikt till docs/stil/spel/, med bildfrekvens
 ```
+
+Alla resurser laddas med relativa adresser (`models/…`, inte `/models/…`), så samma bygge fungerar i Mac-appen och under
+criteroconsulting.se/spel/kartbordet/ (`node verktyg/spel.mjs kartbordet` i criteroconsulting-webb). Onlineläget visas bara i
+utvecklingsläget eller med `VITE_ONLINE=1`, eftersom appen och webbplatsen saknar server (`ONLINE` i `online.js`).
 
 `?quality=low|high` tvingar kvalitetsnivå (annars: mobil = low). `node tools/online_bot.mjs KOD` är en testmotståndare online.
 `tools/deploy.sh` driftsätter Anders original på hans server och ska inte köras härifrån.
@@ -124,7 +129,9 @@ Bilder i `build/smoke/`. `--no-build`, `--headed`, `--only hand,elk`.
 
 Namn: **Saecula: Kartbordet**, som typografi (Cinzel och EB Garamond) i `index.html` och `src/style.css`, utan bild. Glansen löper
 i bokstäverna. `src/title.js`: filmiska bilder bakom titeln, glöd som stiger; "Gå in i kartrummet" ger vit blixt och åska.
-Titelmusiken `public/audio/music/title.mp3` är Anders Suno-låt och behöver bytas eller godkännas av honom före publicering.
+Titelmusiken `public/audio/music/title.mp3` är egen sedan 2026-10-25: barock i två minuter från ElevenLabs Music (`music_v1`,
+instrumental, normaliserad till -15,8 LUFS som Anders gamla låt). Typsnitten ligger lokalt i `src/fonts/` (OFL), inga anrop till Google.
+Ikonerna är den blå kungen ur omslagsbilden (Gemini), gjorda med ikonfamiljens `gor-ikoner.mjs`.
 
 ## Mobil
 

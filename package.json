@@ -13,7 +13,10 @@
     "smoke": "node tools/smoke.mjs",
     "check:legends": "node tools/check_legends.mjs",
     "check:slag": "node tools/check_slag.mjs",
-    "deploy": "tools/deploy.sh"
+    "deploy": "tools/deploy.sh",
+    "tauri": "tauri",
+    "app": "tauri build --target universal-apple-darwin",
+    "release": "./scripts/release.sh"
   },
   "license": "UNLICENSED",
   "type": "module",
@@ -27,6 +30,7 @@
   },
   "devDependencies": {
     "@gltf-transform/cli": "^4.5.1",
+    "@tauri-apps/cli": "^2.12.4",
     "playwright-core": "^1.56.1",
     "vite": "^8.3.5"
   },
