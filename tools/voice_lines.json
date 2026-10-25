@@ -1,0 +1,407 @@
+{
+  "voices": {
+    "herald": "FF7KdobWPaiR0vkcALHF",
+    "pawn": "SOYHLrjzK2X1ezoPC6cr",
+    "knight": "L0Dsvb3SLTyegXwtm47J",
+    "bishop": "uVKHymY7OYMd6OailpG5",
+    "rook": "qNkzaJoHLLdpvgh5tISm",
+    "queen": "pFZP5JQG7iQjIQuC4Bku",
+    "king": "JBFqnCBsd6RMkjVDRZzb",
+    "patsy": "N2lVS1w4EtoT3dr4eOWO"
+  },
+  "lines": {
+    "herald": {
+      "begin": [
+        "[dramatic] Let the battle begin!",
+        "[shouting] To arms! The game is afoot!",
+        "[booming] Round one... fight!"
+      ],
+      "check": [
+        "[shouting] Check!",
+        "[dramatic] The king is in check!",
+        "[dramatic] The king is in danger!"
+      ],
+      "checkmate": [
+        "[shouting] Checkmate!"
+      ],
+      "whiteWins": [
+        "[dramatic] White is victorious!"
+      ],
+      "blackWins": [
+        "[dramatic] Black is victorious!"
+      ],
+      "stalemate": [
+        "[solemn] Stalemate. There is no victor this day.",
+        "[unimpressed] A stalemate. How thrilling."
+      ],
+      "draw": [
+        "[solemn] The battle ends in a draw."
+      ],
+      "promote": [
+        "[awed] A pawn ascends!",
+        "[dramatic] Level up!"
+      ],
+      "firstBlood": [
+        "[dramatic] First blood!"
+      ],
+      "finishHim": [
+        "[booming] Finish him!"
+      ],
+      "fatality": [
+        "[booming] Fatality!"
+      ],
+      "flawless": [
+        "[dramatic] Flawless victory!"
+      ],
+      "doubleKill": [
+        "[shouting] Double kill!"
+      ],
+      "killingSpree": [
+        "[shouting] Killing spree!"
+      ],
+      "comboBreaker": [
+        "[shouting] Combo breaker!"
+      ],
+      "toasty": [
+        "[high-pitched] Toasty!"
+      ],
+      "enPassant": [
+        "[shocked] Holy hell!",
+        "[dramatic] Google en passant!"
+      ],
+      "inquisition": [
+        "[shouting] Nobody expects the Spanish Inquisition!"
+      ],
+      "bongcloud": [
+        "[amused] Ah... the Bongcloud!"
+      ],
+      "horse": [
+        "[shouting] Horse!"
+      ],
+      "dejaVu": [
+        "[mysterious] Déjà vu..."
+      ],
+      "rabbit": [
+        "[ominous] That's no ordinary rabbit!",
+        "[terrified] Look at the bones!"
+      ],
+      "runAway": [
+        "[panicked] Run away! Run away!"
+      ],
+      "blunder": [
+        "[sarcastic] Brilliant move...",
+        "[shocked] What a blunder!",
+        "[dry] Oh. Oh no."
+      ],
+      "brilliant": [
+        "[awed] Brilliant!",
+        "[excited] What a move!"
+      ],
+      "silly": [
+        "[announcer] The Ministry of Silly Walks approves."
+      ],
+      "replay": [
+        "[excited] Let's see that again!",
+        "[dramatic] Instant replay!"
+      ],
+      "nightfall": [
+        "[solemn] Night falls upon the arena..."
+      ],
+      "foot": [
+        "[booming] And now for something completely different!"
+      ]
+    },
+    "pawn": {
+      "select": [
+        "[eager] Yes, sir!",
+        "[determined] Ready for duty!",
+        "[nervous] Me? Right away!",
+        "[gruff] Work, work.",
+        "[eager] Something need doing?",
+        "[nervous] It's dangerous to go alone..."
+      ],
+      "attack": [
+        "[shouting] For the crown!",
+        "[shouting] Have at you!",
+        "[shouting] Leeroy Jenkins!",
+        "[shouting] This is SPARTA!"
+      ],
+      "death": [
+        "[groans] Tell my mother...",
+        "[gasps] Not like this...",
+        "[gasps] I used to be an adventurer like you... then I took a sword to the knee.",
+        "[groans] Not the face..."
+      ],
+      "move": [
+        "[determined] Onward!",
+        "[cheerful] Ready to work!"
+      ],
+      "retreat": [
+        "[panicked] Run away! Run away!"
+      ],
+      "hit": [
+        "[strained] 'Tis but a scratch!",
+        "[pained] Ow! My spleen!"
+      ],
+      "fleshwound": [
+        "[defiant] It's just a flesh wound!"
+      ],
+      "kill": [
+        "[smug] Who's the pawn now?",
+        "[laughs] Pawn stars!"
+      ],
+      "annoyed": [
+        "[annoyed] Stop poking me!",
+        "[exasperated] Me not that kind of pawn!"
+      ],
+      "bored": [
+        "[bored] Any day now...",
+        "[whistles] ...hmm hm hmm..."
+      ]
+    },
+    "knight": {
+      "select": [
+        "[confident] My sword is yours.",
+        "[calm] For honor.",
+        "At your command, my liege.",
+        "[stern] None shall pass.",
+        "[confident] We are the knights who say... Ni!"
+      ],
+      "attack": [
+        "[shouting] Yield, villain!",
+        "[shouting] By my oath!",
+        "[shouting] Ni! Ni! Ni!",
+        "[shouting] Have at you, you scoundrel!"
+      ],
+      "death": [
+        "[pained] I have... failed.",
+        "[groans] Avenge me...",
+        "[groans] All right... we'll call it a draw."
+      ],
+      "move": [
+        "[confident] Onward, for glory!",
+        "[cheerful] I'll take the long way round."
+      ],
+      "retreat": [
+        "[nervous] Run away!"
+      ],
+      "hit": [
+        "[defiant] 'Tis but a scratch!",
+        "[strained] I've had worse!"
+      ],
+      "fleshwound": [
+        "[defiant] 'Tis but a scratch!",
+        "[annoyed] Come back here, I'll bite your legs off!"
+      ],
+      "kill": [
+        "[smug] Flawless... technique.",
+        "[calm] Checkmate is a state of mind."
+      ],
+      "annoyed": [
+        "[annoyed] I fart in your general direction!",
+        "[irritated] Your mother was a hamster!"
+      ],
+      "bored": [
+        "[bored] My horse is getting restless. If I had one."
+      ]
+    },
+    "bishop": {
+      "select": [
+        "[warmly] Bless you, my child.",
+        "The heavens guide my path.",
+        "[mutters] Yes, yes, I'm coming.",
+        "[eager] Hey! Listen!",
+        "[raspy] Deus vult."
+      ],
+      "attack": [
+        "[shouting] Repent!",
+        "[shouting] Feel the wrath of heaven!",
+        "[chanting] Wololo!",
+        "[shouting] By the power of the holy diagonal!"
+      ],
+      "death": [
+        "[gasps] Forgive them...",
+        "[groans] My prayers... unanswered...",
+        "[gasps] The cake... was a lie..."
+      ],
+      "move": [
+        "[mutters] Diagonally, as always.",
+        "[raspy] The Lord works in diagonal ways."
+      ],
+      "retreat": [
+        "[raspy] A strategic withdrawal..."
+      ],
+      "grenade": [
+        "[solemn] One... two... five! [hastily] Three, sir! Three!",
+        "[solemn] And the Lord spake... [hastily] oh, just throw it!"
+      ],
+      "hit": [
+        "[gasps] I'm not dead yet!",
+        "[groans] Oof, my sciatica."
+      ],
+      "fleshwound": [
+        "[raspy] Merely a flesh wound, my child."
+      ],
+      "kill": [
+        "[satisfied] Bring out your dead!",
+        "[smug] Amen."
+      ],
+      "annoyed": [
+        "[annoyed] Thou shalt not poke!",
+        "[raspy] Do you want a smiting? Because that is how you get a smiting."
+      ],
+      "bored": [
+        "[bored] I could have finished a whole sermon by now."
+      ]
+    },
+    "rook": {
+      "select": [
+        "[slowly] Rook... moves.",
+        "[slowly] Stone. Ready.",
+        "[grumbles] Hmm. Yes.",
+        "[slowly] Job's done.",
+        "[slowly] Rook... smash?"
+      ],
+      "attack": [
+        "[roaring] Crush!",
+        "[shouting] Smash you flat!",
+        "[roaring] Rook smash!",
+        "[shouting] Falcon... PUNCH!"
+      ],
+      "death": [
+        "[groans] Rook... crumble...",
+        "[groans] Nooo...",
+        "[groans] Rook... was... a good rook."
+      ],
+      "move": [
+        "[slowly] Castle... coming through.",
+        "[grumbles] Straight lines only."
+      ],
+      "retreat": [
+        "[slowly] Rook... tactical... retreat."
+      ],
+      "hit": [
+        "[slowly] Rook... felt that.",
+        "[grumbles] Stone... does not bleed."
+      ],
+      "fleshwound": [
+        "[slowly] Just... a pebble."
+      ],
+      "kill": [
+        "[slowly] Rook... rocks.",
+        "[laughs] Haha. Pebbles."
+      ],
+      "annoyed": [
+        "[annoyed] Rook... is not... a toy.",
+        "[grumbles] Poke rook again... rook poke back."
+      ],
+      "bored": [
+        "[bored] Rook... waiting... rook... still waiting."
+      ]
+    },
+    "queen": {
+      "select": [
+        "[regal] As I command.",
+        "[amused] How delightful.",
+        "[confident] Point the way.",
+        "[amused] I am the one who knocks.",
+        "[regal] Winter is coming."
+      ],
+      "attack": [
+        "[menacing] Kneel before your queen!",
+        "[shouting] Burn!",
+        "[shouting] Hadouken!",
+        "[menacing] Get over here!",
+        "[cold] Chill out."
+      ],
+      "death": [
+        "[gasps] Impossible...",
+        "[pained] My king... forgive me...",
+        "[dramatic] Tell the king... he's on his own."
+      ],
+      "move": [
+        "[confident] Anywhere I please, darling.",
+        "[amused] Queens move however they like."
+      ],
+      "retreat": [
+        "[haughty] This is not a retreat. It's a repositioning."
+      ],
+      "hit": [
+        "[annoyed] How dare you!",
+        "[gasps] My dress!"
+      ],
+      "fleshwound": [
+        "[haughty] Merely a flesh wound. Rather fetching, actually."
+      ],
+      "kill": [
+        "[amused] Next!",
+        "[smug] Off with their heads. Oh wait, done."
+      ],
+      "annoyed": [
+        "[annoyed] Do you mind? I'm royalty.",
+        "[cold] Touch me again and you're a pawn."
+      ],
+      "bored": [
+        "[impatient] Darling, I'm aging here."
+      ]
+    },
+    "king": {
+      "select": [
+        "[regal] Very well.",
+        "[sighs] Must I do everything myself?",
+        "[dignified] The crown moves.",
+        "[smug] It's good to be the king.",
+        "[pompous] Bow, peasants."
+      ],
+      "attack": [
+        "[shouting] Off with your head!",
+        "[shouting] Bow to your king!",
+        "[shouting] By royal decree!",
+        "[shouting] For the realm!"
+      ],
+      "death": [
+        "[gasps] My kingdom...",
+        "[defeated] It is... finished.",
+        "[gasps] Et tu, pawn?"
+      ],
+      "move": [
+        "[weary] One square. As always. Riveting.",
+        "[pompous] Make way for the king!"
+      ],
+      "retreat": [
+        "[nervous] A king never runs. He... strolls briskly."
+      ],
+      "hit": [
+        "[pained] Treason!",
+        "[gasps] I'll have you hanged for that!"
+      ],
+      "fleshwound": [
+        "[pained] A mere flesh wound. Fetch my physician."
+      ],
+      "kill": [
+        "[smug] All your base are belong to us.",
+        "[smug] Long live me!"
+      ],
+      "check": [
+        "[panicked] Help! Help! I'm being repressed!",
+        "[panicked] Guards! GUARDS!"
+      ],
+      "annoyed": [
+        "[annoyed] I am your king! Stop that!",
+        "[haughty] I didn't vote for you!"
+      ],
+      "bored": [
+        "[impatient] We haven't got all day, you know."
+      ]
+    },
+    "patsy": {
+      "model": [
+        "[whispering] It's only a model.",
+        "[whispering] Shh!"
+      ],
+      "clap": [
+        "[cheerful] Clip clop, clip clop!"
+      ]
+    }
+  }
+}

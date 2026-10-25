@@ -1,0 +1,9 @@
+node_modules/
+dist/
+assets/src/
+build/
+vault/
+.obsidian/
+.DS_Store
+*.blend1
+server/data/

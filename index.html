@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Marble &amp; Mayhem</title>
+  <meta name="theme-color" content="#0c0b0a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Marble &amp; Mayhem" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <canvas id="view"></canvas>
+
+  <!-- laddning / titel -->
+  <div id="cut"></div>
+  <canvas id="embers"></canvas>
+  <div id="title" class="screen">
+    <div class="bars top"></div><div class="bars bottom"></div>
+    <div class="title-card">
+      <div class="logo">
+        <img class="logo-img" src="/logo.webp" alt="Marble &amp; Mayhem" draggable="false" />
+        <div class="logo-shine"></div>
+      </div>
+      <p class="tag">Every capture is a duel.</p>
+      <div class="progress"><div id="progress-bar"></div></div>
+      <p id="progress-label" class="small">Carving marble…</p>
+      <p id="ios-tip" class="small hidden">Tip: Share → <b>Add to Home Screen</b> to play fullscreen.</p>
+      <button id="begin" class="btn gold big" disabled>Enter the arena</button>
+      <p class="credits">Stockfish 19 · Living marble · Holy hand grenades</p>
+    </div>
+  </div>
+  <div id="flash"></div>
+
+  <!-- nytt parti -->
+  <div id="menu" class="screen hidden">
+    <div class="card">
+      <h2>New game</h2>
+      <div class="field">
+        <label>Mode</label>
+        <div class="seg" id="mode">
+          <button data-v="white" class="on">Play White</button>
+          <button data-v="black">Play Black</button>
+          <button data-v="hotseat">Two players</button>
+          <button data-v="watch">Watch</button>
+          <button data-v="online">Online</button>
+        </div>
+      </div>
+      <div class="field hidden" id="online-field">
+        <label>Challenge a friend</label>
+        <div class="seg" id="ocolor">
+          <button data-v="w" class="on">I play White</button>
+          <button data-v="b">I play Black</button>
+          <button data-v="random">Random</button>
+        </div>
+        <button id="online-create" class="btn gold wide">Create invite</button>
+        <div class="or"><span>or join with a code</span></div>
+        <div class="join-row">
+          <input id="join-code" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="K7QX2M" />
+          <button id="online-join" class="btn ghost">Join</button>
+        </div>
+        <p id="online-msg" class="small"></p>
+      </div>
+      <div class="field" id="strength-field">
+        <label>Stockfish strength <span id="elo-label">1800</span></label>
+        <input type="range" id="elo" min="1320" max="3200" step="20" value="1800" />
+        <div class="range-ends"><span>Squire</span><span>Grandmaster</span><span>Full engine</span></div>
+      </div>
+      <div class="field">
+        <label>Battles</label>
+        <div class="seg" id="battles">
+          <button data-v="cinematic" class="on">Cinematic</button>
+          <button data-v="quick">Quick</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Pace</label>
+        <div class="seg" id="pace">
+          <button data-v="1.2">Stately</button>
+          <button data-v="1.7" class="on">Brisk</button>
+          <button data-v="2.4">Swift</button>
+        </div>
+      </div>
+      <div class="row">
+        <button id="menu-close" class="btn ghost hidden">Back</button>
+        <button id="continue" class="btn ghost hidden">Continue</button>
+        <button id="start" class="btn gold">To battle</button>
+      </div>
+      <p id="continue-info" class="small right hidden"></p>
+    </div>
+  </div>
+
+  <!-- inbjudan -->
+  <div id="invite" class="screen hidden">
+    <div class="card small-card">
+      <h2>Your invite</h2>
+      <div id="invite-code" class="code">······</div>
+      <p class="small">Send the code, or the link, to your opponent.</p>
+      <div class="row"><button id="invite-copy" class="btn ghost">Copy link</button><button id="invite-share" class="btn gold">Share</button></div>
+      <p id="invite-status" class="small waiting">Waiting for your opponent…</p>
+      <div class="row"><button id="invite-cancel" class="btn ghost">Cancel</button></div>
+    </div>
+  </div>
+
+  <!-- remierbjudande -->
+  <div id="drawoffer" class="screen hidden">
+    <div class="card small-card">
+      <h2>Draw offered</h2>
+      <p class="small">Your opponent proposes a draw.</p>
+      <div class="row"><button id="draw-decline" class="btn ghost">Fight on</button><button id="draw-accept" class="btn gold">Accept</button></div>
+    </div>
+  </div>
+
+  <!-- spel-HUD -->
+  <div id="hud" class="hidden">
+    <div id="status" class="pill">White to move</div>
+    <div id="side">
+      <div class="captured" id="cap-black"></div>
+      <ol id="moves"></ol>
+      <div class="captured" id="cap-white"></div>
+    </div>
+    <div id="toolbar">
+      <button class="icon" id="btn-menu" title="New game">☰</button>
+      <button class="icon" id="btn-undo" title="Undo">↶</button>
+      <button class="icon mobile-only" id="btn-moves" title="Moves">≡</button>
+      <button class="icon" id="btn-flip" title="Turn the view">⟲</button>
+      <button class="icon" id="btn-battle" title="Cinematic battles on/off">⚔</button>
+      <button class="icon" id="btn-sound" title="Sound on/off">♪</button>
+      <button class="icon hidden" id="btn-replay" title="Replay the last battle">⏮</button>
+      <button class="icon" id="btn-photo" title="Photo mode">◎</button>
+      <button class="icon online-only" id="btn-draw" title="Offer a draw">½</button>
+      <button class="icon online-only" id="btn-resign" title="Resign">⚐</button>
+    </div>
+  </div>
+
+  <!-- fotoläge -->
+  <div id="photobar" class="hidden">
+    <span class="ph-hint">Drag to orbit · pinch/scroll to zoom · right-drag to pan · tap to focus</span>
+    <button class="icon" id="ph-freeze" title="Freeze time">❚❚</button>
+    <button class="btn gold" id="ph-save">Save photo</button>
+    <button class="icon" id="ph-exit" title="Leave photo mode">✕</button>
+  </div>
+  <div id="replay-tag" class="hidden">● REPLAY</div>
+
+  <!-- bondeförvandling -->
+  <div id="promo" class="screen hidden">
+    <div class="card small-card">
+      <h2>Promote</h2>
+      <div class="promo-row">
+        <button data-p="q">♛<span>Queen</span></button>
+        <button data-p="r">♜<span>Rook</span></button>
+        <button data-p="b">♝<span>Bishop</span></button>
+        <button data-p="n">♞<span>Knight</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- partiets slut -->
+  <div id="over" class="screen hidden">
+    <div class="card small-card">
+      <h2 id="over-title">Checkmate</h2>
+      <p id="over-text"></p>
+      <div class="row"><button id="over-review" class="btn ghost">Look around</button><button id="over-rematch" class="btn ghost online-only">Rematch</button><button id="over-new" class="btn gold">New game</button></div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "Marble & Mayhem",
+  "short_name": "Mayhem",
+  "description": "Chess where every capture is a duel between living marble statues.",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0c0b0a",
+  "theme_color": "#0c0b0a",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

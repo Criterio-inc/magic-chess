@@ -1,0 +1,29 @@
+{
+  "name": "battlechess",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 8242",
+    "assets": "tools/build_assets.sh",
+    "marble": "python3 tools/make_marble.py",
+    "server": "node server/index.js",
+    "test:server": "node server/test.mjs"
+  },
+  "license": "UNLICENSED",
+  "type": "module",
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "n8ao": "^2.0.1",
+    "postprocessing": "^6.39.5",
+    "stockfish": "^19.0.1",
+    "three": "^0.186.1",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
+    "vite": "^8.3.5"
+  },
+  "private": true
+}

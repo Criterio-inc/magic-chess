@@ -1,0 +1,525 @@
+{
+ "voice": {
+  "pawn": {
+   "select": [
+    "/audio/voice/pawn_select_0_d416c116.mp3",
+    "/audio/voice/pawn_select_1_f4ecc489.mp3",
+    "/audio/voice/pawn_select_2_3ba1e1d3.mp3",
+    "/audio/voice/pawn_select_3_f18291f6.mp3",
+    "/audio/voice/pawn_select_4_7c9fffc7.mp3",
+    "/audio/voice/pawn_select_5_ea808f6b.mp3"
+   ],
+   "attack": [
+    "/audio/voice/pawn_attack_0_1c9b1ad7.mp3",
+    "/audio/voice/pawn_attack_1_a034cee9.mp3",
+    "/audio/voice/pawn_attack_2_ed6446bf.mp3",
+    "/audio/voice/pawn_attack_3_706aa215.mp3"
+   ],
+   "death": [
+    "/audio/voice/pawn_death_0_9f7de4a6.mp3",
+    "/audio/voice/pawn_death_1_7a1d26b3.mp3",
+    "/audio/voice/pawn_death_2_2b7bbc99.mp3",
+    "/audio/voice/pawn_death_3_f691d218.mp3"
+   ],
+   "move": [
+    "/audio/voice/pawn_move_0_9d4abd74.mp3",
+    "/audio/voice/pawn_move_1_1563cc74.mp3"
+   ],
+   "retreat": [
+    "/audio/voice/pawn_retreat_0_819ecb65.mp3"
+   ],
+   "hit": [
+    "/audio/voice/pawn_hit_0_49c864cc.mp3",
+    "/audio/voice/pawn_hit_1_9276de30.mp3"
+   ],
+   "fleshwound": [
+    "/audio/voice/pawn_fleshwound_0_7df43d2d.mp3"
+   ],
+   "kill": [
+    "/audio/voice/pawn_kill_0_a1a0cda4.mp3",
+    "/audio/voice/pawn_kill_1_75245110.mp3"
+   ],
+   "annoyed": [
+    "/audio/voice/pawn_annoyed_0_79137196.mp3",
+    "/audio/voice/pawn_annoyed_1_5f17dfa9.mp3"
+   ],
+   "bored": [
+    "/audio/voice/pawn_bored_0_5230708f.mp3",
+    "/audio/voice/pawn_bored_1_bbf8eb9d.mp3"
+   ]
+  },
+  "knight": {
+   "select": [
+    "/audio/voice/knight_select_0_d5bc38ff.mp3",
+    "/audio/voice/knight_select_1_558c7a92.mp3",
+    "/audio/voice/knight_select_2_c6a24a1e.mp3",
+    "/audio/voice/knight_select_3_e084fbcb.mp3",
+    "/audio/voice/knight_select_4_ddb77b0f.mp3"
+   ],
+   "attack": [
+    "/audio/voice/knight_attack_0_82d2bf6a.mp3",
+    "/audio/voice/knight_attack_1_a2cf9239.mp3",
+    "/audio/voice/knight_attack_2_029067dd.mp3",
+    "/audio/voice/knight_attack_3_ab2e1370.mp3"
+   ],
+   "death": [
+    "/audio/voice/knight_death_0_25cac2ea.mp3",
+    "/audio/voice/knight_death_1_51653025.mp3",
+    "/audio/voice/knight_death_2_86a5431b.mp3"
+   ],
+   "move": [
+    "/audio/voice/knight_move_0_a406cf4b.mp3",
+    "/audio/voice/knight_move_1_1cb08e97.mp3"
+   ],
+   "retreat": [
+    "/audio/voice/knight_retreat_0_a8c8b5aa.mp3"
+   ],
+   "hit": [
+    "/audio/voice/knight_hit_0_8785653b.mp3",
+    "/audio/voice/knight_hit_1_97b3ae32.mp3"
+   ],
+   "fleshwound": [
+    "/audio/voice/knight_fleshwound_0_8785653b.mp3",
+    "/audio/voice/knight_fleshwound_1_c7c84447.mp3"
+   ],
+   "kill": [
+    "/audio/voice/knight_kill_0_97b0437a.mp3",
+    "/audio/voice/knight_kill_1_8972c76f.mp3"
+   ],
+   "annoyed": [
+    "/audio/voice/knight_annoyed_0_c40a76ba.mp3",
+    "/audio/voice/knight_annoyed_1_dcfd7daf.mp3"
+   ],
+   "bored": [
+    "/audio/voice/knight_bored_0_fb2524bc.mp3"
+   ]
+  },
+  "bishop": {
+   "select": [
+    "/audio/voice/bishop_select_0_7d4d133a.mp3",
+    "/audio/voice/bishop_select_1_8455780e.mp3",
+    "/audio/voice/bishop_select_2_93e898dd.mp3",
+    "/audio/voice/bishop_select_3_072b63b5.mp3",
+    "/audio/voice/bishop_select_4_414f7962.mp3"
+   ],
+   "attack": [
+    "/audio/voice/bishop_attack_0_a84036ae.mp3",
+    "/audio/voice/bishop_attack_1_32fae5e5.mp3",
+    "/audio/voice/bishop_attack_2_d8570d87.mp3",
+    "/audio/voice/bishop_attack_3_1c33489d.mp3"
+   ],
+   "death": [
+    "/audio/voice/bishop_death_0_61799b74.mp3",
+    "/audio/voice/bishop_death_1_a4da38bd.mp3",
+    "/audio/voice/bishop_death_2_0cb0b049.mp3"
+   ],
+   "move": [
+    "/audio/voice/bishop_move_0_b28f8ec3.mp3",
+    "/audio/voice/bishop_move_1_ed5b1bca.mp3"
+   ],
+   "retreat": [
+    "/audio/voice/bishop_retreat_0_5d4faf40.mp3"
+   ],
+   "grenade": [
+    "/audio/voice/bishop_grenade_0_c3cbb53e.mp3",
+    "/audio/voice/bishop_grenade_1_26499b2b.mp3"
+   ],
+   "hit": [
+    "/audio/voice/bishop_hit_0_d8adbed2.mp3",
+    "/audio/voice/bishop_hit_1_049f2250.mp3"
+   ],
+   "fleshwound": [
+    "/audio/voice/bishop_fleshwound_0_31603d5b.mp3"
+   ],
+   "kill": [
+    "/audio/voice/bishop_kill_0_2b7104e1.mp3",
+    "/audio/voice/bishop_kill_1_fad5812d.mp3"
+   ],
+   "annoyed": [
+    "/audio/voice/bishop_annoyed_0_741bf00f.mp3",
+    "/audio/voice/bishop_annoyed_1_23d7ffe2.mp3"
+   ],
+   "bored": [
+    "/audio/voice/bishop_bored_0_fd66a90d.mp3"
+   ]
+  },
+  "rook": {
+   "select": [
+    "/audio/voice/rook_select_0_b8ab2e79.mp3",
+    "/audio/voice/rook_select_1_f8a515aa.mp3",
+    "/audio/voice/rook_select_2_e184d29e.mp3",
+    "/audio/voice/rook_select_3_5d7ac0d1.mp3",
+    "/audio/voice/rook_select_4_2a248bb8.mp3"
+   ],
+   "attack": [
+    "/audio/voice/rook_attack_0_0d988fae.mp3",
+    "/audio/voice/rook_attack_1_79ad2ec5.mp3",
+    "/audio/voice/rook_attack_2_0fb481df.mp3",
+    "/audio/voice/rook_attack_3_bb84d031.mp3"
+   ],
+   "death": [
+    "/audio/voice/rook_death_0_8aa03fa3.mp3",
+    "/audio/voice/rook_death_1_bd8a5437.mp3",
+    "/audio/voice/rook_death_2_4fef9f09.mp3"
+   ],
+   "move": [
+    "/audio/voice/rook_move_0_632b5793.mp3",
+    "/audio/voice/rook_move_1_cb289594.mp3"
+   ],
+   "retreat": [
+    "/audio/voice/rook_retreat_0_f0cac743.mp3"
+   ],
+   "hit": [
+    "/audio/voice/rook_hit_0_cbdb5d31.mp3",
+    "/audio/voice/rook_hit_1_501791e0.mp3"
+   ],
+   "fleshwound": [
+    "/audio/voice/rook_fleshwound_0_36e4c183.mp3"
+   ],
+   "kill": [
+    "/audio/voice/rook_kill_0_acaf9415.mp3",
+    "/audio/voice/rook_kill_1_264c343c.mp3"
+   ],
+   "annoyed": [
+    "/audio/voice/rook_annoyed_0_fd6de310.mp3",
+    "/audio/voice/rook_annoyed_1_69eba25d.mp3"
+   ],
+   "bored": [
+    "/audio/voice/rook_bored_0_cdb4a576.mp3"
+   ]
+  },
+  "queen": {
+   "select": [
+    "/audio/voice/queen_select_0_e2540690.mp3",
+    "/audio/voice/queen_select_1_fdefd216.mp3",
+    "/audio/voice/queen_select_2_eea81b56.mp3",
+    "/audio/voice/queen_select_3_6e015631.mp3",
+    "/audio/voice/queen_select_4_7ba8c196.mp3"
+   ],
+   "attack": [
+    "/audio/voice/queen_attack_0_7cfd3a0f.mp3",
+    "/audio/voice/queen_attack_1_8fd60eb8.mp3",
+    "/audio/voice/queen_attack_2_d669ea9c.mp3",
+    "/audio/voice/queen_attack_3_de136290.mp3",
+    "/audio/voice/queen_attack_4_74886b1d.mp3"
+   ],
+   "death": [
+    "/audio/voice/queen_death_0_00bb9090.mp3",
+    "/audio/voice/queen_death_1_bd9d3176.mp3",
+    "/audio/voice/queen_death_2_f973ed6c.mp3"
+   ],
+   "move": [
+    "/audio/voice/queen_move_0_3d424dc6.mp3",
+    "/audio/voice/queen_move_1_3b740a22.mp3"
+   ],
+   "retreat": [
+    "/audio/voice/queen_retreat_0_8ccbcbe8.mp3"
+   ],
+   "hit": [
+    "/audio/voice/queen_hit_0_7796abff.mp3",
+    "/audio/voice/queen_hit_1_a0daba7b.mp3"
+   ],
+   "fleshwound": [
+    "/audio/voice/queen_fleshwound_0_51d87981.mp3"
+   ],
+   "kill": [
+    "/audio/voice/queen_kill_0_9a51b3b9.mp3",
+    "/audio/voice/queen_kill_1_8b7ae8c3.mp3"
+   ],
+   "annoyed": [
+    "/audio/voice/queen_annoyed_0_785dde68.mp3",
+    "/audio/voice/queen_annoyed_1_842400de.mp3"
+   ],
+   "bored": [
+    "/audio/voice/queen_bored_0_364bcd19.mp3"
+   ]
+  },
+  "king": {
+   "select": [
+    "/audio/voice/king_select_0_cc7a4dfb.mp3",
+    "/audio/voice/king_select_1_48c749b4.mp3",
+    "/audio/voice/king_select_2_370f8bb9.mp3",
+    "/audio/voice/king_select_3_45d63e46.mp3",
+    "/audio/voice/king_select_4_ae00d02e.mp3"
+   ],
+   "attack": [
+    "/audio/voice/king_attack_0_0a2102b2.mp3",
+    "/audio/voice/king_attack_1_b24bdfc5.mp3",
+    "/audio/voice/king_attack_2_fb6aeae9.mp3",
+    "/audio/voice/king_attack_3_60a44bf2.mp3"
+   ],
+   "death": [
+    "/audio/voice/king_death_0_f955f669.mp3",
+    "/audio/voice/king_death_1_c323fde7.mp3",
+    "/audio/voice/king_death_2_36e73e7d.mp3"
+   ],
+   "move": [
+    "/audio/voice/king_move_0_002b863f.mp3",
+    "/audio/voice/king_move_1_67acfbbf.mp3"
+   ],
+   "retreat": [
+    "/audio/voice/king_retreat_0_b695a93e.mp3"
+   ],
+   "hit": [
+    "/audio/voice/king_hit_0_05549b27.mp3",
+    "/audio/voice/king_hit_1_3f84dd98.mp3"
+   ],
+   "fleshwound": [
+    "/audio/voice/king_fleshwound_0_a3a8f812.mp3"
+   ],
+   "kill": [
+    "/audio/voice/king_kill_0_b2d81336.mp3",
+    "/audio/voice/king_kill_1_b3069281.mp3"
+   ],
+   "check": [
+    "/audio/voice/king_check_0_d5059426.mp3",
+    "/audio/voice/king_check_1_f1b231fe.mp3"
+   ],
+   "annoyed": [
+    "/audio/voice/king_annoyed_0_8f285884.mp3",
+    "/audio/voice/king_annoyed_1_3cb91ed9.mp3"
+   ],
+   "bored": [
+    "/audio/voice/king_bored_0_d5e382dd.mp3"
+   ]
+  },
+  "patsy": {
+   "model": [
+    "/audio/voice/patsy_model_0_943da3f2.mp3",
+    "/audio/voice/patsy_model_1_c53ea67d.mp3"
+   ],
+   "clap": [
+    "/audio/voice/patsy_clap_0_d1b9d1e4.mp3"
+   ]
+  }
+ },
+ "herald": {
+  "begin": [
+   "/audio/voice/herald_begin_0_29c7524c.mp3",
+   "/audio/voice/herald_begin_1_40dcecd7.mp3",
+   "/audio/voice/herald_begin_2_c86c2efe.mp3"
+  ],
+  "check": [
+   "/audio/voice/herald_check_0_0e521e3d.mp3",
+   "/audio/voice/herald_check_1_e660d9f8.mp3",
+   "/audio/voice/herald_check_2_4b3395b0.mp3"
+  ],
+  "checkmate": [
+   "/audio/voice/herald_checkmate_0_7c46b303.mp3"
+  ],
+  "whiteWins": [
+   "/audio/voice/herald_whiteWins_0_132991b6.mp3"
+  ],
+  "blackWins": [
+   "/audio/voice/herald_blackWins_0_e1929dbc.mp3"
+  ],
+  "stalemate": [
+   "/audio/voice/herald_stalemate_0_0889b466.mp3",
+   "/audio/voice/herald_stalemate_1_c7546851.mp3"
+  ],
+  "draw": [
+   "/audio/voice/herald_draw_0_db11efad.mp3"
+  ],
+  "promote": [
+   "/audio/voice/herald_promote_0_f07e2b48.mp3",
+   "/audio/voice/herald_promote_1_fbae276f.mp3"
+  ],
+  "firstBlood": [
+   "/audio/voice/herald_firstBlood_0_a16d2005.mp3"
+  ],
+  "finishHim": [
+   "/audio/voice/herald_finishHim_0_4262a960.mp3"
+  ],
+  "fatality": [
+   "/audio/voice/herald_fatality_0_55486463.mp3"
+  ],
+  "flawless": [
+   "/audio/voice/herald_flawless_0_4ac7044c.mp3"
+  ],
+  "doubleKill": [
+   "/audio/voice/herald_doubleKill_0_6e3931c2.mp3"
+  ],
+  "killingSpree": [
+   "/audio/voice/herald_killingSpree_0_6cd5713c.mp3"
+  ],
+  "comboBreaker": [
+   "/audio/voice/herald_comboBreaker_0_d20264bf.mp3"
+  ],
+  "toasty": [
+   "/audio/voice/herald_toasty_0_d0e624fc.mp3"
+  ],
+  "enPassant": [
+   "/audio/voice/herald_enPassant_0_42b95abc.mp3",
+   "/audio/voice/herald_enPassant_1_d251e70c.mp3"
+  ],
+  "inquisition": [
+   "/audio/voice/herald_inquisition_0_a6cc8430.mp3"
+  ],
+  "bongcloud": [
+   "/audio/voice/herald_bongcloud_0_0fde9774.mp3"
+  ],
+  "horse": [
+   "/audio/voice/herald_horse_0_bd8c7f82.mp3"
+  ],
+  "dejaVu": [
+   "/audio/voice/herald_dejaVu_0_a0a3a0ad.mp3"
+  ],
+  "rabbit": [
+   "/audio/voice/herald_rabbit_0_0baca2e4.mp3",
+   "/audio/voice/herald_rabbit_1_d1c89525.mp3"
+  ],
+  "runAway": [
+   "/audio/voice/herald_runAway_0_68ab7ea9.mp3"
+  ],
+  "blunder": [
+   "/audio/voice/herald_blunder_0_7d4ece59.mp3",
+   "/audio/voice/herald_blunder_1_f6f78348.mp3",
+   "/audio/voice/herald_blunder_2_5d3dae32.mp3"
+  ],
+  "brilliant": [
+   "/audio/voice/herald_brilliant_0_174e68d0.mp3",
+   "/audio/voice/herald_brilliant_1_16b45fb4.mp3"
+  ],
+  "silly": [
+   "/audio/voice/herald_silly_0_3e4b2e96.mp3"
+  ],
+  "replay": [
+   "/audio/voice/herald_replay_0_01c73bd5.mp3",
+   "/audio/voice/herald_replay_1_04594982.mp3"
+  ],
+  "nightfall": [
+   "/audio/voice/herald_nightfall_0_91538696.mp3"
+  ],
+  "foot": [
+   "/audio/voice/herald_foot_0_bca07f70.mp3"
+  ]
+ },
+ "sfx": {
+  "clang": [
+   "/audio/sfx/clang_0_4ad51f1b.mp3",
+   "/audio/sfx/clang_1_25645360.mp3",
+   "/audio/sfx/clang_2_5b42f920.mp3"
+  ],
+  "whoosh": [
+   "/audio/sfx/whoosh_0_958e2326.mp3",
+   "/audio/sfx/whoosh_1_c1fd8063.mp3"
+  ],
+  "shatter": [
+   "/audio/sfx/shatter_0_3f6dfb93.mp3",
+   "/audio/sfx/shatter_1_cc4d4f9e.mp3"
+  ],
+  "slam": [
+   "/audio/sfx/slam_0_fd63d1ab.mp3",
+   "/audio/sfx/slam_1_74f540ec.mp3"
+  ],
+  "step": [
+   "/audio/sfx/step_0_ae7c998f.mp3",
+   "/audio/sfx/step_1_a6d5550f.mp3",
+   "/audio/sfx/step_2_77af5238.mp3"
+  ],
+  "step_golem": [
+   "/audio/sfx/step_golem_0_58b49ae2.mp3",
+   "/audio/sfx/step_golem_1_0aa106cc.mp3"
+  ],
+  "magic_cast": [
+   "/audio/sfx/magic_cast_0_f9c83346.mp3",
+   "/audio/sfx/magic_cast_1_993ceeac.mp3"
+  ],
+  "magic_impact": [
+   "/audio/sfx/magic_impact_0_29b6c723.mp3",
+   "/audio/sfx/magic_impact_1_e8cf66bf.mp3"
+  ],
+  "holy": [
+   "/audio/sfx/holy_0_530dc773.mp3",
+   "/audio/sfx/holy_1_ac6beb3d.mp3"
+  ],
+  "sting_check": [
+   "/audio/sfx/sting_check_0_3ea8b5b8.mp3"
+  ],
+  "fanfare_win": [
+   "/audio/sfx/fanfare_win_0_7d53698c.mp3"
+  ],
+  "fanfare_lose": [
+   "/audio/sfx/fanfare_lose_0_5d4db7e4.mp3"
+  ],
+  "promote": [
+   "/audio/sfx/promote_0_94845357.mp3"
+  ],
+  "select": [
+   "/audio/sfx/select_0_3c31ef31.mp3",
+   "/audio/sfx/select_1_6f24c897.mp3"
+  ],
+  "coconut": [
+   "/audio/sfx/coconut_0_525d6103.mp3",
+   "/audio/sfx/coconut_1_80e2af41.mp3",
+   "/audio/sfx/coconut_2_99ea6514.mp3",
+   "/audio/sfx/coconut_3_b990baaf.mp3"
+  ],
+  "thunder": [
+   "/audio/sfx/thunder_0_2e9ab6be.mp3",
+   "/audio/sfx/thunder_1_e3962f8f.mp3"
+  ],
+  "ice_freeze": [
+   "/audio/sfx/ice_freeze_0_499599c6.mp3"
+  ],
+  "ice_shatter": [
+   "/audio/sfx/ice_shatter_0_6fd5e2b0.mp3",
+   "/audio/sfx/ice_shatter_1_5bfc3de6.mp3"
+  ],
+  "holy_beam": [
+   "/audio/sfx/holy_beam_0_820be9df.mp3"
+  ],
+  "punch": [
+   "/audio/sfx/punch_0_c069ecd6.mp3",
+   "/audio/sfx/punch_1_e254f7eb.mp3"
+  ],
+  "fatality": [
+   "/audio/sfx/fatality_0_648d0d92.mp3"
+  ],
+  "crumble": [
+   "/audio/sfx/crumble_0_698b1b3c.mp3",
+   "/audio/sfx/crumble_1_588d0893.mp3"
+  ],
+  "arm_crack": [
+   "/audio/sfx/arm_crack_0_1a8faebf.mp3",
+   "/audio/sfx/arm_crack_1_c50c5229.mp3"
+  ],
+  "frost_ray": [
+   "/audio/sfx/frost_ray_0_b5971cdc.mp3"
+  ],
+  "holy_grenade": [
+   "/audio/sfx/holy_grenade_0_2f3a2d17.mp3"
+  ],
+  "rabbit_snarl": [
+   "/audio/sfx/rabbit_snarl_0_f9b4462a.mp3"
+  ],
+  "rabbit_hop": [
+   "/audio/sfx/rabbit_hop_0_959c3bc7.mp3",
+   "/audio/sfx/rabbit_hop_1_18564542.mp3"
+  ],
+  "foot_stomp": [
+   "/audio/sfx/foot_stomp_0_2a705149.mp3"
+  ],
+  "shutter": [
+   "/audio/sfx/shutter_0_d4706199.mp3"
+  ],
+  "rewind": [
+   "/audio/sfx/rewind_0_599b60be.mp3"
+  ],
+  "leap": [
+   "/audio/sfx/leap_0_ffd12f13.mp3"
+  ],
+  "owl": [
+   "/audio/sfx/owl_0_81bdb21f.mp3"
+  ],
+  "crickets": [
+   "/audio/sfx/crickets_0_f70803f2.mp3"
+  ],
+  "wind": [
+   "/audio/sfx/wind_0_e0dee823.mp3"
+  ],
+  "fire": [
+   "/audio/sfx/fire_0_d9e4d1a4.mp3"
+  ]
+ }
+}

@@ -1,0 +1,48 @@
+{
+ "squareSize": 2.0,
+ "tileTop": 0.74,
+ "boardHalf": 8.0,
+ "frameTop": 0.77,
+ "daisTop": 0.54,
+ "braziers": [
+  [
+   10.2,
+   1.9,
+   -10.2
+  ],
+  [
+   10.2,
+   1.9,
+   10.2
+  ],
+  [
+   -10.2,
+   1.9,
+   -10.2
+  ],
+  [
+   -10.2,
+   1.9,
+   10.2
+  ]
+ ],
+ "banners": [
+  {
+   "name": "banner_w0",
+   "side": "w"
+  },
+  {
+   "name": "banner_w1",
+   "side": "w"
+  },
+  {
+   "name": "banner_b0",
+   "side": "b"
+  },
+  {
+   "name": "banner_b1",
+   "side": "b"
+  }
+ ],
+ "columnRadius": 18.5
+}
