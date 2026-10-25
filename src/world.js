@@ -196,11 +196,16 @@ export class World {
       if (!o.isMesh) return;
       const name = o.material?.name;
       if (o.name.startsWith('banner_')) {
-        o.material = bannerMaterial(o.name.includes('_w') ? 'w' : 'b');
-        // fanorna på vänster sida ses från baksidan: spegla bilden så att texten läses rätt från brädet
-        if (o.name.endsWith('0')) { o.material.map.repeat.x = -1; o.material.map.offset.x = 1; o.material.map.wrapS = THREE.RepeatWrapping; }
-        // positionerna är kvantiserade: vågen räknas i nodens skala
-        o.material.userData.uniforms.uScale.value = 1 / o.scale.x;
+        // Duken går från stången (u = 0) mot brädets mittlinje. Sett från brädet löper u åt höger bara när fanan står
+        // till vänster om vit och duken går mot svart (eller tvärtom); övriga speglas så att loggan läses rätt.
+        root.updateMatrixWorld(true);
+        const c = new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3());
+        const mirror = c.x * c.z > 0;
+        o.material = bannerMaterial(o.name.includes('_w') ? 'w' : 'b', mirror);
+        o.customDepthMaterial = o.material.userData.depth; // skuggan fladdrar med
+        const u = o.material.userData.uniforms;
+        u.uScale.value = 1 / o.scale.x; // positionerna är kvantiserade: vågen räknas i nodens skala
+        u.uWidthDir.value = -Math.sign(c.z); // åt vilket håll (objektets z) duken växer från stången
         o.castShadow = true;
         this.banners.push(o);
         return;
@@ -331,48 +336,75 @@ export class World {
   }
 }
 
-/** Fanduk med lagfärg och vapen, som böljar i vinden i vertexshadern. */
-function bannerMaterial(side) {
+/** Fanduk i lagfärg med spelets logga, som böljar i vinden i vertexshadern. */
+let logoImg = null;
+function bannerMaterial(side, mirror) {
   const c = document.createElement('canvas');
-  c.width = 256; c.height = 512;
+  c.width = 512; c.height = 1024;
   const g = c.getContext('2d');
-  const base = side === 'w' ? '#1d3a8a' : '#7c0f18';
-  const grad = g.createLinearGradient(0, 0, 256, 0);
-  grad.addColorStop(0, base); grad.addColorStop(0.5, side === 'w' ? '#2a4fae' : '#9b1822'); grad.addColorStop(1, base);
-  g.fillStyle = grad; g.fillRect(0, 0, 256, 512);
-  g.strokeStyle = '#e3b765'; g.lineWidth = 10; g.strokeRect(14, 14, 228, 484);
-  g.lineWidth = 3; g.strokeRect(28, 28, 200, 456);
-  g.fillStyle = '#f0c46a';
-  g.font = '170px serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.shadowColor = 'rgba(0,0,0,0.4)'; g.shadowBlur = 10;
-  g.fillText(side === 'w' ? '♔' : '♚', 128, 220);
-  g.font = 'bold 34px Georgia'; g.fillText(side === 'w' ? 'ALBA' : 'NOX', 128, 390);
   const t = new THREE.CanvasTexture(c);
+  const paint = () => {
+    const base = side === 'w' ? '#1d3a8a' : '#7c0f18';
+    const grad = g.createLinearGradient(0, 0, 512, 0);
+    grad.addColorStop(0, base); grad.addColorStop(0.5, side === 'w' ? '#2a4fae' : '#9b1822'); grad.addColorStop(1, base);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = grad; g.fillRect(0, 0, 512, 1024);
+    g.strokeStyle = '#e3b765'; g.lineWidth = 20; g.strokeRect(28, 28, 456, 968);
+    g.lineWidth = 6; g.strokeRect(56, 56, 400, 912);
+    if (mirror) g.setTransform(-1, 0, 0, 1, 512, 0);
+    if (logoImg?.complete && logoImg.naturalWidth) {
+      const w = 420, h = (w * logoImg.naturalHeight) / logoImg.naturalWidth;
+      g.shadowColor = 'rgba(0,0,0,0.55)'; g.shadowBlur = 18; g.shadowOffsetY = 6;
+      g.drawImage(logoImg, 256 - w / 2, 400 - h / 2, w, h);
+      g.shadowColor = 'transparent';
+    }
+    g.fillStyle = '#f0c46a'; g.font = '120px serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(side === 'w' ? '♔' : '♚', 256, 720);
+    t.needsUpdate = true;
+  };
+  logoImg ??= Object.assign(new Image(), { src: '/logo.webp' });
+  paint();
+  if (!logoImg.complete) logoImg.addEventListener('load', paint, { once: true });
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 8;
   t.flipY = false; // glTF-UV:er har origo uppe till vänster
   const m = new THREE.MeshPhysicalMaterial({ map: t, side: THREE.DoubleSide, roughness: 0.8, sheen: 1, sheenRoughness: 0.5,
     sheenColor: new THREE.Color(side === 'w' ? 0x9fb8ff : 0xff9a8a) });
-  const uniforms = { uTime: { value: 0 }, uPhase: { value: side === 'w' ? 0 : 1.7 }, uScale: { value: 1 } };
+  const uniforms = { uTime: { value: 0 }, uPhase: { value: side === 'w' ? 0 : 1.7 }, uScale: { value: 1 }, uWidthDir: { value: 1 } };
   m.userData.uniforms = uniforms;
+  // Duken i objektets YZ-plan (normal längs X): uv.x = 0 vid stången, uv.y = 0 vid armen upptill. Båda kanterna sitter fast,
+  // så utslaget växer bort från dem och vågorna löper ut mot det fria hörnet.
+  const decl = '#include <common>\nuniform float uTime;\nuniform float uPhase;\nuniform float uScale;\nuniform float uWidthDir;';
+  const wave = /* glsl */ `
+    float fromPole = smoothstep(0.0, 0.55, uv.x);
+    float fromArm = 0.12 + 0.88 * smoothstep(0.0, 0.45, uv.y);
+    float amp = 0.26 * fromPole * fromArm;
+    float ph = uv.x * 4.5 + uv.y * 2.0 - uTime * 2.3 + uPhase;
+    float wave = (sin(ph) + 0.3 * sin(ph * 2.1 + 1.0)) * amp;
+    float slope = (cos(ph) + 0.63 * cos(ph * 2.1 + 1.0)) * amp;   // d(wave)/d(ph)
+  `;
+  const move = /* glsl */ `
+    vec3 transformed = vec3(position);
+    transformed.x += wave * uScale;
+    transformed.y += sin(ph * 0.7) * 0.04 * fromPole * fromArm * uScale;
+  `;
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nuniform float uTime;\nuniform float uPhase;\nuniform float uScale;')
-      .replace('#include <beginnormal_vertex>', /* glsl */ `
-        float hang = 1.0 - uv.y;                 // 0 vid stången, 1 nertill
-        float ph = uv.y * 5.0 - uTime * 2.3 + uPhase + uv.x * 1.3;
-        float amp = 0.18 * hang + 0.04;
-        float wave = sin(ph) * amp + sin(ph * 2.1 + 1.0) * amp * 0.3;
-        float dwave = (cos(ph) * amp * 5.0 + cos(ph * 2.1 + 1.0) * amp * 0.63) ;
-        vec3 objectNormal = normalize(vec3(normal.x, normal.y - dwave * 0.3, normal.z));
+      .replace('#include <common>', decl)
+      .replace('#include <beginnormal_vertex>', wave + /* glsl */ `
+        // lutningen längs höjden (y, 3,6 m) och bredden (z, 1,9 m) vrider normalen
+        vec3 objectNormal = normalize(normal + normal.x * vec3(0.0, slope * 2.0 / 3.6, -slope * 4.5 / 1.9 * uWidthDir));
       `)
-      .replace('#include <begin_vertex>', /* glsl */ `
-        vec3 transformed = vec3(position);
-        transformed.x += wave * uScale;           // duken hänger i YZ-planet (normal längs X)
-        transformed.z += sin(ph * 0.7) * 0.05 * hang * uScale;
-      `);
+      .replace('#include <begin_vertex>', move);
   };
   m.customProgramCacheKey = () => 'banner' + side;
+  const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, side: THREE.DoubleSide });
+  depth.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, uniforms);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', decl).replace('#include <begin_vertex>', wave + move);
+  };
+  depth.customProgramCacheKey = () => 'bannerdepth';
+  m.userData.depth = depth;
   return m;
 }

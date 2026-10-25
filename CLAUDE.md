@@ -50,6 +50,9 @@ blender -b -P blender/extras.py -- --only patsy --preview /tmp/prev  # kaninen, 
   origo mitt under sulan) och Patsy (`patsy.glb`, standardskelettet: idle, walk, clap, bow; kokosnötterna styvt på hand.L/R och
   kanterna möts exakt i klappögonblicken). Klapptider, gånghastighet och längder i `public/models/patsy.json`.
 - `blender/arena.py` – bräde (rutstorlek 2 m, vit mot +Z i three), estrad, pelarring, terräng, glödfat, fanor.
+  Fandukarna hänger på stångens sida (mot brädets mittlinje), fästa i ringar och en arm: uv.x = 0 vid stången, uv.y = 0 upptill.
+  `bannerMaterial` (world.js) ritar loggan på duken (speglad där u löper åt vänster sett från brädet) och böljar den
+  med utslag noll vid stången och armen; skuggan har samma våg (`customDepthMaterial`).
 - `tools/optimize.mjs` – gltf-transform. Kör aldrig `gltf-transform optimize` direkt (se fällor).
 
 ## Ljud (ElevenLabs)

@@ -255,13 +255,22 @@ for side, sy in (("w", -1), ("b", 1)):
     for k, sx in enumerate((-1, 1)):
         px, py = sx * (FO + 1.3), sy * 5.0
         z0 = DAIS_TOP
+        # Duken hänger på stångens ena sida (mot brädets mittlinje), fäst i ringar längs stången och i en arm upptill:
+        # kanten vid stången står still, så duken kan aldrig bölja genom stången.
+        dy = -sy
+        W, Hh, G = 1.9, 3.6, 0.1   # dukens bredd, höjd och glipan från stångens mitt
+        top = z0 + 6.05
         keep(tube(f"pole_{side}{k}", [(px, py, z0), (px, py, z0 + 6.4)], [0.07, 0.055], material="Bronze", seg=12), 1.0)
         keep(ellipsoid(f"finial_{side}{k}", (px, py, z0 + 6.5), (0.13, 0.13, 0.16), material="Trim"), 1.0)
-        keep(tube(f"crossbar_{side}{k}", [(px, py - 1.0, z0 + 6.1), (px, py + 1.0, z0 + 6.1)], 0.04, material="Bronze", seg=8), 1.0)
-        # fanduken: tätt rutnät så vinden kan bölja den i vertexshadern
+        arm_end = py + dy * (G + W + 0.08)
+        keep(tube(f"crossbar_{side}{k}", [(px, py, top + 0.05), (px, arm_end, top + 0.05)], 0.04, material="Bronze", seg=8), 1.0)
+        keep(ellipsoid(f"armtip_{side}{k}", (px, arm_end, top + 0.05), (0.06, 0.06, 0.06), material="Trim"), 1.0)
+        for r in range(5):
+            keep(torus(f"poler_{side}{k}_{r}", (px, py, top - 0.15 - r * (Hh - 0.5) / 4), 0.085, 0.016,
+                       material="Bronze", seg=16, rseg=6), 1.0)
+        # fanduken: tätt rutnät så vinden kan bölja den i vertexshadern (u = 0 vid stången, v = 0 upptill)
         me = bpy.data.meshes.new(f"banner_{side}{k}")
-        cols, rows = 10, 24
-        W, Hh = 1.9, 3.6
+        cols, rows = 16, 24
         vs, fs, uvs = [], [], []
         for j in range(rows + 1):
             for i in range(cols + 1):
@@ -269,7 +278,7 @@ for side, sy in (("w", -1), ("b", 1)):
                 yb = -Hh * v
                 if v > 0.999:  # svalstjärt
                     yb += (1 - abs(u - 0.5) * 2) * 0.45
-                vs.append((px, py - W / 2 + W * u, z0 + 6.05 + yb))
+                vs.append((px, py + dy * (G + W * u), top + yb))
         for j in range(rows):
             for i in range(cols):
                 a = j * (cols + 1) + i
