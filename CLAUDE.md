@@ -10,6 +10,9 @@ npm run dev            # http://localhost:8240 (och http://<lan-ip>:8240 för te
 npm run server         # onlineservern (WebSocket :8241, Vite proxar /ws dit)
 npm run test:server    # 19 steg mot servern
 npm run build          # dist/ (statisk, base './')
+npm run smoke          # röktest i riktig Chrome mot ett preview-bygge (se nedan)
+npm run check:legends  # legendpartierna är lagliga och slutar i matt
+npm run deploy         # bygg + driftsätt på mayhem.bjarby.com (Vultr, Caddy)
 ```
 
 `?quality=low|high` tvingar kvalitetsnivå (annars: mobil = low). `node tools/online_bot.mjs KOD` är en testmotståndare online.
@@ -34,6 +37,8 @@ blender -b -P blender/extras.py -- --only patsy --preview /tmp/prev  # kaninen, 
 - `blender/lib.py` – primitiver (lathe med veck/båge, limb, tube, prism, blade), modifierare, `uv_box`.
 - `blender/rig.py` – gemensamt skelett, styv bindning, poser/animation (NLA-spår = glTF-animationer), export.
   Benkonventioner står överst i filen. Vapen pekar rakt upp ur handen och riktas med `prop`-benet via `rig.aim()`.
+  Mantelbenen `cape.1`/`cape.2` (under chest) finns i alla skelett; `pieces.cape_rig` lägger dem längs manteln, viktar
+  manteln chest -> cape.1 -> cape.2 och skriver längderna till `pieces.json` (`cape`). `src/capes.js` simulerar dem.
 - `blender/anatomy.py` – skulpterade kroppar: muskler/ansikte/nävar som metabollar (mjuk sammansmältning, negativa former gräver
   fåror), konverteras, decimeras och får mjuka vikter överförda från ett styvt lager av samma former. Storlekar = verkliga radier
   (Blenders fält s·(1-(d/R)²)³ ⇒ yta vid R·√(1-(t/s)^⅓)). Låg styvhet (≈2,5) = former som smälter in.
@@ -77,6 +82,30 @@ kill, annoyed (≥4 klick), bored (lång betänketid), check (kungen), grenade (
   annars blixt; 25 % jättefoten ("And now for something completely different"). Mördarkaninen tar ~4 % av offren (filmläge).
   Patsy följer springaren och slår kokosnötterna; 8 % av vanliga drag blir en dum gång (Ministry of Silly Walks).
 - Extramodeller i `blender/extras.py` (kanin, fot, Patsy) laddas valfritt: saknas en fil hoppas händelsen över.
+- **Svarte riddaren** (`Choreographer.blackKnight`, ~3 % av närstrider i filmläge, aldrig kungen): armar och ben huggs av ett i
+  taget ("'Tis but a scratch", "I'm invincible!"), bålen sjunker till marken, erbjuder remi och krossas. Röst: `blackknight`.
+- **Hoppa över duellen:** tryck på brädet, mellanslag/Esc eller "Skip" medan en strid pågår (`Game.inBattle`) → `world.fast = 8`
+  och ljudet nästan tyst (`Sound.hush`) tills draget är klart.
+- **Ljudmix:** röster går direkt till master och duckar "bädden" (effekter, musik, miljö) medan de hörs; limiter sist i kedjan.
+- **Veteraner** (`src/veteran.js`): två slag = guldlagerkrans över huvudet, tre = glödande krans med gnistor. Pjäsernas identitet
+  (startrutan) följs genom historiken (`Game.recountKills`), så kransarna överlever ångra, omladdning och onlineåteranslutning.
+- **Sammanfattning** i slutkortet: träffsäkerhet per sida (Lichess formel ur analysmotorns värderingar), värsta draget, MVP.
+- **Tips** (✧, inte online): analysmotorns bästa drag som glödande pil (`Board.showArrow`).
+- **Legender** (`src/legends.js`): Légal 1750, Immortal 1851, Evergreen 1852, Opera 1858 spelas upp med strider och titelkort.
+  Nya partier: lägg till SAN-dragen och kör `npm run check:legends`.
+
+## Röktest
+
+`npm run smoke` bygger till `build/smoke-dist`, startar `vite preview` (port 8250, ingen HMR som laddar om mitt i) och kör
+Chrome (playwright-core, systemets Chrome) genom alla händelser: varje mattfinish (FEN-ställningar), foten, kaninen, Svarte riddaren,
+köttsår, granaten, alla dödssätt, Patsy + dum gång, hoppa över, repris, veteran, tips, legendparti, ångra/fotoläge. Felar vid konsolfel.
+Bilder i `build/smoke/`. `--no-build`, `--headed`, `--only foot,rabbit`.
+
+## Driftsättning
+
+`tools/deploy.sh`: Vultr-boxen 70.34.220.159 (delas med audioworld, geo, lokaltrafik). Caddy framför (automatisk HTTPS, blocket läggs
+till i `/etc/caddy/Caddyfile` en gång), statiska filer i `/opt/marble-mayhem/dist`, onlineservern som systemd-tjänsten
+`marble-mayhem` (användare `mayhem`, port 8243, rum i `/var/lib/marble-mayhem/rooms.json`). DNS: A-post `mayhem` hos one.com.
 
 ## Titelskärmen
 
@@ -95,6 +124,11 @@ Röster avkodas först när de behövs på mobil (alla på en gång > 100 MB).
 
 `server/` (se `server/PROTOCOL.md`, auktoritativ chess.js, rum med 6-teckenskod, token för återanslutning, rum sparas i
 `server/data/`). Klienten: `src/online.js` + `Game.startOnline/remoteMove/endOnline`. Inbjudningslänk `?join=KOD`.
+Returmatch (båda ber, färgerna byts), åskådare (`?watch=KOD` eller "Watch" i menyn; max 50 per rum, kan aldrig dra) och glåpord
+(❝ i verktygsfältet, 8 Python-repliker med rösten `taunter`, 2 i rad sedan 1 per 4 s) ligger i `src/online-extras.js` + `.css`.
+`online.listen(ev, fn)` lägger till lyssnare utan att ersätta main.js hanterare (`on` har en per händelse).
+Testmotståndare: `node tools/online_bot.mjs KOD [--taunt] [--ask-rematch] [--no-rematch] [--url ws://…]`, stdin `t <id>`, `r`, `q`, `x`.
+`sessionStorage['bc.ws']` pekar en flik mot en annan WebSocket-server (felsökning).
 
 ## Lokalt minne
 
@@ -109,8 +143,8 @@ Spelas på titel/meny, tonas ut när striden börjar.
 
 ## Kod
 
-`src/main.js` startar; `world.js` (renderare, HDRI-sol, efterbehandling, arena), `materials.js` (triplanar marmor),
-`pieces.js`, `board.js`, `battle.js` (koreografi + filmkamera), `fx.js` (partiklar, krossade statyer), `game.js`
+`src/main.js` startar; `world.js` (renderare, HDRI-sol, efterbehandling, arena), `materials.js` (triplanar marmor,
+golvspärr för skinnade pjäser, Patsys säckväv och kokosnötter), `pieces.js`, `capes.js` (mantelfysik), `board.js`, `battle.js` (koreografi + filmkamera), `fx.js` (partiklar, krossade statyer), `game.js`
 (chess.js + Stockfish + inmatning), `engine.js` (UCI i Web Worker), `audio.js` (synt), `voice.js` (inspelningar), `ui.js`.
 
 ## Fällor (alla upplevda)
@@ -129,6 +163,12 @@ Spelas på titel/meny, tonas ut när striden börjar.
 - `ui.on(ev)` har en hanterare per händelse; en andra registrering ersätter den första.
 - Blender klämmer metabollarnas upplösning till minst 0,005 m: små former (kaninen, foten i människoskala) blir grova.
   `extras.blob` bygger dem uppskalade och skalar ned meshen.
-- Mantlar och dräkter är styvt bundna till chest/hips: djupa knäböj sänker fållen genom golvet och bakåtlutning svänger
-  långa mantlar framåt (därför grundare `silly` för löparen/drottningen och mindre lutning för mantelbärarna).
+- Dräkter är styvt bundna till hips: djupa knäböj sänker fållen genom golvet. `withFloor` (materials.js) klämmer skinnade
+  vertexar till brädets ovansida inom brädet; skuggan klämms inte. Mantlarna simuleras (capes.js) men hänger i chest
+  upptill, så kraftig bakåtlutning syns ändå (därför grundare `silly` för löparen/drottningen och mindre lutning).
+- Bennamn jämförs utan punkter men MED siffror (`/[^A-Za-z0-9]/`): annars blir `cape.1` och `cape.2` samma nyckel.
+- En pausad kameraflygning (`timeScale = 0`) skriver fortfarande kameran varje bild: kör `BC.game.director.job++` innan
+  kameran placeras för hand. OrbitControls har minsta avstånd: `BC.world.controls.enabled = false` för närbilder.
+- `await import('/src/x.js')` i konsolen ger en egen modulinstans (Vite lägger på `?t=`): att ändra dess exporter
+  (t.ex. `boardFloor`) påverkar inte spelet. Gå via `BC` eller `renderer.properties.get(material).uniforms`.
 - `pieces.py` importeras av `extras.py`; `main()` körs bara när filen är huvudskript.

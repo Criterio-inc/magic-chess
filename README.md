@@ -11,6 +11,10 @@ arcane bolt) and the victim topples and shatters.
 - **Battles:** every piece has several attacks and its victims die in different ways — toppled, crumbled, launched, frozen
   solid, smitten by lightning — plus a Holy Hand Grenade, knights on coconut-powered imaginary horses, flesh wounds, and a
   Mortal-Kombat-style finish on checkmate. ~175 voiced lines full of game and Monty Python references.
+- **Extras:** the Black Knight ("'Tis but a scratch"), a killer rabbit, a giant foot, Patsy with coconuts, silly walks, veterans
+  with golden laurels, hints, move evaluation (!!/??), accuracy and MVP after the game, replays, photo mode, and four legendary
+  games (Légal 1750, the Immortal, the Evergreen, the Opera Game) replayed as cinema. Tap to skip any duel.
+- **Online:** invite code or link, rematch, spectators, Monty Python taunts.
 - **Mobile:** lighter models and textures, dynamic resolution, portrait-aware cameras, touch controls, installable as an app.
 - **Rendering:** three.js WebGL, HDRI sky with a matched sun and 4K shadows, triplanar marble, N8AO ambient
   occlusion, bloom, depth of field in battles, AgX tone mapping, SMAA.
@@ -21,7 +25,10 @@ arcane bolt) and the victim topples and shatters.
 npm install
 npm run dev      # http://localhost:8240
 npm run server   # online play (WebSocket on :8241)
+npm run smoke    # plays every event in Chrome and fails on any console error
 ```
+
+Live at https://mayhem.bjarby.com.
 
 See `CLAUDE.md` for the asset pipeline.
 
