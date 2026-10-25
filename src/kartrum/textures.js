@@ -67,7 +67,8 @@ export function woodTexture({ dark, light, planks = 8, joints = 0, seed = 1, siz
     for (let x = 0; x < size; x++) {
       const u = x / size;
       const ring = 0.5 + 0.5 * Math.sin((yp * 7 + wobble(u * 4 + off, y * 0.025) * 7) * Math.PI);
-      const k = Math.pow(ring, 1.8) * 0.72 + fiber(u * 64 + off, y * 0.7) * 0.28;
+      // fibrerna byter ton var fjärde pixelrad: tätare än så gnistrar de när bordet ses snett
+      const k = Math.pow(ring, 1.8) * 0.72 + fiber(u * 64 + off, y * 0.22) * 0.28;
       let s = tint * (0.93 + 0.12 * blotch(u * 8 + p * 3, y * 0.008));
       if (yp < 0.01 || yp > 0.99) s *= 0.42; // fog mellan plankorna
       if (period && (x + jOff) % period < 2) s *= 0.5;

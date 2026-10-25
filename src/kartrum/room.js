@@ -31,6 +31,25 @@ function add(parent, geo, mat, { x = 0, y = 0, z = 0, cast = true, receive = tru
   return m;
 }
 
+/**
+ * Läs texturen en aning mjukare (bias i mipnivåer). Kartans graverade streck och träets fibrer är finare än skärmen
+ * när bordet ses snett på avstånd och gnistrade då så fort kameran eller ljuset rörde sig. Nära håll förblir skarpt,
+ * eftersom nivå 0 är golvet för förskjutningen.
+ */
+function softMip(mat, bias) {
+  const uniform = typeof bias === 'number' ? { value: bias } : bias;
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uMipBias = uniform;
+    shader.fragmentShader = 'uniform float uMipBias;\n' + shader.fragmentShader.replace('#include <map_fragment>',
+      THREE.ShaderChunk.map_fragment.replace('texture2D( map, vMapUv )', 'texture2D( map, vMapUv, uMipBias )'));
+  };
+  mat.customProgramCacheKey = () => 'softmip';
+  return mat;
+}
+
+/** Kartans förskjutning: 0,9 vid brädet där den ses snett, nära noll i översikten där kameran tittar rakt ner. */
+export const mapBias = { value: 0.9 };
+
 const lathe = (profile, seg = 32) => new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(r, y)), seg);
 
 /** Cylinder mellan två punkter (passarens ben, stänger). */
@@ -50,10 +69,10 @@ function materials(pal) {
   const plaster = plasterTexture({ color: pal.plaster });
   const std = (o) => new THREE.MeshStandardMaterial(o);
   return {
-    table: std({ map: tableTex, roughness: 0.4 }),
-    tableDark: std({ map: tableTex, color: 0x8f8078, roughness: 0.55 }),
-    floor: std({ map: floorTex, roughness: 0.5 }),
-    panel: std({ map: panelTex, roughness: 0.6 }),
+    table: softMip(std({ map: tableTex, roughness: 0.4 }), 0.6),
+    tableDark: softMip(std({ map: tableTex, color: 0x8f8078, roughness: 0.55 }), 0.6),
+    floor: softMip(std({ map: floorTex, roughness: 0.5 }), 0.6),
+    panel: softMip(std({ map: panelTex, roughness: 0.6 }), 0.6),
     plaster: (u, v) => {
       const t = plaster.clone();
       t.repeat.set(u, v);
@@ -178,7 +197,7 @@ function mapSheet(g, T, mapTex) {
   }
   geo.computeVertexNormals();
   // papperet något mörkare än bilden: annars bränner solfläcken ut kartan helt
-  add(g, geo, new THREE.MeshStandardMaterial({ map: mapTex, color: 0xd2c6b0, roughness: 0.9 }), { y: T + 0.015, cast: false });
+  add(g, geo, softMip(new THREE.MeshStandardMaterial({ map: mapTex, color: 0xd2c6b0, roughness: 0.9 }), mapBias), { y: T + 0.015, cast: false });
 }
 
 function tableProps(g, T, M) {
@@ -271,8 +290,11 @@ export function buildRoom(boardBottom, pal, mapTex, { half = 9.4, lift = 0.7, ta
   const T = boardBottom - lift; // brädet vilar på en låg trälåda ovanpå kartan
   const F = T - TABLE.h;
   const M = materials(pal);
-  add(g, new THREE.BoxGeometry(2 * half + 0.5, lift, 2 * half + 0.5), M.tableDark, { y: T + lift / 2 });
-  add(g, new THREE.BoxGeometry(2 * half + 0.7, 0.12, 2 * half + 0.7), M.brass, { y: boardBottom - 0.06 });
+  // Lådans ovansida slutar strax under ramens underkant (0,02 över brädets lägsta punkt), och mässingslisten är ett
+  // band på lådans sidor. Två ytor på samma höjd tävlar om pixlarna och flimrar så fort kameran rör sig.
+  const top = boardBottom + 0.018;
+  add(g, new THREE.BoxGeometry(2 * half + 0.5, top - T, 2 * half + 0.5), M.tableDark, { y: (T + top) / 2 });
+  add(g, new THREE.BoxGeometry(2 * half + 0.62, 0.14, 2 * half + 0.62), M.brass, { y: top - 0.15 });
   walls(g, F, M);
   bookshelf(g, F, M);
   // bordet med kartan skjuts i sidled: brädet står på kartans östra del och Östersjön ligger fri bredvid

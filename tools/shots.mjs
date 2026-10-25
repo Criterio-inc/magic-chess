@@ -45,7 +45,7 @@ for (const [name, s] of Object.entries(SHOTS)) {
   if (s && !started) {
     // nytt tvåspelarparti utan titelskärm; kameran i vits hemmabild
     await page.click('#begin');
-    await page.waitForTimeout(3000);
+    await page.waitForSelector('#menu:not(.hidden)', { timeout: 30000 }); // menyn kommer efter entréns blixt
     await page.evaluate(async () => {
       document.getElementById('menu').classList.add('hidden');
       await BC.game.newGame({ mode: 'hotseat', elo: 1800, battles: 'cinematic', pace: 2.4 });

@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { arenaMaterials } from '../materials.js';
 import { tier } from '../quality.js';
-import { buildRoom, buildEnv, PALETTE, ROOM, WINDOWS, SILL, LINTEL } from './room.js';
+import { buildRoom, buildEnv, mapBias, PALETTE, ROOM, WINDOWS, SILL, LINTEL } from './room.js';
 
 const TABLE_X = -11; // brädet står på kartans östra del, så att Östersjön och Skandinavien ligger fria bredvid
 const lerp = THREE.MathUtils.lerp;
@@ -111,6 +111,12 @@ export class MapRoom {
     L.shadow.normalBias = 0.05;
     L.shadow.radius = 2;
     this.scene.add(L, L.target);
+    // konen räknas en gång för sol och måne: en vinkel som ändras varje bildruta flyttar skuggornas rutnät och får
+    // kanterna att krypa medan dygnet glider
+    this.aimWindow(L, 0.12);
+    const low = L.angle;
+    this.aimWindow(L, 0.45);
+    this.sunAngle = Math.max(low, L.angle);
     this.aimWindow(L, 0.3);
     return L;
   }
@@ -127,7 +133,7 @@ export class MapRoom {
     for (const w of WINDOWS) for (const dz of [-w.w / 2, w.w / 2]) for (const h of [SILL, LINTEL]) {
       ang = Math.max(ang, axis.angleTo(new THREE.Vector3(-ROOM.W / 2, this.room.F + h, w.z + dz).sub(L.position).normalize()));
     }
-    L.angle = ang * 1.12;
+    L.angle = this.sunAngle ?? ang * 1.12;
     L.shadow.camera.near = dist - 260;
     L.shadow.camera.far = dist + 300;
   }
@@ -204,6 +210,7 @@ export class MapRoom {
     });
     this.key.intensity = CANDLE.key * smooth(0.45, 0.75, t);
     this.lamp.intensity = 2.6 * k;
+    mapBias.value = lerp(0.9, 0.15, k); // skarp karta uppifrån, mjukare där den ses snett och annars gnistrar
     // omgivningen: rummets reflexer byts i skymningen, som originalets himlar
     this.scene.environment = t > 0.6 ? this.envNight : this.envDay;
     this.scene.environmentIntensity = lerp(0.45, 0.55, dusk) * (1 - 0.4 * k);
@@ -222,7 +229,8 @@ export class MapRoom {
   update(dt, time) {
     this.candles.forEach((L, i) => {
       const lit = L.userData.lit || 0;
-      L.intensity = L.userData.base * lit * (0.93 + 0.07 * Math.sin(time * 11 + i) * Math.sin(time * 3.7 + i * 2));
+      // lugnt fladder: ett helt bräde som pulserar snabbt upplevs som flimmer
+      L.intensity = L.userData.base * lit * (0.96 + 0.04 * Math.sin(time * 7 + i) * Math.sin(time * 2.3 + i * 2));
     });
     for (const group of this.room.flames) {
       for (const f of group) {
