@@ -1,15 +1,17 @@
 // Partiets gång: regler (chess.js), Stockfish, mänskliga drag och animering av varje drag.
-import * as THREE from 'three';
 import { Chess } from 'chess.js';
-import { Choreographer, Director } from './battle.js';
+import { Choreographer } from './battle.js';
+import { Director } from './director.js';
 import { GLYPH } from './pieces.js';
 import { tick, wait, tween, ease } from './util.js';
 import { setVeteran } from './veteran.js';
 import { legendById, legendMoves } from './legends.js';
+import { OnlineMethods } from './game-online.js';
+import { AnalysisMethods } from './game-analysis.js';
+import { SaveMethods } from './game-save.js';
+import { PhotoMethods } from './game-photo.js';
+import { InputMethods } from './game-input.js';
 
-const NAMES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
-// vinstchans (%) ur centibönder, som Lichess räknar träffsäkerhet
-const winPct = (cp) => 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * Math.max(-1000, Math.min(1000, cp)))) - 1);
 
 export class Game {
   constructor({ world, board, lib, fx, sound, engine, analyst, ui, voice }) {
@@ -348,196 +350,6 @@ export class Game {
     this.moved = true;
   }
 
-  // ------------------------------------------------------------------ online
-
-  /** Partiet börjar (eller återupptas) med serverns ställning. */
-  async startOnline(state, color, { fanfare = true } = {}) {
-    this.settings.mode = 'online';
-    this.myColor = color;
-    this.onlineOver = state.over || null;
-    this.remoteQueue = [];
-    const token = ++this.token;
-    this.playing = false;
-    this.thinking = false;
-    this.chess = new Chess();
-    for (const mv of state.moves) this.chess.move({ from: mv.from, to: mv.to, promotion: mv.promotion });
-    this.stats = { captures: 0, lost: { w: 0, b: 0 }, lastCapturer: null, streakPiece: null, streak: 0 };
-    const opp = color === 'w' ? state.black : state.white;
-    this.opponentName = opp?.name || null;
-    this.selected = null;
-    this.moveAcc = [];
-    this.syncFromBoard();
-    this.ui.reset();
-    this.ui.setOnline(true);
-    this.ui.rebuildMoves(this.chess.history({ verbose: true }));
-    const h = this.chess.history({ verbose: true });
-    this.lastMove = h.length ? [h[h.length - 1].from, h[h.length - 1].to] : null;
-    this.refreshMarks();
-    this.primeAnalysis();
-    this.world.setTimeOfDay(this.timeForPly(), true);
-    await this.director.toHome(color || 'w', fanfare ? 2.2 : 0.8); // åskådare (color null) ser det från vit sida
-    if (token !== this.token) return;
-    if (fanfare) {
-      this.voice?.herald('begin');
-      this.ui.toast(!color ? 'To battle!' : color === 'w' ? 'You play White' : 'You play Black');
-    }
-    this.busy = false;
-    this.nextTurn();
-  }
-
-  /** Ett drag från servern. Egna drag har redan spelats (servern ekar dem). */
-  remoteMove(msg) {
-    if (msg.by === this.myColor) return;
-    this.remoteQueue ||= [];
-    const expected = this.chess.history().length + this.remoteQueue.length;
-    if (msg.ply < expected) return;          // redan känt
-    if (msg.ply > expected) { this.online?.resync(); return; } // missat drag: hämta serverns ställning
-    this.remoteQueue.push({ from: msg.from, to: msg.to, promotion: msg.promotion, remote: true });
-    if (!this.playing) this.play(this.remoteQueue.shift());
-  }
-
-  /** Servern avslutade partiet. Matt/patt m.m. visas när draget har spelats klart; uppgivet, remi och övergivet direkt. */
-  endOnline(result, reason, { quiet = false } = {}) {
-    this.onlineOver = { result, reason };
-    const local = ['checkmate', 'stalemate', 'repetition', 'insufficient', 'fifty'];
-    if (local.includes(reason)) return;
-    const winner = result === '1-0' ? 'w' : result === '0-1' ? 'b' : null;
-    const me = winner === this.myColor;
-    const watching = !this.myColor; // åskådare: berätta ur båda sidors perspektiv
-    const loser = winner === 'w' ? 'Black' : 'White';
-    const title = reason === 'draw-agreed' ? 'Draw' : watching ? `${winner === 'w' ? 'White' : 'Black'} wins` : me ? 'Victory' : 'Defeat';
-    const text = reason === 'draw-agreed' ? 'Both sides agree to a draw.'
-      : watching ? (reason === 'resign' ? `${loser} lays down the sword.` : `${loser} fled the arena.`)
-      : reason === 'resign' ? (me ? 'Your opponent yields the field.' : 'You laid down your sword.')
-      : (me ? 'Your opponent fled the arena.' : 'You left the arena.');
-    if (!quiet) { // quiet = återansluten till ett redan avgjort parti
-      this.voice?.herald(winner ? (winner === 'w' ? 'whiteWins' : 'blackWins') : 'draw');
-      if (winner) this.sound.fanfare(me || watching);
-    }
-    this.ui.status(title);
-    this.busy = true;
-    const token = this.token;
-    this.summary().then((st) => token === this.token && this.ui.gameOver(title, text, st));
-  }
-
-  // ------------------------------------------------------------------ dragbedömning (Stockfish)
-
-  /** Värdera utgångsställningen så att första draget har något att jämföras med. */
-  primeAnalysis() {
-    this.notes = new Map();
-    this.animatedPly = this.chess.history().length - 1;
-    const fen = this.chess.fen();
-    this.evalPromise = this.analyst ? this.analyst.evaluate(fen, this.analysisMs()) : Promise.resolve({ cp: 0, best: null });
-  }
-
-  analysisMs() { return this.world.tierName === 'low' ? 140 : 260; }
-
-  /** Jämför värderingen före och efter draget: ?? = grov miss, ? = misstag, !! = korrekt offer. */
-  analyse(res, token) {
-    if (!this.analyst) return;
-    const ply = this.chess.history().length - 1;
-    const before = this.evalPromise || Promise.resolve({ cp: 0, best: null });
-    const after = this.analyst.evaluate(this.chess.fen(), this.analysisMs());
-    this.evalPromise = after;
-    // material för offerbedömningen räknas på ställningen direkt efter draget
-    const VAL = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
-    const opp = res.color === 'w' ? 'b' : 'w';
-    const v = VAL[res.promotion || res.piece];
-    const attackers = this.chess.attackers(res.to, opp).map((sq) => VAL[this.chess.get(sq)?.type] ?? 9);
-    const defenders = this.chess.attackers(res.to, res.color).length;
-    const sacrifice = v >= 3 && attackers.length > 0 && (defenders === 0 || Math.min(...attackers) < v) && (VAL[res.captured] || 0) < v - 1;
-    this.lastAnalysis = Promise.all([before, after]).then(([b, a]) => {
-      if (token !== this.token) return;
-      const delta = -a.cp - b.cp; // ur den dragandes perspektiv
-      // träffsäkerhet: hur mycket vinstchans draget kostade (Lichess-formeln)
-      const loss = Math.max(0, winPct(b.cp) - winPct(-a.cp));
-      (this.moveAcc ||= [])[ply] = { color: res.color, san: res.san, loss, acc: Math.max(0, Math.min(100, 103.1668 * Math.exp(-0.04354 * loss) - 3.1669)) };
-      const uci = res.from + res.to + (res.promotion || '');
-      let sym = null;
-      if (delta <= -250 && b.cp > -700) sym = '??';
-      else if (delta <= -110 && b.cp > -700) sym = '?';
-      else if (sacrifice && b.best === uci && delta >= -40) sym = '!!';
-      if (!sym) return;
-      this.notes.set(ply, sym);
-      if (this.animatedPly >= ply) this.showNote(ply);
-    });
-  }
-
-  showNote(ply) {
-    const sym = this.notes.get(ply);
-    if (!sym || this.shownNote === ply) return;
-    this.shownNote = ply;
-    const mv = this.chess.history({ verbose: true })[ply];
-    const piece = mv && this.pieces.get(mv.to);
-    this.ui.annotateMove(ply, sym);
-    if (piece) this.ui.badge(sym, () => piece.root.visible ? piece.root.position.clone().setY(piece.root.position.y + piece.meta.height + 0.45) : null, this.world.camera);
-    if (sym === '??') setTimeout(() => this.voice?.herald('blunder'), 900);
-    else if (sym === '!!') setTimeout(() => this.voice?.herald('brilliant'), 900);
-  }
-
-  /** Tiden på dygnet följer partiets längd (cirka 90 halvdrag till skymning). */
-  timeForPly(n = this.chess.history().length) { return Math.min(1, n / 90); }
-
-  afterMove() {
-    if (!this.moved) return;
-    this.moved = false;
-    this.world.setTimeOfDay(this.timeForPly());
-    this.saveLocal();
-    this.nextTurn();
-  }
-
-  // ------------------------------------------------------------------ senaste partiet sparas lokalt
-
-  /** Spara lokala partier (inte online: där är servern minnet) så att de kan fortsätta efter omladdning. */
-  saveLocal(over = false) {
-    if (this.settings.mode === 'online') return;
-    const moves = this.chess.history({ verbose: true }).map((m) => ({ from: m.from, to: m.to, ...(m.promotion ? { promotion: m.promotion } : {}) }));
-    const data = { v: 1, settings: { ...this.settings }, moves, over: over || this.chess.isGameOver(), savedAt: Date.now() };
-    try { localStorage.setItem('bc.lastGame', JSON.stringify(data)); } catch { /* fullt eller privat läge */ }
-  }
-
-  static loadLocal() {
-    try {
-      const d = JSON.parse(localStorage.getItem('bc.lastGame'));
-      return d && d.v === 1 && !d.over && d.moves?.length ? d : null;
-    } catch { return null; }
-  }
-
-  /** Fortsätt ett sparat parti: spela upp dragen utan animation och ta vid där det slutade. */
-  async resume(saved) {
-    Object.assign(this.settings, saved.settings);
-    const token = ++this.token;
-    this.playing = false;
-    this.thinking = false;
-    this.ui.setOnline(false);
-    this.onlineOver = null;
-    this.remoteQueue = [];
-    this.chess = new Chess();
-    for (const m of saved.moves) {
-      try { this.chess.move(m); } catch { break; }
-    }
-    this.stats = { captures: 0, lost: { w: 0, b: 0 }, lastCapturer: null, streakPiece: null, streak: 0 };
-    for (const m of this.chess.history({ verbose: true })) if (m.captured) { this.stats.captures++; this.stats.lost[m.color === 'w' ? 'b' : 'w']++; }
-    this.selected = null;
-    this.moveAcc = [];
-    this.syncFromBoard();
-    this.ui.reset();
-    this.ui.rebuildMoves(this.chess.history({ verbose: true }));
-    const h = this.chess.history({ verbose: true });
-    this.lastMove = h.length ? [h[h.length - 1].from, h[h.length - 1].to] : null;
-    this.refreshMarks();
-    this.primeAnalysis();
-    this.world.setTimeOfDay(this.timeForPly(), true);
-    this.engine.newGame();
-    await this.engine.setStrength(this.settings.elo >= 3190 ? null : this.settings.elo);
-    const side = this.settings.mode === 'black' ? 'b' : this.settings.mode === 'hotseat' ? this.chess.turn() : 'w';
-    await this.director.toHome(side, 1.8);
-    if (token !== this.token) return;
-    this.ui.toast('The battle resumes');
-    this.busy = false;
-    this.nextTurn();
-  }
-
   /** Härolden och angriparen kommenterar slaget (Mortal Kombat-, Unreal- och Killer Instinct-blinkningar). */
   announceCapture(mover, victim, flags = '') {
     this.graveyardAdd(victim.type, victim.color);
@@ -630,31 +442,6 @@ export class Game {
     this.ui.gameOver(title, text, st);
   }
 
-  /** Efter partiet: träffsäkerhet per sida, värsta missen och veckans MVP (flest slag). */
-  async summary() {
-    await Promise.race([this.lastAnalysis, wait(2)]);
-    const acc = (c) => {
-      const l = (this.moveAcc || []).filter((m) => m && m.color === c);
-      return l.length ? Math.round(l.reduce((a, m) => a + m.acc, 0) / l.length) : null;
-    };
-    let blunder = null;
-    (this.moveAcc || []).forEach((m, ply) => {
-      if (m && m.loss >= 20 && (!blunder || m.loss > blunder.loss)) blunder = { ...m, ply };
-    });
-    if (blunder) {
-      const n = Math.floor(blunder.ply / 2) + 1;
-      blunder.label = `${n}${blunder.color === 'w' ? '.' : '…'} ${blunder.san}${this.notes.get(blunder.ply) || ''}`;
-    }
-    const { kills } = this.recountKills();
-    let mvp = null;
-    for (const [uid, k] of kills) if (!mvp || k > mvp.kills) mvp = { uid, kills: k };
-    if (mvp) {
-      const c = new Chess().get(mvp.uid);
-      mvp = c ? { ...mvp, name: `${c.color === 'w' ? 'White' : 'Black'} ${NAMES[c.type]}` } : null;
-    }
-    return { acc: { w: acc('w'), b: acc('b') }, blunder, mvp, moves: Math.ceil(this.chess.history().length / 2) };
-  }
-
   // ------------------------------------------------------------------ hoppa över en duell, tips
 
   /** Duellflaggan styr om ett tryck snabbspolar och om "Skip"-knappen syns. Slutar duellen slutar spolningen. */
@@ -716,167 +503,10 @@ export class Game {
     this.nextTurn();
   }
 
-  // ------------------------------------------------------------------ repris och fotoläge
-
-  /** Spela upp senaste striden igen med samma attack och samma död. */
-  async replay() {
-    const lb = this.chor.lastBattle;
-    if (!lb || this.playing || this.photoMode || (this.busy && !this.chess.isGameOver())) return;
-    this.playing = true;
-    this.busy = true;
-    clearTimeout(this.boredTimer);
-    this.board.setMarks([]);
-    this.ui.setReplay(true);
-    this.voice?.herald('replay');
-    this.sound.bank?.sfx('rewind', { gain: 0.6, rate: 1 });
-    await wait(0.6);
-    const real = this.pieces.get(lb.to);
-    if (real) real.root.visible = false;
-    const att = this.spawnTemp(lb.att.type, lb.att.color, lb.from);
-    const vic = this.spawnTemp(lb.vic.type, lb.vic.color, lb.victimSquare);
-    att.onAttackCry = () => this.voice?.piece(att, 'attack');
-    att.onGrenade = () => this.voice?.piece(att, 'grenade');
-    vic.onDeathCry = () => this.voice?.piece(vic, 'death');
-    vic.onFleshwound = () => this.voice?.piece(vic, 'fleshwound');
-    this.chor.force = { death: lb.death, fleshwound: lb.fleshwound, blackKnight: lb.blackKnight };
-    this.setInBattle(true);
-    try {
-      await this.chor.capture(att, vic, lb.from, lb.to, lb.victimSquare, { move: lb.move });
-    } finally {
-      this.chor.force = null;
-      this.setInBattle(false);
-      att.dispose();
-      if (real) real.root.visible = true;
-      this.ui.setReplay(false);
-      this.playing = false;
-      this.busy = false;
-      this.refreshMarks();
-    }
-    this.nextTurn();
-  }
-
-  photo(on) {
-    const c = this.world.controls;
-    if (on === this.photoMode) return;
-    this.photoMode = on;
-    this.ui.setPhoto(on);
-    if (on) {
-      this.photoSaved = { min: c.minDistance, max: c.maxDistance, pan: c.enablePan, polar: c.maxPolarAngle };
-      c.enabled = true;
-      c.enablePan = true;
-      c.minDistance = 1.2;
-      c.maxDistance = 70;
-      c.maxPolarAngle = THREE.MathUtils.degToRad(89);
-      this.world.photoDof = true;
-      this.world.setFocus(c.target.clone(), 0.9);
-    } else {
-      Object.assign(c, { minDistance: this.photoSaved.min, maxDistance: this.photoSaved.max, enablePan: this.photoSaved.pan, maxPolarAngle: this.photoSaved.polar });
-      this.world.photoDof = false;
-      this.world.setFocus(null, 0);
-      this.world.timeScale = 1;
-      this.ui.setFrozen(false);
-      this.director.toHome(this.director.side, 1.2);
-    }
-  }
-
-  photoFreeze() {
-    this.world.timeScale = this.world.timeScale === 0 ? 1 : 0;
-    this.ui.setFrozen(this.world.timeScale === 0);
-  }
-
-  /** Tryck i fotoläget: ställ skärpan där. */
-  photoFocus(n) {
-    const hit = this.board.pick(n, this.world.camera, [...this.all], (sq) => !!this.chess.get(sq));
-    const p = hit?.square ? this.board.toWorld(hit.square).setY(this.board.top + 1.0) : null;
-    if (p) this.world.setFocus(p, 1);
-  }
-
-  async photoSave() {
-    this.sound.bank?.sfx('shutter', { gain: 0.7, rate: 1 });
-    const flash = document.getElementById('flash');
-    const blob = await this.world.capture();
-    flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
-    if (!blob) return;
-    const name = `marble-and-mayhem-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.png`;
-    const file = new File([blob], name, { type: 'image/png' });
-    if (navigator.canShare?.({ files: [file] }) && /Mobi|Android|iPhone|iPad/.test(navigator.userAgent)) {
-      navigator.share({ files: [file], title: 'Marble & Mayhem' }).catch(() => {});
-      return;
-    }
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = name;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  }
-
-  // ------------------------------------------------------------------ inmatning
-
-  bindInput() {
-    const el = this.world.canvas;
-    let down = null;
-    const ndc = (e) => new THREE.Vector2((e.clientX / el.clientWidth) * 2 - 1, -(e.clientY / el.clientHeight) * 2 + 1);
-    el.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
-    window.addEventListener('keydown', (e) => {
-      if (!this.inBattle || (e.key !== ' ' && e.key !== 'Escape')) return;
-      e.preventDefault();
-      this.skipBattle();
-    });
-    el.addEventListener('pointerup', (e) => {
-      if (!down) return;
-      const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
-      down = null;
-      if (moved > (e.pointerType === 'touch' ? 14 : 6)) return; // det var en kameradragning
-      this.click(ndc(e));
-    });
-    el.addEventListener('pointermove', (e) => {
-      if (this.busy || !this.isHumanTurn() || e.buttons) return;
-      const hit = this.board.pick(ndc(e), this.world.camera, [...this.all], (sq) => !!this.chess.get(sq));
-      const sq = hit?.square;
-      const own = sq && this.chess.get(sq)?.color === this.chess.turn();
-      const target = this.selected && this.legal?.some((m) => m.to === sq);
-      this.board.setHover(own || target ? sq : null);
-      el.style.cursor = own || target ? 'pointer' : 'default';
-    });
-  }
-
-  click(n) {
-    if (this.photoMode) return this.photoFocus(n);
-    if (this.inBattle) return this.skipBattle();
-    if (this.busy || !this.isHumanTurn()) return;
-    const hit = this.board.pick(n, this.world.camera, [...this.all], (sq) => !!this.chess.get(sq));
-    if (!hit?.square) return;
-    const sq = hit.square;
-    const pc = this.chess.get(sq);
-    if (this.selected) {
-      const moves = this.legal.filter((m) => m.to === sq);
-      if (moves.length) {
-        if (moves.some((m) => m.promotion)) {
-          this.ui.askPromotion(this.chess.turn()).then((p) => this.play({ from: this.selected, to: sq, promotion: p }));
-        } else this.play({ from: this.selected, to: sq });
-        return;
-      }
-    }
-    if (pc && pc.color === this.chess.turn()) {
-      const now = performance.now();
-      this.pokes = this.pokeSq === sq && now - this.pokeT < 2500 ? (this.pokes || 0) + 1 : 1;
-      this.pokeSq = sq;
-      this.pokeT = now;
-      this.selected = sq;
-      this.legal = this.chess.moves({ square: sq, verbose: true });
-      const piece = this.pieces.get(sq);
-      if (piece) this.voice?.piece(piece, this.pokes >= 4 ? 'annoyed' : 'select');
-      if (this.pokes >= 4) this.pokes = 0;
-      if (!this.voice?.sfx('select', { gain: 0.5 })) this.sound.step(0.4);
-      this.refreshMarks([
-        { square: sq, kind: 'select' },
-        ...this.legal.map((m) => ({ square: m.to, kind: m.captured ? 'capture' : 'move' })),
-      ]);
-    } else {
-      this.selected = null;
-      this.refreshMarks();
-    }
-  }
 
   glyph(type, color) { return GLYPH[color][type]; }
 }
+
+// online, dragbedömning, sparande, repris och fotoläge samt inmatning bor i game-*.js
+Object.assign(Game.prototype, OnlineMethods, AnalysisMethods, SaveMethods, PhotoMethods, InputMethods);
+Game.loadLocal = SaveMethods.loadLocal;
