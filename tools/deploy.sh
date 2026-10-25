@@ -11,6 +11,7 @@ HOST=${HOST:-root@70.34.220.159}
 DOMAIN=${DOMAIN:-mayhem.bjarby.com}
 APP=/opt/marble-mayhem
 PORT=${PORT:-8243}
+CADDY=${CADDY:-1}   # CADDY=0: hoppa över Caddy (t.ex. innan DNS-posten finns, så att certifikatförsöken inte misslyckas)
 cd "$(dirname "$0")/.."
 
 echo "› bygger"
@@ -32,7 +33,7 @@ rsync -az --delete --exclude data --exclude test.mjs server/ "$HOST:$APP/server/
 rsync -az build/deploy/package.json "$HOST:$APP/package.json"
 
 echo "› installerar och startar"
-ssh "$HOST" APP="$APP" PORT="$PORT" DOMAIN="$DOMAIN" bash -s <<'REMOTE'
+ssh "$HOST" APP="$APP" PORT="$PORT" DOMAIN="$DOMAIN" CADDY="$CADDY" bash -s <<'REMOTE'
 set -euo pipefail
 id mayhem >/dev/null 2>&1 || useradd --system --home "$APP" --shell /usr/sbin/nologin mayhem
 mkdir -p /var/lib/marble-mayhem && chown mayhem /var/lib/marble-mayhem
@@ -65,7 +66,7 @@ systemctl daemon-reload
 systemctl enable marble-mayhem >/dev/null 2>&1
 systemctl restart marble-mayhem
 
-if ! grep -q "^$DOMAIN {" /etc/caddy/Caddyfile; then
+if [ "$CADDY" = 1 ] && ! grep -q "^$DOMAIN {" /etc/caddy/Caddyfile; then
   cp /etc/caddy/Caddyfile "/etc/caddy/Caddyfile.bak.$(date +%s)"
   cat >> /etc/caddy/Caddyfile <<CADDY
 
@@ -86,8 +87,10 @@ $DOMAIN {
 }
 CADDY
 fi
-caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null
-systemctl reload caddy
+if [ "$CADDY" = 1 ]; then
+  caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null
+  systemctl reload caddy
+fi
 sleep 1
 systemctl is-active marble-mayhem
 REMOTE
