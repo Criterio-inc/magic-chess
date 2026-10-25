@@ -2,6 +2,7 @@
 import { World } from './world.js';
 import { Board } from './board.js';
 import { PieceLibrary } from './pieces.js';
+import { setBoardFloor } from './materials.js';
 import { FX } from './fx.js';
 import { Sound } from './audio.js';
 import { Voice } from './voice.js';
@@ -10,6 +11,7 @@ import { Game } from './game.js';
 import { UI } from './ui.js';
 import { tier } from './quality.js';
 import { Online } from './online.js';
+import { setupOnlineExtras } from './online-extras.js';
 import { Title } from './title.js';
 
 const ui = new UI();
@@ -38,9 +40,11 @@ async function boot() {
   ui.progress(1, null);
   const fx = new FX(world);
   fx.setGround(meta.tileTop);
+  setBoardFloor(meta.tileTop, meta.boardHalf); // pjäsernas golvspärr och mantlarna
   for (const b of meta.braziers) fx.addBrazier(b);
   const game = new Game({ world, board, lib, fx, sound, engine, analyst, ui, voice });
   const online = (game.online = new Online());
+  const extras = setupOnlineExtras({ online, game, ui, voice, world, sound }); // rematch, åskådare, glåpord
   // kvällen: syrsor och uggla när solen gått ned, härolden noterar mörkret en gång per parti
   let night = null, nightSaid = false, owlT = 0;
   world.onTime = (t) => {
@@ -69,6 +73,7 @@ async function boot() {
   window.addEventListener('keydown', firstGesture);
 
   const joinParam = new URLSearchParams(location.search).get('join');
+  const watchParam = new URLSearchParams(location.search).get('watch'); // åskådarlänk
   ui.ready(async () => {
     sound.unlock();
     // dånande entré: vit blixt, åska, titelbilderna slutar och kameran svänger in över arenan
@@ -88,6 +93,8 @@ async function boot() {
       online.forget();
       online.join(joinParam);
       ui.toast('Joining…');
+    } else if (watchParam) {
+      extras.watch(watchParam);
     } else if (online.session?.started) {
       online.connect(); // återanslut till pågående onlineparti
       ui.toast('Reconnecting…');
@@ -132,7 +139,7 @@ async function boot() {
     resignArmed = performance.now();
     ui.toast('Tap ⚐ again to resign', true);
   });
-  ui.on('rematch', () => { online.rematch(); game.awaitingRematch = true; ui.hide('over'); ui.toast('Rematch requested'); });
+  ui.on('rematch', () => extras.requestRematch());
   const ERR = { 'no-such-room': 'No arena with that code.', 'room-full': 'That arena already has two players.',
     'bad-token': 'Your seat has expired.', 'rate-limited': 'Easy there — too many requests.', 'bad-request': 'Something went wrong.' };
   online
@@ -149,9 +156,9 @@ async function boot() {
     .on('start', (m) => {
       world.controls.autoRotate = false;
       game.settings.started = true;
-      let color = online.session?.color;
-      if (game.awaitingRematch && game.myColor) { color = game.myColor === 'w' ? 'b' : 'w'; game.awaitingRematch = false; }
-      online.save({ started: true, color });
+      // spelare får sin färg av servern (den byts vid rematch); åskådare har ingen
+      const color = online.watching ? null : m.color || online.session?.color;
+      if (!online.watching) online.save({ started: true, color });
       ui.hide('invite'); ui.hide('menu'); ui.hide('over');
       sound.setMusic(0, 3);
       game.startOnline(m.state, color);
@@ -166,7 +173,6 @@ async function boot() {
     })
     .on('draw-offer', (m) => { if (m.by !== game.myColor) ui.askDraw().then((a) => online.answerDraw(a)); })
     .on('draw-declined', () => ui.toast('Draw declined'))
-    .on('rematch', (m) => { if (m.by !== game.myColor) ui.toast('Your opponent wants a rematch'); })
     .on('over', (m) => game.endOnline(m.result, m.reason))
     .on('error', (m) => {
       ui.onlineMsg(ERR[m.code] || m.message);
@@ -184,6 +190,8 @@ async function boot() {
   ui.on('photoSave', () => game.photoSave());
   ui.on('photoFreeze', () => game.photoFreeze());
   ui.on('replay', () => game.replay());
+  ui.on('hint', () => game.hint());
+  ui.on('skip', () => game.skipBattle());
   // vriden telefon / ändrat fönster: lägg om översiktsbilden när inget drag pågår
   let lastAspect = world.camera.aspect;
   window.addEventListener('resize', () => {

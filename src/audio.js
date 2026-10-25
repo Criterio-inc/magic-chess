@@ -15,7 +15,17 @@ export class Sound {
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -16;
     comp.ratio.value = 3;
-    this.master.connect(comp).connect(ctx.destination);
+    // tegelvägg sist: granaten, foten och åskan får inte slå i taket
+    const limit = ctx.createDynamicsCompressor();
+    limit.threshold.value = -3;
+    limit.knee.value = 0;
+    limit.ratio.value = 20;
+    limit.attack.value = 0.002;
+    limit.release.value = 0.15;
+    this.master.connect(comp).connect(limit).connect(ctx.destination);
+    // allt utom röster går genom "bädden", som duckar när någon talar
+    this.bed = ctx.createGain();
+    this.bed.connect(this.master);
     // gemensamt rum: kort efterklang från en syntetisk impulsrespons
     this.verb = ctx.createConvolver();
     this.verb.buffer = this.impulse(2.2, 2.8);
@@ -26,7 +36,7 @@ export class Sound {
     // musiken går förbi efterklangen och har egen nivå
     this.musicGain = ctx.createGain();
     this.musicGain.gain.value = 0;
-    this.musicGain.connect(this.master);
+    this.musicGain.connect(this.bed);
     this.ambience();
     if (this.pendingMusic) this.playMusic(this.pendingMusic);
   }
@@ -62,7 +72,29 @@ export class Sound {
 
   setEnabled(on) {
     this.enabled = on;
-    if (this.master) this.master.gain.setTargetAtTime(on ? 0.8 : 0, this.ctx.currentTime, 0.1);
+    this.applyMaster();
+  }
+
+  applyMaster() {
+    if (this.master) this.master.gain.setTargetAtTime(this.enabled ? (this.hushed ? 0.12 : 0.8) : 0, this.ctx.currentTime, 0.08);
+  }
+
+  /** Snabbspolning: nästan tyst så att åttafaldig fart inte blir ett kakofoniskt mischmasch. */
+  hush(on) {
+    this.hushed = on;
+    this.applyMaster();
+  }
+
+  /** Sänk musik och effekter medan en röst talar (sek), och lyft dem mjukt igen efteråt. */
+  duck(sec) {
+    if (!this.bed) return;
+    const t = this.ctx.currentTime;
+    const until = Math.max(this.duckUntil || 0, t + sec);
+    this.duckUntil = until;
+    const g = this.bed.gain;
+    g.cancelScheduledValues(t);
+    g.setTargetAtTime(0.5, t, 0.05);
+    g.setTargetAtTime(1, until, 0.25);
   }
 
   makeNoise(sec) {
@@ -82,12 +114,12 @@ export class Sound {
     return b;
   }
 
-  out(gain = 1, wet = 0.3, pan = 0) {
+  out(gain = 1, wet = 0.3, pan = 0, voice = false) {
     const g = this.ctx.createGain();
     g.gain.value = gain;
     const p = this.ctx.createStereoPanner();
     p.pan.value = Math.max(-1, Math.min(1, pan));
-    g.connect(p).connect(this.master);
+    g.connect(p).connect(voice ? this.master : this.bed);
     if (wet > 0) {
       const w = this.ctx.createGain();
       w.gain.value = wet;
@@ -250,7 +282,7 @@ export class Sound {
     lg2.gain.value = 0.025;
     lfo2.connect(lg2).connect(g.gain);
     this.synthWindLfo = lg2;
-    src.connect(f).connect(g).connect(this.master);
+    src.connect(f).connect(g).connect(this.bed);
     src.start(); lfo.start(); lfo2.start();
     this.synthWind = g;
     // eldsprak från glödfaten

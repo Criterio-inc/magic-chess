@@ -51,6 +51,7 @@
           <button data-v="black">Play Black</button>
           <button data-v="hotseat">Two players</button>
           <button data-v="watch">Watch</button>
+          <button data-v="legend">Legends</button>
           <button data-v="online">Online</button>
         </div>
       </div>
@@ -68,6 +69,10 @@
           <button id="online-join" class="btn ghost">Join</button>
         </div>
         <p id="online-msg" class="small"></p>
+      </div>
+      <div class="field hidden" id="legend-field">
+        <label>Famous game</label>
+        <div class="seg seg-wrap" id="legend"></div>
       </div>
       <div class="field" id="strength-field">
         <label>Stockfish strength <span id="elo-label">1800</span></label>
@@ -132,6 +137,7 @@
       <button class="icon" id="btn-undo" title="Undo">↶</button>
       <button class="icon mobile-only" id="btn-moves" title="Moves">≡</button>
       <button class="icon" id="btn-flip" title="Turn the view">⟲</button>
+      <button class="icon offline-only" id="btn-hint" title="Hint">✧</button>
       <button class="icon" id="btn-battle" title="Cinematic battles on/off">⚔</button>
       <button class="icon" id="btn-sound" title="Sound on/off">♪</button>
       <button class="icon hidden" id="btn-replay" title="Replay the last battle">⏮</button>
@@ -139,7 +145,9 @@
       <button class="icon online-only" id="btn-draw" title="Offer a draw">½</button>
       <button class="icon online-only" id="btn-resign" title="Resign">⚐</button>
     </div>
+    <button id="btn-skip" class="pill">Skip ⏭</button>
   </div>
+  <div id="legend-card" class="hidden"><div class="lc-title"></div><div class="lc-where"></div><div class="lc-players"></div></div>
 
   <!-- fotoläge -->
   <div id="photobar" class="hidden">
@@ -168,6 +176,7 @@
     <div class="card small-card">
       <h2 id="over-title">Checkmate</h2>
       <p id="over-text"></p>
+      <div id="over-stats"></div>
       <div class="row"><button id="over-review" class="btn ghost">Look around</button><button id="over-rematch" class="btn ghost online-only">Rematch</button><button id="over-new" class="btn gold">New game</button></div>
     </div>
   </div>

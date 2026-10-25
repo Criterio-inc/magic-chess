@@ -7,7 +7,9 @@
     "rook": "qNkzaJoHLLdpvgh5tISm",
     "queen": "pFZP5JQG7iQjIQuC4Bku",
     "king": "JBFqnCBsd6RMkjVDRZzb",
-    "patsy": "N2lVS1w4EtoT3dr4eOWO"
+    "patsy": "N2lVS1w4EtoT3dr4eOWO",
+    "taunter": "uVKHymY7OYMd6OailpG5",
+    "blackknight": "L0Dsvb3SLTyegXwtm47J"
   },
   "lines": {
     "herald": {
@@ -401,6 +403,52 @@
       ],
       "clap": [
         "[cheerful] Clip clop, clip clop!"
+      ]
+    },
+    "taunter": {
+      "fart": [
+        "[thick French accent, mocking] I fart in your general direction!"
+      ],
+      "hamster": [
+        "[thick French accent, mocking] Your mother was a hamster, and your father smelt of elderberries!"
+      ],
+      "goaway": [
+        "[thick French accent, haughty] Now go away, or I shall taunt you a second time!"
+      ],
+      "ni": [
+        "[booming] Ni! Ni! Ni!"
+      ],
+      "really": [
+        "[unimpressed] That was your move? Really?"
+      ],
+      "wellplayed": [
+        "[grudging] Well played. I mean it. Mostly."
+      ],
+      "expect": [
+        "[gleeful] Nobody expects my next move!"
+      ],
+      "hurry": [
+        "[impatient sigh] Any century now would be lovely."
+      ]
+    },
+    "blackknight": {
+      "nonepass": [
+        "[stern] None shall pass."
+      ],
+      "scratch": [
+        "[dismissive] 'Tis but a scratch."
+      ],
+      "flesh": [
+        "[defiant] Just a flesh wound."
+      ],
+      "invincible": [
+        "[triumphant] I'm invincible!"
+      ],
+      "draw": [
+        "[reasonable] All right, we'll call it a draw."
+      ],
+      "bite": [
+        "[furious] Come back here! I'll bite your legs off!"
       ]
     }
   }

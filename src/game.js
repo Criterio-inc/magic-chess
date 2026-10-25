@@ -4,6 +4,12 @@ import { Chess } from 'chess.js';
 import { Choreographer, Director } from './battle.js';
 import { GLYPH } from './pieces.js';
 import { tick, wait, tween, ease } from './util.js';
+import { setVeteran } from './veteran.js';
+import { legendById, legendMoves } from './legends.js';
+
+const NAMES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
+// vinstchans (%) ur centibönder, som Lichess räknar träffsäkerhet
+const winPct = (cp) => 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * Math.max(-1000, Math.min(1000, cp)))) - 1);
 
 export class Game {
   constructor({ world, board, lib, fx, sound, engine, analyst, ui, voice }) {
@@ -38,7 +44,7 @@ export class Game {
     this.pieces.set(square, p);
     this.all.add(p);
     const origDispose = p.dispose.bind(p);
-    p.dispose = () => { origDispose(); this.all.delete(p); };
+    p.dispose = () => { p.wreathOff?.(); origDispose(); this.all.delete(p); };
     return p;
   }
 
@@ -62,8 +68,40 @@ export class Game {
 
   syncFromBoard() {
     this.clearPieces();
-    for (const row of this.chess.board()) for (const c of row) if (c) this.spawn(c.type, c.color, c.square);
+    const { id, kills } = this.recountKills();
+    for (const row of this.chess.board()) for (const c of row) {
+      if (!c) continue;
+      const p = this.spawn(c.type, c.color, c.square);
+      p.uid = id.get(c.square) || c.square;
+      p.kills = kills.get(p.uid) || 0;
+      setVeteran(p, p.kills, { fx: this.fx, world: this.world });
+    }
     this.graveyardRebuild();
+  }
+
+  /** Följ varje pjäs genom historiken (identitet = startrutan) och räkna hur många den har slagit. */
+  recountKills() {
+    const hist = this.chess.history({ verbose: true });
+    const start = hist.length ? new Chess() : this.chess;
+    const id = new Map();
+    for (const row of start.board()) for (const c of row) if (c) id.set(c.square, c.square);
+    const kills = new Map();
+    for (const m of hist) {
+      const who = id.get(m.from);
+      if (m.captured) {
+        id.delete(m.flags.includes('e') ? m.to[0] + m.from[1] : m.to);
+        kills.set(who, (kills.get(who) || 0) + 1);
+      }
+      id.delete(m.from);
+      id.set(m.to, who);
+      if (m.flags.includes('k') || m.flags.includes('q')) {
+        const r = m.color === 'w' ? '1' : '8';
+        const [rf, rt] = m.flags.includes('k') ? ['h' + r, 'f' + r] : ['a' + r, 'd' + r];
+        id.set(rt, id.get(rf));
+        id.delete(rf);
+      }
+    }
+    return { id, kills };
   }
 
   // ------------------------------------------------------------------ kyrkogården vid brädkanten
@@ -98,12 +136,13 @@ export class Game {
   humanColor() {
     const m = this.settings.mode;
     if (m === 'online') return this.myColor;
+    if (m === 'legend') return null;
     return m === 'white' ? 'w' : m === 'black' ? 'b' : m === 'hotseat' ? this.chess.turn() : null;
   }
 
   isHumanTurn() {
     const m = this.settings.mode;
-    if (m === 'watch') return false;
+    if (m === 'watch' || m === 'legend') return false;
     if (m === 'hotseat') return true;
     if (m === 'online' && this.onlineOver) return false;
     return this.chess.turn() === this.humanColor();
@@ -120,6 +159,7 @@ export class Game {
     this.chess = new Chess();
     this.selected = null;
     this.stats = { captures: 0, lost: { w: 0, b: 0 }, lastCapturer: null, streakPiece: null, streak: 0 };
+    this.moveAcc = [];
     this.syncFromBoard();
     this.board.setMarks([]);
     this.ui.reset();
@@ -133,7 +173,11 @@ export class Game {
     await this.director.toHome(side, 2.2);
     if (token !== this.token) return; // ett nyare parti har startats under tiden
     this.voice?.herald('begin');
-    this.ui.toast('To battle!');
+    if (this.settings.mode === 'legend') {
+      this.ui.legendCard(legendById(this.settings.legend));
+      await wait(3.2);
+      if (token !== this.token) return;
+    } else this.ui.toast('To battle!');
     this.nextTurn();
   }
 
@@ -148,9 +192,18 @@ export class Game {
       if (this.remoteQueue?.length) return this.play(this.remoteQueue.shift());
       if (!this.isHumanTurn()) {
         this.busy = true;
-        if (!this.onlineOver) this.ui.status(`Waiting for ${this.opponentName || 'your opponent'}…`);
+        if (!this.onlineOver) this.ui.status(this.online?.watching ? `Watching ${this.online.watching}` : `Waiting for ${this.opponentName || 'your opponent'}…`);
         return;
       }
+    }
+    if (this.settings.mode === 'legend') {
+      // berömt parti: nästa drag ur partiet efter en kort andningspaus
+      this.busy = true;
+      const san = legendMoves(legendById(this.settings.legend))[this.chess.history().length];
+      if (!san) return;
+      await wait(0.9);
+      if (token !== this.token || this.playing) return;
+      return this.play(san);
     }
     if (this.isHumanTurn()) {
       this.busy = false;
@@ -207,6 +260,7 @@ export class Game {
       await this.playMove(m);
     } finally {
       this.playing = false;
+      this.setInBattle(false);
     }
     this.afterMove();
   }
@@ -254,7 +308,9 @@ export class Game {
       mover.onGrenade = () => this.voice?.piece(mover, 'grenade');
       victim.onDeathCry = () => this.voice?.piece(victim, 'death');
       victim.onFleshwound = () => this.voice?.piece(victim, 'fleshwound');
+      this.setInBattle(true);
       await this.chor.capture(mover, victim, res.from, res.to, vsq, { afterKill: () => this.announceCapture(mover, victim, flags) });
+      this.setInBattle(false);
     } else {
       // bakåt = reträtt ("Run away!"), annars ibland en replik på väg
       const back = (res.color === 'w' ? -1 : 1) * (+res.to[1] - +res.from[1]) > 0;
@@ -268,7 +324,13 @@ export class Game {
     this.pieces.set(res.to, mover);
     if (res.promotion) {
       this.voice?.herald(res.promotion === 'n' ? 'horse' : 'promote');
-      const np = await this.chor.promote(mover, () => this.spawn(res.promotion, res.color, res.to));
+      const np = await this.chor.promote(mover, () => {
+        const q = this.spawn(res.promotion, res.color, res.to);
+        q.uid = mover.uid;
+        q.kills = mover.kills || 0;
+        setVeteran(q, q.kills, { fx: this.fx, world: this.world });
+        return q;
+      });
       setTimeout(() => this.voice?.piece(np, 'select'), 900);
     }
     this.ui.addMove(res.san, res.color);
@@ -303,6 +365,7 @@ export class Game {
     const opp = color === 'w' ? state.black : state.white;
     this.opponentName = opp?.name || null;
     this.selected = null;
+    this.moveAcc = [];
     this.syncFromBoard();
     this.ui.reset();
     this.ui.setOnline(true);
@@ -312,11 +375,11 @@ export class Game {
     this.refreshMarks();
     this.primeAnalysis();
     this.world.setTimeOfDay(this.timeForPly(), true);
-    await this.director.toHome(color, fanfare ? 2.2 : 0.8);
+    await this.director.toHome(color || 'w', fanfare ? 2.2 : 0.8); // åskådare (color null) ser det från vit sida
     if (token !== this.token) return;
     if (fanfare) {
       this.voice?.herald('begin');
-      this.ui.toast(color === 'w' ? 'You play White' : 'You play Black');
+      this.ui.toast(!color ? 'To battle!' : color === 'w' ? 'You play White' : 'You play Black');
     }
     this.busy = false;
     this.nextTurn();
@@ -334,21 +397,27 @@ export class Game {
   }
 
   /** Servern avslutade partiet. Matt/patt m.m. visas när draget har spelats klart; uppgivet, remi och övergivet direkt. */
-  endOnline(result, reason) {
+  endOnline(result, reason, { quiet = false } = {}) {
     this.onlineOver = { result, reason };
     const local = ['checkmate', 'stalemate', 'repetition', 'insufficient', 'fifty'];
     if (local.includes(reason)) return;
     const winner = result === '1-0' ? 'w' : result === '0-1' ? 'b' : null;
     const me = winner === this.myColor;
-    const title = reason === 'draw-agreed' ? 'Draw' : me ? 'Victory' : 'Defeat';
-    const text = reason === 'resign' ? (me ? 'Your opponent yields the field.' : 'You laid down your sword.')
-      : reason === 'abandoned' ? (me ? 'Your opponent fled the arena.' : 'You left the arena.')
-      : 'Both sides agree to a draw.';
-    this.voice?.herald(winner ? (winner === 'w' ? 'whiteWins' : 'blackWins') : 'draw');
-    if (winner) this.sound.fanfare(me);
+    const watching = !this.myColor; // åskådare: berätta ur båda sidors perspektiv
+    const loser = winner === 'w' ? 'Black' : 'White';
+    const title = reason === 'draw-agreed' ? 'Draw' : watching ? `${winner === 'w' ? 'White' : 'Black'} wins` : me ? 'Victory' : 'Defeat';
+    const text = reason === 'draw-agreed' ? 'Both sides agree to a draw.'
+      : watching ? (reason === 'resign' ? `${loser} lays down the sword.` : `${loser} fled the arena.`)
+      : reason === 'resign' ? (me ? 'Your opponent yields the field.' : 'You laid down your sword.')
+      : (me ? 'Your opponent fled the arena.' : 'You left the arena.');
+    if (!quiet) { // quiet = återansluten till ett redan avgjort parti
+      this.voice?.herald(winner ? (winner === 'w' ? 'whiteWins' : 'blackWins') : 'draw');
+      if (winner) this.sound.fanfare(me || watching);
+    }
     this.ui.status(title);
     this.busy = true;
-    this.ui.gameOver(title, text);
+    const token = this.token;
+    this.summary().then((st) => token === this.token && this.ui.gameOver(title, text, st));
   }
 
   // ------------------------------------------------------------------ dragbedömning (Stockfish)
@@ -377,9 +446,12 @@ export class Game {
     const attackers = this.chess.attackers(res.to, opp).map((sq) => VAL[this.chess.get(sq)?.type] ?? 9);
     const defenders = this.chess.attackers(res.to, res.color).length;
     const sacrifice = v >= 3 && attackers.length > 0 && (defenders === 0 || Math.min(...attackers) < v) && (VAL[res.captured] || 0) < v - 1;
-    Promise.all([before, after]).then(([b, a]) => {
+    this.lastAnalysis = Promise.all([before, after]).then(([b, a]) => {
       if (token !== this.token) return;
       const delta = -a.cp - b.cp; // ur den dragandes perspektiv
+      // träffsäkerhet: hur mycket vinstchans draget kostade (Lichess-formeln)
+      const loss = Math.max(0, winPct(b.cp) - winPct(-a.cp));
+      (this.moveAcc ||= [])[ply] = { color: res.color, san: res.san, loss, acc: Math.max(0, Math.min(100, 103.1668 * Math.exp(-0.04354 * loss) - 3.1669)) };
       const uci = res.from + res.to + (res.promotion || '');
       let sym = null;
       if (delta <= -250 && b.cp > -700) sym = '??';
@@ -447,6 +519,7 @@ export class Game {
     this.stats = { captures: 0, lost: { w: 0, b: 0 }, lastCapturer: null, streakPiece: null, streak: 0 };
     for (const m of this.chess.history({ verbose: true })) if (m.captured) { this.stats.captures++; this.stats.lost[m.color === 'w' ? 'b' : 'w']++; }
     this.selected = null;
+    this.moveAcc = [];
     this.syncFromBoard();
     this.ui.reset();
     this.ui.rebuildMoves(this.chess.history({ verbose: true }));
@@ -468,6 +541,8 @@ export class Game {
   /** Härolden och angriparen kommenterar slaget (Mortal Kombat-, Unreal- och Killer Instinct-blinkningar). */
   announceCapture(mover, victim, flags = '') {
     this.graveyardAdd(victim.type, victim.color);
+    mover.kills = (mover.kills || 0) + 1;
+    setVeteran(mover, mover.kills, { fx: this.fx, world: this.world });
     this.ui.canReplay(true);
     const st = this.stats;
     st.lost[victim.color]++;
@@ -501,6 +576,7 @@ export class Game {
 
   async gameOver() {
     this.busy = true;
+    const token = this.token; // ett nytt parti mitt i slutsekvensen ska inte få det gamla slutkortet
     const c = this.chess;
     let title, text, winner = null;
     if (c.isCheckmate()) {
@@ -518,17 +594,25 @@ export class Game {
       const checkerSq = atk.includes(lastTo) ? lastTo : atk[0];
       const checker = checkerSq ? this.pieces.get(checkerSq) : null;
       if (checker) checker.onGrenade = () => this.voice?.piece(checker, 'grenade');
+      this.setInBattle(true);
       if (king) await this.chor.checkmate(king, winners, () => {
         this.ui.toast('Fatality', true);
         setTimeout(() => this.voice?.herald('fatality'), 500);
       }, checker);
+      this.setInBattle(false);
+      if (token !== this.token) return;
       this.board.setMarks([]);
       await wait(1.2);
+      if (token !== this.token) return;
       const flawless = this.stats?.lost[winner] === 0;
       this.voice?.herald(flawless ? 'flawless' : winner === 'w' ? 'whiteWins' : 'blackWins');
       if (flawless) this.ui.toast('Flawless victory');
       const human = this.settings.mode === 'white' ? 'w' : this.settings.mode === 'black' ? 'b' : null;
       this.sound.fanfare(!human || human === winner);
+      if (this.settings.mode === 'legend') {
+        const l = legendById(this.settings.legend);
+        text = `${winner === 'w' ? l.white : l.black} wins. ${l.title}, ${l.where}.`;
+      }
     } else {
       title = 'Draw';
       text = c.isStalemate() ? 'Stalemate — no legal move remains.' : c.isThreefoldRepetition() ? 'Threefold repetition.'
@@ -539,8 +623,74 @@ export class Game {
     this.ui.status(title);
     this.saveLocal(true);
     await wait(1.2);
+    if (token !== this.token) return;
     this.director.release();
-    this.ui.gameOver(title, text);
+    const st = await this.summary();
+    if (token !== this.token) return;
+    this.ui.gameOver(title, text, st);
+  }
+
+  /** Efter partiet: träffsäkerhet per sida, värsta missen och veckans MVP (flest slag). */
+  async summary() {
+    await Promise.race([this.lastAnalysis, wait(2)]);
+    const acc = (c) => {
+      const l = (this.moveAcc || []).filter((m) => m && m.color === c);
+      return l.length ? Math.round(l.reduce((a, m) => a + m.acc, 0) / l.length) : null;
+    };
+    let blunder = null;
+    (this.moveAcc || []).forEach((m, ply) => {
+      if (m && m.loss >= 20 && (!blunder || m.loss > blunder.loss)) blunder = { ...m, ply };
+    });
+    if (blunder) {
+      const n = Math.floor(blunder.ply / 2) + 1;
+      blunder.label = `${n}${blunder.color === 'w' ? '.' : '…'} ${blunder.san}${this.notes.get(blunder.ply) || ''}`;
+    }
+    const { kills } = this.recountKills();
+    let mvp = null;
+    for (const [uid, k] of kills) if (!mvp || k > mvp.kills) mvp = { uid, kills: k };
+    if (mvp) {
+      const c = new Chess().get(mvp.uid);
+      mvp = c ? { ...mvp, name: `${c.color === 'w' ? 'White' : 'Black'} ${NAMES[c.type]}` } : null;
+    }
+    return { acc: { w: acc('w'), b: acc('b') }, blunder, mvp, moves: Math.ceil(this.chess.history().length / 2) };
+  }
+
+  // ------------------------------------------------------------------ hoppa över en duell, tips
+
+  /** Duellflaggan styr om ett tryck snabbspolar och om "Skip"-knappen syns. Slutar duellen slutar spolningen. */
+  setInBattle(on) {
+    this.inBattle = on;
+    document.body.classList.toggle('inbattle', on);
+    if (!on) this.endSkip();
+  }
+
+  skipBattle() {
+    if (!this.inBattle || this.world.fast > 1) return;
+    this.world.fast = 8;
+    this.sound.hush?.(true);
+    document.body.classList.add('skipping');
+  }
+
+  endSkip() {
+    if (this.world.fast === 1) return;
+    this.world.fast = 1;
+    this.sound.hush?.(false);
+    document.body.classList.remove('skipping');
+  }
+
+  /** Visa analysmotorns bästa drag som en glödande pil (inte online). */
+  async hint() {
+    if (this.settings.mode === 'online' || this.busy || !this.isHumanTurn() || !this.analyst || this.hinting) return;
+    this.hinting = true;
+    const fen = this.chess.fen();
+    try {
+      const { best } = await this.analyst.evaluate(fen, 700);
+      if (!best || this.chess.fen() !== fen) return;
+      this.board.showArrow(best.slice(0, 2), best.slice(2, 4));
+      this.sound.bank?.sfx('select', { gain: 0.5 });
+    } finally {
+      this.hinting = false;
+    }
   }
 
   async undo() {
@@ -553,6 +703,7 @@ export class Game {
     this.playing = false;
     this.thinking = false;
     for (let i = 0; i < plies; i++) this.chess.undo();
+    if (this.moveAcc) this.moveAcc.length = Math.min(this.moveAcc.length, this.chess.history().length);
     this.syncFromBoard();
     this.ui.rebuildMoves(this.chess.history({ verbose: true }));
     const h = this.chess.history({ verbose: true });
@@ -587,11 +738,13 @@ export class Game {
     att.onGrenade = () => this.voice?.piece(att, 'grenade');
     vic.onDeathCry = () => this.voice?.piece(vic, 'death');
     vic.onFleshwound = () => this.voice?.piece(vic, 'fleshwound');
-    this.chor.force = { death: lb.death, fleshwound: lb.fleshwound };
+    this.chor.force = { death: lb.death, fleshwound: lb.fleshwound, blackKnight: lb.blackKnight };
+    this.setInBattle(true);
     try {
       await this.chor.capture(att, vic, lb.from, lb.to, lb.victimSquare, { move: lb.move });
     } finally {
       this.chor.force = null;
+      this.setInBattle(false);
       att.dispose();
       if (real) real.root.visible = true;
       this.ui.setReplay(false);
@@ -664,6 +817,11 @@ export class Game {
     let down = null;
     const ndc = (e) => new THREE.Vector2((e.clientX / el.clientWidth) * 2 - 1, -(e.clientY / el.clientHeight) * 2 + 1);
     el.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+    window.addEventListener('keydown', (e) => {
+      if (!this.inBattle || (e.key !== ' ' && e.key !== 'Escape')) return;
+      e.preventDefault();
+      this.skipBattle();
+    });
     el.addEventListener('pointerup', (e) => {
       if (!down) return;
       const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
@@ -684,6 +842,7 @@ export class Game {
 
   click(n) {
     if (this.photoMode) return this.photoFocus(n);
+    if (this.inBattle) return this.skipBattle();
     if (this.busy || !this.isHumanTurn()) return;
     const hit = this.board.pick(n, this.world.camera, [...this.all], (sq) => !!this.chess.get(sq));
     if (!hit?.square) return;

@@ -1,5 +1,6 @@
 // HUD och menyer.
 import { GLYPH } from './pieces.js';
+import { LEGENDS } from './legends.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -7,6 +8,8 @@ export class UI {
   constructor() {
     this.handlers = {};
     this.moveCount = 0;
+    $('legend').innerHTML = LEGENDS.map((l, i) => `<button data-v="${l.id}"${i ? '' : ' class="on"'}>${l.title.replace(/^The /, '')}<small>${l.where.split(', ').pop()}</small></button>`).join('');
+    this.setupSeg('legend');
     this.setupSeg('mode');
     this.setupSeg('battles');
     this.setupSeg('pace');
@@ -21,7 +24,8 @@ export class UI {
     $('mode').addEventListener('click', () => {
       const m = this.seg('mode');
       $('strength-field').style.opacity = m === 'hotseat' ? 0.35 : 1;
-      $('strength-field').classList.toggle('hidden', m === 'online');
+      $('strength-field').classList.toggle('hidden', m === 'online' || m === 'legend');
+      $('legend-field').classList.toggle('hidden', m !== 'legend');
       $('online-field').classList.toggle('hidden', m !== 'online');
       $('start').classList.toggle('hidden', m === 'online');
     });
@@ -48,12 +52,14 @@ export class UI {
     $('ph-save').addEventListener('click', () => this.emit('photoSave'));
     $('ph-freeze').addEventListener('click', () => this.emit('photoFreeze'));
     $('btn-replay').addEventListener('click', () => this.emit('replay'));
+    $('btn-hint').addEventListener('click', () => this.emit('hint'));
+    $('btn-skip').addEventListener('click', () => this.emit('skip'));
     $('btn-resign').addEventListener('click', () => this.emit('resign'));
     $('over-rematch').addEventListener('click', () => this.emit('rematch'));
     $('start').addEventListener('click', () => this.emit('start', this.readSettings()));
     $('continue').addEventListener('click', () => this.emit('continue'));
     this.restoreSettings();
-    for (const id of ['mode', 'battles', 'pace', 'ocolor']) $(id).addEventListener('click', () => this.storeSettings());
+    for (const id of ['mode', 'battles', 'pace', 'ocolor', 'legend']) $(id).addEventListener('click', () => this.storeSettings());
     $('elo').addEventListener('change', () => this.storeSettings());
     $('menu-close').addEventListener('click', () => this.hide('menu'));
     $('btn-menu').addEventListener('click', () => { $('menu-close').classList.remove('hidden'); this.show('menu'); this.emit('menu'); });
@@ -126,7 +132,7 @@ export class UI {
 
   /** Menyvalen minns mellan besök. */
   storeSettings() {
-    const s = { mode: this.seg('mode'), elo: +$('elo').value, battles: this.seg('battles'), pace: this.seg('pace'), ocolor: this.seg('ocolor') };
+    const s = { mode: this.seg('mode'), elo: +$('elo').value, battles: this.seg('battles'), pace: this.seg('pace'), ocolor: this.seg('ocolor'), legend: this.seg('legend') };
     try { localStorage.setItem('bc.settings', JSON.stringify(s)); } catch { /* privat läge */ }
   }
 
@@ -139,6 +145,7 @@ export class UI {
     if (s.battles) set('battles', s.battles);
     if (s.pace) set('pace', s.pace);
     if (s.ocolor) set('ocolor', s.ocolor);
+    if (s.legend) set('legend', s.legend);
     if (s.elo) { $('elo').value = s.elo; $('elo').dispatchEvent(new Event('input')); }
     $('mode').dispatchEvent(new Event('click'));
   }
@@ -151,7 +158,8 @@ export class UI {
     if (!has) return;
     const n = Math.ceil(saved.moves.length / 2);
     const m = saved.settings.mode;
-    const who = m === 'hotseat' ? 'Two players' : m === 'watch' ? 'Stockfish vs Stockfish'
+    const legend = m === 'legend' && LEGENDS.find((l) => l.id === saved.settings.legend);
+    const who = legend ? legend.title : m === 'hotseat' ? 'Two players' : m === 'watch' ? 'Stockfish vs Stockfish'
       : `You are ${m === 'white' ? 'White' : 'Black'} vs Stockfish ${saved.settings.elo >= 3190 ? '(full)' : saved.settings.elo}`;
     $('continue-info').textContent = `Saved game: move ${n} · ${who}`;
   }
@@ -193,7 +201,7 @@ export class UI {
   readSettings() {
     const battles = this.seg('battles');
     $('btn-battle').classList.toggle('off', battles === 'quick');
-    return { mode: this.seg('mode'), elo: +$('elo').value, battles, pace: +this.seg('pace') };
+    return { mode: this.seg('mode'), elo: +$('elo').value, battles, pace: +this.seg('pace'), legend: this.seg('legend') };
   }
 
   progress(frac, label) {
@@ -283,9 +291,38 @@ export class UI {
     });
   }
 
-  gameOver(title, text) {
+  gameOver(title, text, st = null) {
     $('over-title').textContent = title;
     $('over-text').textContent = text;
+    const box = $('over-stats');
+    box.innerHTML = '';
+    if (st) {
+      const row = (k, v) => { const d = document.createElement('div'); d.className = 'st-row'; d.innerHTML = `<span></span><b></b>`; d.children[0].textContent = k; d.children[1].textContent = v; box.appendChild(d); };
+      if (st.acc.w != null || st.acc.b != null) {
+        const a = document.createElement('div');
+        a.className = 'st-acc';
+        for (const c of ['w', 'b']) {
+          const v = st.acc[c];
+          a.insertAdjacentHTML('beforeend', `<div><span>${c === 'w' ? 'White' : 'Black'}</span><b>${v == null ? '–' : v + '%'}</b><i style="--v:${v ?? 0}"></i></div>`);
+        }
+        box.appendChild(a);
+      }
+      if (st.blunder) row('Worst move', st.blunder.label);
+      if (st.mvp) row('MVP', `${st.mvp.name} · ${st.mvp.kills} ${st.mvp.kills === 1 ? 'kill' : 'kills'}`);
+    }
     this.show('over');
+  }
+
+  /** Titelkort för ett berömt parti: namn, plats och år, spelarna. */
+  legendCard(l) {
+    const c = $('legend-card');
+    c.querySelector('.lc-title').textContent = l.title;
+    c.querySelector('.lc-where').textContent = l.where;
+    c.querySelector('.lc-players').textContent = `${l.white}  vs  ${l.black}`;
+    c.classList.remove('hidden', 'go');
+    void c.offsetWidth;
+    c.classList.add('go');
+    clearTimeout(this.legendTimer);
+    this.legendTimer = setTimeout(() => c.classList.add('hidden'), 5200);
   }
 }

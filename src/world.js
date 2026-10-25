@@ -48,6 +48,7 @@ export class World {
     this.shake = 0;
     this.tierName = tier.name;
     this.timeScale = 1; // felsökning: BC.world.timeScale = 0.2 för slowmotion
+    this.fast = 1;      // snabbspolning när spelaren hoppar över en duell
     this.slow = 1;      // filmisk slowmotion/träffstopp (se slowmo, hitstop)
     this.slowUntil = 0;
     this.tmp = new THREE.Vector3();
@@ -302,7 +303,7 @@ export class World {
     const loop = () => {
       const now = performance.now();
       if (now > this.slowUntil) this.slow += (1 - this.slow) * 0.12;
-      const dt = Math.min(this.clock.getDelta(), 1 / 20) * this.timeScale * this.slow;
+      const dt = Math.min(this.clock.getDelta(), 1 / 20) * this.timeScale * (this.fast > 1 ? 1 : this.slow) * this.fast;
       const t = this.clock.elapsedTime;
       for (const fn of this.updaters) fn(dt, t);
       if (this.controls.enabled) this.controls.update();

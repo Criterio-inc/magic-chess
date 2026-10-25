@@ -291,6 +291,52 @@
    "clap": [
     "/audio/voice/patsy_clap_0_d1b9d1e4.mp3"
    ]
+  },
+  "taunter": {
+   "fart": [
+    "/audio/voice/taunter_fart_0_12b2a2da.mp3"
+   ],
+   "hamster": [
+    "/audio/voice/taunter_hamster_0_a9ba900d.mp3"
+   ],
+   "goaway": [
+    "/audio/voice/taunter_goaway_0_ca61f359.mp3"
+   ],
+   "ni": [
+    "/audio/voice/taunter_ni_0_3d0b88dd.mp3"
+   ],
+   "really": [
+    "/audio/voice/taunter_really_0_ef2d6e9a.mp3"
+   ],
+   "wellplayed": [
+    "/audio/voice/taunter_wellplayed_0_f93e1fda.mp3"
+   ],
+   "expect": [
+    "/audio/voice/taunter_expect_0_7a2afc5e.mp3"
+   ],
+   "hurry": [
+    "/audio/voice/taunter_hurry_0_90d37e38.mp3"
+   ]
+  },
+  "blackknight": {
+   "nonepass": [
+    "/audio/voice/blackknight_nonepass_0_e084fbcb.mp3"
+   ],
+   "scratch": [
+    "/audio/voice/blackknight_scratch_0_c0c3053e.mp3"
+   ],
+   "flesh": [
+    "/audio/voice/blackknight_flesh_0_3cd1cbd9.mp3"
+   ],
+   "invincible": [
+    "/audio/voice/blackknight_invincible_0_48a48e10.mp3"
+   ],
+   "draw": [
+    "/audio/voice/blackknight_draw_0_a611164f.mp3"
+   ],
+   "bite": [
+    "/audio/voice/blackknight_bite_0_949c2d37.mp3"
+   ]
   }
  },
  "herald": {

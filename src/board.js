@@ -101,6 +101,34 @@ export class Board {
     });
   }
 
+  /** Glödande pil över brädet (tipset): tonar in, pulserar och tonar ut efter `sec` sekunder. */
+  showArrow(from, to, { color = 0xffc861, sec = 4.5 } = {}) {
+    this.arrow?.userData.kill();
+    const a = this.toWorld(from), b = this.toWorld(to);
+    const len = a.distanceTo(b);
+    const w = 0.22 * this.S, head = 0.42 * this.S, hw = 0.38 * this.S;
+    const s = new THREE.Shape();
+    const L = len - head;
+    s.moveTo(-w / 2, 0.2 * this.S); s.lineTo(w / 2, 0.2 * this.S); s.lineTo(w / 2, L); s.lineTo(hw, L);
+    s.lineTo(0, len); s.lineTo(-hw, L); s.lineTo(-w / 2, L); s.closePath();
+    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+    const m = new THREE.Mesh(new THREE.ShapeGeometry(s), mat);
+    m.rotation.x = -Math.PI / 2;
+    m.rotation.z = -Math.atan2(b.x - a.x, -(b.z - a.z));
+    m.position.copy(a).setY(this.top + 0.03);
+    m.renderOrder = 2;
+    this.world.scene.add(m);
+    this.arrow = m;
+    let t = 0;
+    const off = this.world.addUpdater((dt) => {
+      t += dt;
+      const fade = Math.min(1, t / 0.3, Math.max(0, (sec - t) / 0.6));
+      mat.opacity = fade * (0.8 + 0.2 * Math.sin(t * 5));
+      if (t >= sec) m.userData.kill();
+    });
+    m.userData.kill = () => { off(); m.removeFromParent(); m.geometry.dispose(); mat.dispose(); if (this.arrow === m) this.arrow = null; };
+  }
+
   setHover(square) {
     this.hover.visible = !!square;
     if (!square) return;

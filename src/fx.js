@@ -452,8 +452,8 @@ export class FX {
     // vilka ben räknas (för delkrossning): dominant ben per vertex ur skinIndex/skinWeight
     const boneOk = opts.bones ? piece.meshes.map((mesh) => {
       const si = mesh.geometry.getAttribute('skinIndex'), sw = mesh.geometry.getAttribute('skinWeight');
-      const names = mesh.skeleton.bones.map((b) => b.name.replace(/[^A-Za-z]/g, ''));
-      const want = new Set(opts.bones.map((n) => n.replace(/[^A-Za-z]/g, '')));
+      const names = mesh.skeleton.bones.map((b) => b.name.replace(/[^A-Za-z0-9]/g, ''));
+      const want = new Set(opts.bones.map((n) => n.replace(/[^A-Za-z0-9]/g, '')));
       const ok = new Uint8Array(si.count);
       for (let i = 0; i < si.count; i++) {
         let best = 0, bw = -1;

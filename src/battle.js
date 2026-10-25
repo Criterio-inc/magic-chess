@@ -448,7 +448,12 @@ export class Choreographer {
     } else att.onAttackCry?.();
 
     let atk;
-    if (cinematic && !this.force && this.lib?.extras?.rabbit && Math.random() < (this.rabbitChance ?? 0.04)) {
+    const melee = ['sparks', 'holy', 'slam', 'uppercut'].includes(mv.fx);
+    if (cinematic && melee && vic.type !== 'k' && (force.blackKnight || (!this.force && Math.random() < (this.blackKnightChance ?? 0.03)))) {
+      // "None shall pass": offret blir Svarte riddaren och vägrar ge sig, lem för lem
+      this.lastBattle.blackKnight = true;
+      atk = this.blackKnight(att, vic, vpos, away, mv, impacts[0]).then(resolveDeath);
+    } else if (cinematic && !this.force && this.lib?.extras?.rabbit && Math.random() < (this.rabbitChance ?? 0.04)) {
       // "That's no ordinary rabbit!" — kaninen tar offret i stället
       atk = this.killerRabbit(att, vic, vpos, away).then(resolveDeath);
     } else {
@@ -552,6 +557,82 @@ export class Choreographer {
           }]] });
         }
       }
+    });
+  }
+
+  /** Svarte riddaren: armarna och benen huggs av en i taget medan offret hävdar att det bara är en skråma.
+   *  Till sist står bålen på marken, erbjuder remi och krossas med ett sista hugg. */
+  async blackKnight(att, vic, vpos, away, mv, hitT) {
+    const say = (k) => wait(Math.min(2.2, this.voice?.say('blackknight', k, { gain: 1 }) || 1.2));
+    const pan = this.pan(vpos);
+    const H = vic.meta.height;
+    let hops = null;
+    const strike = (bones, hide) => new Promise((resolve) => {
+      att.play(mv.clip, { timeScale: 0.9, events: [
+        [Math.max(0, hitT - 0.14), () => this.sound.whoosh(this.pan(att.position))],
+        [hitT, () => {
+          this.fx.sparks(vic.chest(new THREE.Vector3()), away, 0xffd9a0, 40);
+          this.sound.clang(pan);
+          this.fx.shatter(vic, away, { bones, keep: true, power: 0.8, dust: 0.3 });
+          vic.hideBones(hide);
+          this.sound.bank?.sfx('arm_crack', { pan });
+          this.world.hitstop(0.08);
+          resolve();
+        }],
+      ] }).then(() => att.idle(0.25));
+    });
+    const limb = (side, part) => part === 'arm'
+      ? [[`upperarm.${side}`, `forearm.${side}`, `hand.${side}`, `prop.${side}`], [`upperarm.${side}`]]
+      : [[`thigh.${side}`, `shin.${side}`, `foot.${side}`], [`thigh.${side}`]];
+
+    att.idle(0.2);
+    await say('nonepass');
+    await wait(0.3);
+    // vänster arm
+    await strike(...limb('L', 'arm'));
+    vic.play('hit', { timeScale: 0.8 }).then(() => vic.idle(0.2));
+    await wait(0.5);
+    await say('scratch');
+    // höger arm
+    await strike(...limb('R', 'arm'));
+    vic.play('hit', { timeScale: 0.8 }).then(() => vic.idle(0.2));
+    await wait(0.5);
+    await say('flesh');
+    // ett ben: offret hoppar trotsigt på det andra
+    await strike(...limb('L', 'leg'));
+    const y0 = vic.root.position.y;
+    let hopping = true;
+    hops = (async () => {
+      while (hopping) {
+        await tween(0.32, (k) => { vic.root.position.y = y0 + Math.sin(k * Math.PI) * 0.16 * H / 2; vic.root.rotation.z = Math.sin(k * Math.PI) * 0.06; }, ease.linear);
+        this.sound.step(0.9, pan);
+      }
+    })();
+    await say('invincible');
+    await wait(0.4);
+    // det andra benet: bålen sjunker ner på marken
+    await strike(...limb('R', 'leg'));
+    hopping = false;
+    await hops;
+    const drop = 0.47 * H;
+    this.fx.dust(vpos.clone().setY(this.board.top + 0.1), 14, 0.8);
+    await tween(0.28, (k) => { vic.root.position.y = y0 - drop * k; vic.root.rotation.z = 0; }, ease.in);
+    this.sound.thud(pan, 1.1);
+    this.world.shake = Math.max(this.world.shake, 0.15);
+    await wait(0.6);
+    await say('draw');
+    await wait(0.4);
+    // sista hugget, medan bålen hotar att bita benen av angriparen
+    this.voice?.say('blackknight', 'bite', { gain: 1 });
+    await wait(0.6);
+    await new Promise((resolve) => {
+      att.play(mv.clip, { timeScale: 1, events: [[hitT, () => {
+        this.fx.sparks(vic.chest(new THREE.Vector3()), away, 0xffd9a0, 50);
+        this.sound.clang(pan);
+        this.world.slowmo(0.3, 0.7);
+        this.director.punch();
+        this.die(vic, 'crumble', away).then(resolve);
+      }]] });
     });
   }
 

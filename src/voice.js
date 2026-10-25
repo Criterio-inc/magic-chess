@@ -50,14 +50,16 @@ export class Voice {
     return this.buffers.get(u);
   }
 
-  playBuffer(buf, { gain = 1, pan = 0, rate = 1, wet = 0.2, loop = false, fade = 0 } = {}) {
+  playBuffer(buf, { gain = 1, pan = 0, rate = 1, wet = 0.2, loop = false, fade = 0, voice = false } = {}) {
     const s = this.sound;
     if (!s.ok || !buf) return null;
     const src = s.ctx.createBufferSource();
     src.buffer = buf;
     src.playbackRate.value = rate;
     src.loop = loop;
-    const out = s.out(fade ? 0 : gain, wet, pan);
+    // röster går förbi bädden och duckar den så länge de hörs
+    if (voice) s.duck(buf.duration / rate);
+    const out = s.out(fade ? 0 : gain, wet, pan, voice);
     if (fade) out.gain.linearRampToValueAtTime(gain, s.ctx.currentTime + fade);
     src.connect(out);
     src.start();
@@ -80,6 +82,7 @@ export class Voice {
   /** Pjäsens replik (select, move, retreat, attack, hit, fleshwound, death, kill, annoyed, bored, check, grenade).
    *  Svarta pjäser låter något mörkare. Returnerar replikens längd i sekunder (0 om den inte är avkodad än). */
   piece(piece, kind) {
+    if (this.sound.hushed) return 0;
     const set = this.manifest.voice[piece.name] || {};
     const lines = set[kind] || (kind === 'retreat' ? set.move : null) || ((kind === 'move' || kind === 'retreat' || kind === 'annoyed') ? set.select : null);
     if (!lines?.length || !this.sound.ok) return 0;
@@ -90,7 +93,7 @@ export class Voice {
     const go = (buf) => {
       if (!buf) return;
       if ((kind === 'select' || kind === 'move') && this.speaking) try { this.speaking.stop(); } catch { /* redan slut */ }
-      this.speaking = this.playBuffer(buf, { gain: kind === 'death' ? 0.9 : 0.8, rate, wet: 0.18 });
+      this.speaking = this.playBuffer(buf, { gain: kind === 'death' ? 0.9 : 0.8, rate, wet: 0.18, voice: true });
     };
     const buf = this.buffers.get(u);
     if (buf) { go(buf); return buf.duration / rate; }
@@ -98,12 +101,24 @@ export class Voice {
     return 2.6; // okänd längd: en rimlig gissning för väntan (granaten)
   }
 
+  /** En namngiven röst utanför pjäserna (taunter, blackknight). Returnerar längden i sekunder (gissning om ej avkodad). */
+  say(who, kind, { gain = 0.9, rate = 1, wet = 0.2 } = {}) {
+    const lines = this.manifest.voice[who]?.[kind];
+    if (!lines?.length || !this.sound.ok || this.sound.hushed) return 0;
+    const u = lines[Math.floor(Math.random() * lines.length)];
+    const go = (buf) => buf && this.playBuffer(buf, { gain, rate, wet, voice: true });
+    const buf = this.buffers.get(u);
+    if (buf) { go(buf); return buf.duration / rate; }
+    this.decode(u).then(go);
+    return 2.2;
+  }
+
   herald(key) {
     const buf = this.pick(this.manifest.herald[key]);
-    if (!buf) return;
+    if (!buf || this.sound.hushed) return;
     const now = performance.now();
     if (now - this.lastHerald < 700) return;
     this.lastHerald = now;
-    this.playBuffer(buf, { gain: 0.95, wet: 0.35, rate: 1 });
+    this.playBuffer(buf, { gain: 0.95, wet: 0.35, rate: 1, voice: true });
   }
 }
