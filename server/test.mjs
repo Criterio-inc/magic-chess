@@ -1,5 +1,5 @@
 // Starttest för online-servern: startar index.js på en slumpad port och spelar igenom
-// protokollet (PROTOCOL.md) med två ws-klienter. Avslutas med kod 1 vid första fel.
+// protokollet (PROTOCOL.md) med ws-klienter (spelare och åskådare). Avslutas med kod 1 vid första fel.
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
@@ -13,6 +13,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const TMP = mkdtempSync(join(tmpdir(), 'battlechess-test-'));
 const DATA_FILE = join(TMP, 'rooms.json');
 const ABANDON_MS = 1500;
+const TAUNT_MS = 400; // kort påfyllning av glåpordshinken så att testet går fort
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const CODE_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/;
 
@@ -22,7 +23,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function startServer() {
   const proc = spawn(process.execPath, [join(HERE, 'index.js')], {
-    env: { ...process.env, PORT: '0', DATA_FILE, ABANDON_MS: String(ABANDON_MS) },
+    env: { ...process.env, PORT: '0', DATA_FILE, ABANDON_MS: String(ABANDON_MS), TAUNT_MS: String(TAUNT_MS) },
     stdio: ['ignore', 'pipe', 'inherit'],
   });
   const port = await new Promise((resolve, reject) => {
@@ -101,15 +102,26 @@ async function play(mover, from, to, ply, san) {
   return echoes[0];
 }
 
-// Båda skickar rematch och får start; returnerar state.
+// Båda skickar rematch och får start (med sin nya, bytta färg); returnerar state.
 async function rematch() {
+  const alice = colorOf('Alice');
   A.send({ t: 'rematch' });
-  assert.equal((await B.next('rematch')).by, colorOf('Alice'));
+  assert.equal((await B.next('rematch')).by, alice);
   B.send({ t: 'rematch' });
   const [sa, sb] = [await A.next('start'), await B.next('start')];
-  assert.deepEqual(sa, sb);
+  assert.deepEqual(sa.state, sb.state);
+  assert.equal(sa.color, alice === 'w' ? 'b' : 'w');
+  assert.equal(sb.color, alice);
   current = sa.state;
   return sa.state;
+}
+
+// Alla klienterna i listan får samma meddelande av typen t; returnerar det.
+async function all(clients, t) {
+  const got = [];
+  for (const c of clients) got.push(await c.next(t));
+  for (const m of got.slice(1)) assert.deepEqual(m, got[0]);
+  return got[0];
 }
 let current; // senaste state, för att veta vem som har vilken färg
 const colorOf = (name) => (current.white.name === name ? 'w' : 'b');
@@ -142,8 +154,11 @@ step('create → join (gemener i koden) → start', async () => {
 
   assert.deepEqual(await A.next('opponent'), { t: 'opponent', status: 'joined', name: 'Bob' });
   const [sa, sb] = [await A.next('start'), await B.next('start')];
-  assert.deepEqual(sa, sb);
+  assert.deepEqual(sa.state, sb.state);
+  assert.equal(sa.color, 'w');
+  assert.equal(sb.color, 'b');
   assert.equal(sa.state.fen, START_FEN);
+  assert.equal(sa.state.watchers, 0);
   assert.deepEqual(sa.state.moves, []);
   assert.equal(sa.state.turn, 'w');
   assert.equal(sa.state.ply, 0);
@@ -356,6 +371,176 @@ step(`övergivet parti efter ABANDON_MS (${ABANDON_MS} ms) → over abandoned`, 
   assert.deepEqual(await E.next('over', ABANDON_MS + 2000), { t: 'over', result: '1-0', reason: 'abandoned' });
   assert.ok(Date.now() - t0 >= ABANDON_MS - 50, 'för tidigt');
   await E.close();
+});
+
+// ---- åskådare, glåpord och rematch med publik (ett eget rum: Wilma mot Quentin) ----
+
+let P, Q, S, S2, codeP, tokP;
+
+step('watch: åskådaren får ställningen och följer dragen; alla ser antalet', async () => {
+  P = await connect(srv.port);
+  Q = await connect(srv.port);
+  create(P, { color: 'w', name: 'Wilma' });
+  ({ code: codeP, token: tokP } = await P.next('created'));
+  Q.send({ t: 'join', code: codeP, name: 'Quentin' });
+  await Q.next('joined');
+  await P.next('opponent');
+  await P.next('start');
+  await Q.next('start');
+  P.send({ t: 'move', from: 'e2', to: 'e4', ply: 0 });
+  await all([P, Q], 'move');
+
+  S = await connect(srv.port);
+  S.send({ t: 'watch', code: codeP.toLowerCase() });
+  const w = await S.next('watching');
+  assert.equal(w.code, codeP);
+  assert.ok(!('token' in w) && !('color' in w), 'åskådare får varken token eller färg');
+  assert.deepEqual(w.state.moves, [{ from: 'e2', to: 'e4', san: 'e4' }]);
+  assert.equal(w.state.ply, 1);
+  assert.equal(w.state.turn, 'b');
+  assert.deepEqual(w.state.white, { name: 'Wilma', online: true });
+  assert.deepEqual(w.state.black, { name: 'Quentin', online: true });
+  assert.equal(w.state.watchers, 1);
+  assert.deepEqual(await all([P, Q, S], 'watchers'), { t: 'watchers', n: 1 });
+  Q.send({ t: 'move', from: 'e7', to: 'e5', ply: 1 });
+  const m = await all([P, Q, S], 'move');
+  assert.equal(m.san, 'e5');
+  assert.equal(m.by, 'b');
+});
+
+step('åskådaren kan inte dra (reject spectator), ge upp, erbjuda remi, be om rematch eller ta en plats', async () => {
+  S.send({ t: 'move', from: 'g1', to: 'f3', ply: 2 });
+  const r = await S.next('reject');
+  assert.equal(r.reason, 'spectator');
+  assert.equal(r.state.ply, 2);
+  for (const t of ['resign', 'draw-offer', 'rematch']) {
+    S.send({ t });
+    assert.equal((await S.next('error')).code, 'spectator', t);
+  }
+  S.send({ t: 'draw-answer', accept: true });
+  assert.equal((await S.next('error')).code, 'spectator');
+  S.send({ t: 'join', code: codeP }); // åskådare upptar ingen plats – rummet är fullt ändå
+  assert.equal((await S.next('error')).code, 'room-full');
+  S.send({ t: 'rejoin', code: codeP, token: 'gissad' });
+  assert.equal((await S.next('error')).code, 'bad-token');
+  await P.quiet();
+  await Q.quiet();
+  // partiet är orört och åskådaren tittar fortfarande
+  P.send({ t: 'move', from: 'g1', to: 'f3', ply: 2 });
+  assert.equal((await all([P, Q, S], 'move')).san, 'Nf3');
+});
+
+step('watch: okänd kod → no-such-room, fel typ → bad-request, eget rum → bad-request', async () => {
+  const D = await connect(srv.port);
+  D.send({ t: 'watch', code: codeP === 'ZZZZZZ' ? 'YYYYYY' : 'ZZZZZZ' });
+  assert.equal((await D.next('error')).code, 'no-such-room');
+  D.send({ t: 'watch', code: 5 });
+  assert.equal((await D.next('error')).code, 'bad-request');
+  P.send({ t: 'watch', code: codeP });
+  assert.equal((await P.next('error')).code, 'bad-request');
+  await D.close();
+  await Q.quiet();
+});
+
+step(`glåpord: ekas till alla med by; okänt id → bad-request; skur på 2, sedan 1 per ${TAUNT_MS} ms`, async () => {
+  P.send({ t: 'taunt', id: 'fart' });
+  assert.deepEqual(await all([P, Q, S], 'taunt'), { t: 'taunt', id: 'fart', by: 'w' });
+  for (const id of ['nope', 'toString', 42, undefined]) {
+    P.send({ t: 'taunt', id });
+    assert.equal((await P.next('error')).code, 'bad-request', String(id));
+  }
+  S.send({ t: 'taunt', id: 'ni' });
+  assert.equal((await S.next('error')).code, 'spectator');
+  P.send({ t: 'taunt', id: 'ni' }); // andra i skuren
+  assert.equal((await all([P, Q, S], 'taunt')).id, 'ni');
+  P.send({ t: 'taunt', id: 'hurry' }); // hinken är tom
+  assert.equal((await P.next('error')).code, 'rate-limited');
+  await Q.quiet();
+  await S.quiet();
+  Q.send({ t: 'taunt', id: 'hamster' }); // motståndaren har en egen hink
+  assert.deepEqual(await all([P, Q, S], 'taunt'), { t: 'taunt', id: 'hamster', by: 'b' });
+  await sleep(TAUNT_MS + 60);
+  P.send({ t: 'taunt', id: 'expect' }); // påfylld
+  assert.equal((await all([P, Q, S], 'taunt')).id, 'expect');
+});
+
+step('fler åskådare räknas; den som lämnar eller tappar anslutningen räknas bort', async () => {
+  S2 = await connect(srv.port);
+  S2.send({ t: 'watch', code: codeP });
+  assert.equal((await S2.next('watching')).state.watchers, 2);
+  assert.deepEqual(await all([P, Q, S, S2], 'watchers'), { t: 'watchers', n: 2 });
+  await S2.close();
+  assert.deepEqual(await all([P, Q, S], 'watchers'), { t: 'watchers', n: 1 });
+  const S3 = await connect(srv.port);
+  S3.send({ t: 'watch', code: codeP });
+  await S3.next('watching');
+  await all([P, Q, S, S3], 'watchers');
+  S3.send({ t: 'leave' });
+  assert.deepEqual(await all([P, Q, S], 'watchers'), { t: 'watchers', n: 1 });
+  await S3.quiet();
+  await S3.close();
+});
+
+step('rematch med åskådare: båda måste be, färgerna byts, samma rum och tokens', async () => {
+  P.send({ t: 'rematch' }); // partiet pågår: ignoreras
+  await Q.quiet();
+  await S.quiet();
+  P.send({ t: 'resign' });
+  assert.deepEqual(await all([P, Q, S], 'over'), { t: 'over', result: '0-1', reason: 'resign' });
+  P.send({ t: 'rematch' });
+  assert.deepEqual(await all([Q, S], 'rematch'), { t: 'rematch', by: 'w' });
+  P.send({ t: 'rematch' }); // dubblett: ignoreras
+  await P.quiet();
+  await Q.quiet();
+  await S.quiet();
+  // en ny åskådare får veta att vit vill spela igen
+  S2 = await connect(srv.port);
+  S2.send({ t: 'watch', code: codeP });
+  assert.deepEqual((await S2.next('watching')).state.over, { result: '0-1', reason: 'resign' });
+  await all([P, Q, S, S2], 'watchers');
+  assert.deepEqual(await S2.next('rematch'), { t: 'rematch', by: 'w' });
+
+  Q.send({ t: 'rematch' });
+  const [sp, sq, ss, ss2] = [await P.next('start'), await Q.next('start'), await S.next('start'), await S2.next('start')];
+  assert.equal(sp.color, 'b');
+  assert.equal(sq.color, 'w');
+  assert.ok(!('color' in ss) && !('color' in ss2), 'åskådare får ingen färg');
+  for (const m of [sq, ss, ss2]) assert.deepEqual(m.state, sp.state);
+  assert.equal(sp.state.fen, START_FEN);
+  assert.equal(sp.state.ply, 0);
+  assert.equal(sp.state.over, null);
+  assert.equal(sp.state.watchers, 2);
+  assert.deepEqual(sp.state.white, { name: 'Quentin', online: true });
+  assert.deepEqual(sp.state.black, { name: 'Wilma', online: true });
+  P.send({ t: 'move', from: 'e2', to: 'e4', ply: 0 }); // Wilma är svart nu
+  assert.equal((await P.next('reject')).reason, 'not-your-turn');
+  Q.send({ t: 'move', from: 'd2', to: 'd4', ply: 0 });
+  assert.equal((await all([P, Q, S, S2], 'move')).by, 'w');
+
+  // samma token gäller efter rematchen, nu för svart
+  await P.close();
+  assert.deepEqual(await Q.next('opponent'), { t: 'opponent', status: 'disconnected' });
+  P = await connect(srv.port);
+  P.send({ t: 'rejoin', code: codeP, token: tokP });
+  const j = await P.next('joined');
+  assert.equal(j.color, 'b');
+  assert.equal(j.token, tokP);
+  assert.equal(j.state.watchers, 2);
+  assert.deepEqual(j.state.moves.map((m) => m.san), ['d4']);
+  assert.deepEqual(await Q.next('opponent'), { t: 'opponent', status: 'reconnected', name: 'Wilma' });
+  await S.quiet();
+});
+
+step('båda spelarna lämnar → åskådarna får over och sedan no-such-room', async () => {
+  P.send({ t: 'leave' }); // Wilma (svart) lämnar mitt i partiet
+  assert.deepEqual(await all([Q, S, S2], 'over'), { t: 'over', result: '1-0', reason: 'abandoned' });
+  assert.deepEqual(await Q.next('opponent'), { t: 'opponent', status: 'left' });
+  Q.send({ t: 'leave' });
+  for (const s of [S, S2]) assert.equal((await s.next('error')).code, 'no-such-room');
+  await Q.quiet();
+  S.send({ t: 'watch', code: codeP });
+  assert.equal((await S.next('error')).code, 'no-such-room');
+  for (const c of [P, Q, S, S2]) await c.close();
 });
 
 step('max 10 nya rum per IP och minut → rate-limited', async () => {

@@ -1,5 +1,6 @@
 // Rum och partier enligt PROTOCOL.md – ren logik utan sockets, så att den går att testa.
-// En "klient" är vilket objekt som helst med send(obj); lobbyn sätter client.room och client.color.
+// En "klient" är vilket objekt som helst med send(obj); lobbyn sätter client.room och client.color
+// (spelare) eller client.watching (åskådare).
 import { randomInt, randomUUID } from 'node:crypto';
 import { Chess } from 'chess.js';
 
@@ -8,6 +9,10 @@ const CODE_RE = new RegExp(`^[${ALPHABET}]{6}$`);
 const SQUARE_RE = /^[a-h][1-8]$/;
 const PROMOTIONS = ['q', 'r', 'b', 'n'];
 const MAX_NAME = 24;
+const MAX_WATCHERS = 50;
+const TAUNT_BURST = 2; // så många glåpord i rad, sedan ett per tauntMs
+// Glåporden som får skickas (texterna och rösterna finns i klienten, src/online-extras.js).
+export const TAUNTS = ['fart', 'hamster', 'goaway', 'ni', 'really', 'wellplayed', 'expect', 'hurry'];
 
 const other = (c) => (c === 'w' ? 'b' : 'w');
 const winner = (c) => (c === 'w' ? '1-0' : '0-1');
@@ -39,9 +44,10 @@ function parseCode(v) {
 }
 
 export class Lobby {
-  constructor({ abandonMs = 10 * 60_000, ttlMs = 24 * 3_600_000, now = Date.now } = {}) {
+  constructor({ abandonMs = 10 * 60_000, ttlMs = 24 * 3_600_000, tauntMs = 4000, now = Date.now } = {}) {
     this.abandonMs = abandonMs;
     this.ttlMs = ttlMs;
+    this.tauntMs = tauntMs;
     this.now = now;
     this.rooms = new Map();
   }
@@ -63,6 +69,7 @@ export class Lobby {
 
   // Anslutningen tappades (inte samma sak som leave).
   disconnect(client) {
+    this._unwatch(client);
     const room = client.room;
     if (!room) return;
     const seat = room.seats[client.color];
@@ -89,7 +96,7 @@ export class Lobby {
         }
       }
       const online = ['w', 'b'].some((c) => room.seats[c]?.client);
-      if (!online && now - room.lastActive >= this.ttlMs) this.rooms.delete(room.code);
+      if (!online && now - room.lastActive >= this.ttlMs) this._close(room);
     }
   }
 
@@ -103,6 +110,7 @@ export class Lobby {
       turn: room.chess.turn(),
       over: room.over,
       ply: room.moves.length,
+      watchers: room.watchers.size,
     };
   }
 
@@ -163,6 +171,7 @@ export class Lobby {
       over: null,
       drawOffer: null,
       rematch: new Set(),
+      watchers: new Set(), // åskådarnas anslutningar (sparas inte)
       lastActive: this.now(),
     };
   }
@@ -181,6 +190,7 @@ export class Lobby {
 
   // Sätter anslutningen på platsen. Satt den någon annanstans räknas det som bortkoppling där.
   _attach(client, room, seat) {
+    this._unwatch(client);
     if (client.room && client.room.seats[client.color] !== seat) this.disconnect(client);
     seat.client = client;
     seat.goneAt = null;
@@ -189,17 +199,21 @@ export class Lobby {
   }
 
   // Nytt parti (första gången eller rematch). Klockan för att överge börjar om för den som är borta.
+  // Spelarna får sin färg i meddelandet (den byts vid rematch), åskådarna bara ställningen.
   _start(room) {
     room.started = true;
     for (const c of ['w', 'b']) {
       const s = room.seats[c];
       if (!s.client) s.goneAt = this.now();
     }
-    this._broadcast(room, { t: 'start', state: this.state(room) });
+    const state = this.state(room);
+    for (const c of ['w', 'b']) this._send(room, c, { t: 'start', state, color: c });
+    this._toWatchers(room, { t: 'start', state });
   }
 
-  // Rummet och platsen som anslutningen sitter på, annars bad-request.
+  // Rummet och platsen som anslutningen sitter på, annars bad-request (spectator för åskådare).
   _mine(client) {
+    if (client.watching) throw new ProtocolError('spectator', 'Åskådare kan bara titta');
     const room = client.room;
     if (!room || room.seats[client.color]?.client !== client) throw bad('Du är inte med i något rum');
     room.lastActive = this.now();
@@ -210,9 +224,49 @@ export class Lobby {
     room.seats[color]?.client?.send(msg);
   }
 
+  _toWatchers(room, msg) {
+    for (const w of room.watchers) w.send(msg);
+  }
+
+  // Till alla i rummet: båda spelarna och åskådarna.
   _broadcast(room, msg) {
     this._send(room, 'w', msg);
     this._send(room, 'b', msg);
+    this._toWatchers(room, msg);
+  }
+
+  // Antalet åskådare har ändrats.
+  _watchersChanged(room) {
+    this._broadcast(room, { t: 'watchers', n: room.watchers.size });
+  }
+
+  // Åskådaren slutar titta (tar en plats, tittar på ett annat rum, lämnar eller tappar anslutningen).
+  _unwatch(client) {
+    const room = client.watching;
+    if (!room) return;
+    client.watching = null;
+    if (room.watchers.delete(client)) this._watchersChanged(room);
+  }
+
+  // Rummet försvinner; åskådarna får veta det.
+  _close(room) {
+    this.rooms.delete(room.code);
+    for (const w of room.watchers) {
+      w.watching = null;
+      w.send({ t: 'error', code: 'no-such-room', message: 'Rummet har stängts' });
+    }
+    room.watchers.clear();
+  }
+
+  // Glåpord: hink med TAUNT_BURST polletter som fylls på med en per tauntMs. Hinken följer platsen.
+  _mayTaunt(seat) {
+    const now = this.now();
+    const b = (seat.taunt ??= { tokens: TAUNT_BURST, at: now });
+    b.tokens = Math.min(TAUNT_BURST, b.tokens + (now - b.at) / this.tauntMs);
+    b.at = now;
+    if (b.tokens < 1) return false;
+    b.tokens -= 1;
+    return true;
   }
 
   _reject(client, room, reason) {
@@ -308,6 +362,7 @@ const HANDLERS = {
   },
 
   move(client, msg) {
+    if (client.watching) return this._reject(client, client.watching, 'spectator');
     const { room, color } = this._mine(client);
     const { from, to, promotion, ply } = msg;
     if (typeof from !== 'string' || !SQUARE_RE.test(from)) throw bad('from måste vara en ruta, t.ex. e2');
@@ -364,7 +419,11 @@ const HANDLERS = {
     const opp = room.seats[other(color)];
     if (!room.over || !opp || opp.left || room.rematch.has(color)) return;
     room.rematch.add(color);
-    if (room.rematch.size < 2) return this._send(room, other(color), { t: 'rematch', by: color });
+    if (room.rematch.size < 2) {
+      this._send(room, other(color), { t: 'rematch', by: color });
+      this._toWatchers(room, { t: 'rematch', by: color });
+      return;
+    }
     // Nytt parti, färgerna byts.
     [room.seats.w, room.seats.b] = [room.seats.b, room.seats.w];
     for (const c of ['w', 'b']) {
@@ -381,6 +440,7 @@ const HANDLERS = {
   },
 
   leave(client) {
+    if (client.watching) return this._unwatch(client);
     const { room, color } = this._mine(client);
     const seat = room.seats[color];
     seat.client = null;
@@ -388,10 +448,36 @@ const HANDLERS = {
     seat.left = true;
     client.room = client.color = null;
     const opp = room.seats[other(color)];
-    if (!opp || opp.left) return this.rooms.delete(room.code);
+    if (!opp || opp.left) return this._close(room);
     if (this._playing(room)) this._finish(room, winner(other(color)), 'abandoned');
     room.rematch.clear();
     this._send(room, other(color), { t: 'opponent', status: 'left' });
+  },
+
+  // Titta på ett rum som åskådare: ingen plats, ingen token, inga drag.
+  watch(client, msg) {
+    const code = parseCode(msg.code);
+    const room = this.rooms.get(code);
+    if (!room) throw new ProtocolError('no-such-room', 'Rummet finns inte');
+    if (client.room === room) throw bad('Du spelar redan i rummet');
+    if (client.watching === room) return client.send({ t: 'watching', code, state: this.state(room) }); // synka igen
+    if (room.watchers.size >= MAX_WATCHERS) throw new ProtocolError('room-full', 'För många åskådare');
+    if (client.room) this.disconnect(client); // lämnar sin plats som vid en tappad anslutning
+    this._unwatch(client);
+    room.watchers.add(client);
+    client.watching = room;
+    client.send({ t: 'watching', code, state: this.state(room) });
+    this._watchersChanged(room);
+    // väntande rematch-önskemål syns inte i state
+    for (const c of room.rematch) client.send({ t: 'rematch', by: c });
+  },
+
+  // Glåpord till motståndaren och åskådarna (och ett eko till avsändaren).
+  taunt(client, msg) {
+    const { room, color } = this._mine(client);
+    if (typeof msg.id !== 'string' || !TAUNTS.includes(msg.id)) throw bad('Okänt glåpord');
+    if (!this._mayTaunt(room.seats[color])) throw new ProtocolError('rate-limited', 'Lugn i stormen – ett glåpord i taget');
+    this._broadcast(room, { t: 'taunt', id: msg.id, by: color });
   },
 
   ping(client) {

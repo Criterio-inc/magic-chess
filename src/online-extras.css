@@ -1,0 +1,48 @@
+/* Onlinetillägg: åskådare, glåpord och rematch (src/online-extras.js). */
+
+/* åskådare har inga spelarknappar */
+body.spectating #btn-draw, body.spectating #btn-resign, body.spectating #btn-taunt,
+body.spectating #over-rematch, body.spectating #over-rematch-note { display: none !important; }
+
+/* "Watch" bredvid "Join" */
+.join-row #online-watch { padding-left: 18px; padding-right: 18px; }
+
+/* åskådarräknaren under statusraden */
+#watchers { position: absolute; left: 50%; top: calc(max(18px, env(safe-area-inset-top)) + 46px); transform: translateX(-50%);
+  padding: 3px 12px; background: var(--glass); border: 1px solid var(--line); font-size: 14px; color: var(--ink-dim);
+  letter-spacing: 0.04em; white-space: nowrap; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: opacity 0.6s; }
+body:not(.online) #watchers, body.battle #watchers { opacity: 0; }
+
+/* glåpordsknappen svalnar mellan glåporden */
+#btn-taunt { font-size: 24px; line-height: 1; }
+#btn-taunt.cool { opacity: 0.45; }
+
+#taunt-menu { position: fixed; z-index: 16; display: flex; flex-direction: column; width: min(330px, calc(100vw - 16px));
+  background: var(--glass-hi); border: 1px solid var(--line); padding: 6px; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2); }
+#taunt-menu button { background: transparent; border: 0; border-bottom: 1px solid rgba(227, 183, 101, 0.14); text-align: left;
+  padding: 9px 12px; font-size: 17px; font-style: italic; color: var(--ink); }
+#taunt-menu button:last-child { border-bottom: 0; }
+#taunt-menu button:hover:not(:disabled) { background: rgba(227, 183, 101, 0.12); color: var(--gold-hi); }
+#taunt-menu button:disabled { opacity: 0.4; cursor: default; }
+
+/* pratbubbla: spetsen pekar på kungen (--tail = spetsens x i bubblan) */
+.taunt-bubble { position: fixed; left: 0; top: 0; z-index: 12; pointer-events: none; max-width: min(320px, 72vw);
+  padding: 10px 16px; border-radius: 16px; background: #f6efe0; color: #22180c; border: 2px solid #c9a35a;
+  font-size: 20px; font-style: italic; line-height: 1.25; box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45); transform-origin: 50% 100%;
+  opacity: 0; will-change: transform, opacity; }
+.taunt-bubble::after { content: ''; position: absolute; left: var(--tail, 50%); bottom: -11px; width: 18px; height: 18px;
+  margin-left: -9px; background: #f6efe0; border-right: 2px solid #c9a35a; border-bottom: 2px solid #c9a35a; transform: rotate(45deg); }
+.taunt-bubble.side-b { background: #2b2620; color: #f4efe6; border-color: #7a6440; }
+.taunt-bubble.side-b::after { background: #2b2620; border-color: #7a6440; }
+.taunt-bubble.free::after { display: none; }
+
+/* rematchraden i slutrutan */
+#over-rematch-note { margin: -10px 0 16px; color: var(--gold-hi); font-style: italic; }
+
+@media (max-width: 720px), (max-height: 520px) {
+  #watchers { top: calc(max(10px, env(safe-area-inset-top)) + 34px); font-size: 12px; }
+  .join-row .btn { padding-left: 12px; padding-right: 12px; }
+  .taunt-bubble { font-size: 17px; }
+  #taunt-menu button { font-size: 16px; padding: 8px 10px; }
+}

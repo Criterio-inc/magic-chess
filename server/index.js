@@ -11,6 +11,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT ?? 8241);
 const DATA_FILE = process.env.DATA_FILE ?? join(HERE, 'data', 'rooms.json');
 const ABANDON_MS = Number(process.env.ABANDON_MS ?? 10 * 60_000);
+const TAUNT_MS = Number(process.env.TAUNT_MS ?? 4000); // ett glåpord per 4 s (efter en liten skur)
 const TRUST_PROXY = !!process.env.TRUST_PROXY; // läs klientens IP ur X-Forwarded-For (bakom nginx o.d.)
 const SAVE_MS = 30_000;
 const TICK_MS = Math.min(1000, Math.max(50, ABANDON_MS / 4));
@@ -18,7 +19,7 @@ const HEARTBEAT_MS = 30_000;
 const MSG_PER_SEC = 20;
 const CREATES_PER_MIN = 10;
 
-const lobby = new Lobby({ abandonMs: ABANDON_MS });
+const lobby = new Lobby({ abandonMs: ABANDON_MS, tauntMs: TAUNT_MS });
 
 // ---- lagring ----
 
@@ -78,6 +79,7 @@ wss.on('connection', (ws, req) => {
   const client = {
     room: null,
     color: null,
+    watching: null, // rummet som åskådaren tittar på
     send(msg) {
       if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg));
     },
