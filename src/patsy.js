@@ -2,8 +2,26 @@
 // klappklipp. När springaren är framme bugar han (ibland: "It's only a model") och försvinner i ett dammoln.
 import * as THREE from 'three';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
-import { wait, tween, ease } from './util.js';
+import { wait, tween, ease, angleDelta } from './util.js';
 import { ensureBakeColor } from './pieces.js';
+import { sackcloth, coconutShell, withBake, withFloor } from './materials.js';
+
+const FOLLOW = 0.75;      // m bakom springarens mittpunkt: tätt i hälarna (manteln hänger ~0,35 m bakom honom)
+const CAPE_GAP = 0.34;    // m mellan mantelfållen och Patsys mittpunkt (händerna och kjolen når ~0,2 m framåt)
+const FOLLOW_MAX = 0.95;  // i full galopp släpar manteln efter: då lite längre bak, aldrig mer än så här
+const FOLLOW_RATE = 10;   // 1/s inställning mot målpunkten; springarens egen fart läggs på direkt (ingen eftersläpning)
+const CLEAR = 0.62;       // m minsta avstånd till springaren: vänder han tvärt går Patsy runt, inte igenom
+
+/** Patsys egen kostym (samma för båda lagen): bara huden är lagets marmor. Byggs en gång per bibliotek. */
+function costume(lib, color) {
+  lib.patsyCostume ||= {
+    Cloth: withFloor(withBake(sackcloth({ color: 0x7d5d3c }), { dirt: 0.55, edge: 0.35 })),            // kåpa och luva
+    Sack: withFloor(withBake(sackcloth({ color: 0xb59569, cell: 0.008, contrast: 0.36, mottle: 0.22 }), { dirt: 0.5, edge: 0.3 })),
+    Rope: withFloor(withBake(sackcloth({ color: 0xc8ad7c, cell: 0.003, contrast: 0.45, sheen: 0.2 }), { dirt: 0.4, edge: 0.45 })),
+    Wood: withFloor(withBake(coconutShell(), { dirt: 0.25, edge: 0.35 })),                               // kokosnötterna
+  };
+  return { ...lib.mats[color], ...lib.patsyCostume };
+}
 
 export class Patsy {
   constructor(chor, knight) {
@@ -13,7 +31,7 @@ export class Patsy {
     const meta = chor.lib.extras.patsyMeta || {};
     this.root = new THREE.Group();
     this.model = skeletonClone(src.scene);
-    const mats = chor.lib.mats[knight.color];
+    const mats = costume(chor.lib, knight.color);
     this.model.traverse((o) => {
       if (!o.isMesh) return;
       ensureBakeColor(o);
@@ -30,9 +48,10 @@ export class Patsy {
     this.claps = meta.events?.clap || [0.12, 0.37];
     this.clipLen = this.actions.clap?.getClip().duration || 0.5;
     const k = knight.root;
-    const back = new THREE.Vector3(Math.sin(k.rotation.y), 0, Math.cos(k.rotation.y)).multiplyScalar(-1.6);
+    const back = new THREE.Vector3(Math.sin(k.rotation.y), 0, Math.cos(k.rotation.y)).multiplyScalar(-FOLLOW);
     this.root.position.copy(k.position).add(back);
     this.root.rotation.y = k.rotation.y;
+    this.lastK = k.position.clone();
     this.lastT = 0;
     this.play('clap');
     this.off = chor.world.addUpdater((dt) => this.update(dt));
@@ -53,15 +72,29 @@ export class Patsy {
   update(dt) {
     this.mixer.update(dt);
     if (this.finishing) return;
-    // följ en punkt halvannan meter bakom springaren
+    // följ tätt i springarens hälar: hans förflyttning läggs på direkt, resten ställs in mot en punkt bakom honom
     const k = this.knight.root;
-    const fwd = new THREE.Vector3(Math.sin(k.rotation.y), 0, Math.cos(k.rotation.y));
-    const goal = k.position.clone().addScaledVector(fwd, -1.5);
-    const d = goal.sub(this.root.position).setY(0);
-    if (d.length() > 0.05) {
-      this.root.position.addScaledVector(d, Math.min(1, dt * 3));
-      this.root.rotation.y = Math.atan2(d.x, d.z);
+    if (dt > 0) {
+      const p = this.root.position;
+      const before = p.clone();
+      p.x += k.position.x - this.lastK.x;
+      p.z += k.position.z - this.lastK.z;
+      const fwd = new THREE.Vector3(Math.sin(k.rotation.y), 0, Math.cos(k.rotation.y));
+      // avståndet mäts mot mantelns fåll (simulerad, src/capes.js) så att han inte går in i den när den svänger
+      const cape = this.knight.cape;
+      const hem = cape?.ready ? -cape.x[1].clone().sub(k.position).dot(fwd) : 0.3;
+      const follow = THREE.MathUtils.clamp(hem + CAPE_GAP, FOLLOW, FOLLOW_MAX);
+      const d = k.position.clone().addScaledVector(fwd, -follow).sub(p).setY(0);
+      p.addScaledVector(d, Math.min(1, dt * FOLLOW_RATE));
+      const off = p.clone().sub(k.position).setY(0);
+      if (off.lengthSq() < 1e-8) off.copy(fwd).negate();
+      if (off.length() < CLEAR) p.copy(k.position).addScaledVector(off.normalize(), CLEAR).setY(before.y);
+      // vänd mot rörelsen när han travar, annars åt samma håll som springaren
+      const mv = p.clone().sub(before).setY(0);
+      const want = mv.length() > 0.6 * dt ? Math.atan2(mv.x, mv.z) : k.rotation.y;
+      this.root.rotation.y += angleDelta(this.root.rotation.y, want) * Math.min(1, dt * 12);
     }
+    this.lastK.copy(k.position);
     // kokosnötterna slår ihop på klippets händelsetider
     const a = this.actions.clap;
     if (a && this.cur === a) {

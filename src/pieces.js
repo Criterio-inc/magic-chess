@@ -5,6 +5,7 @@ import { gltfLoader } from './world.js';
 import { teamMaterials } from './materials.js';
 import { tier } from './quality.js';
 import { tween, angleDelta, ease } from './util.js';
+import { CapeSim } from './capes.js';
 
 export const TYPES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
 export const GLYPH = { w: { p: '♙', n: '♘', b: '♗', r: '♖', q: '♕', k: '♔' }, b: { p: '♟', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚' } };
@@ -105,12 +106,13 @@ export class Piece {
         this.meshes.push(o);
       }
       // GLTFLoader sanerar nodnamn ('prop.R' -> 'propR'); jämför utan punkter
-      const bn = o.isBone ? o.name.replace(/[^A-Za-z]/g, '') : '';
+      const bn = o.isBone ? o.name.replace(/[^A-Za-z0-9]/g, '') : '';
       if (bn === 'propR') this.propR = o;
       if (bn === 'chest') this.chestBone = o;
       if (o.isBone) (this.bones ||= {})[bn] = o;
     });
     this.root.add(this.model);
+    this.cape = CapeSim.for(this); // mantelfysik (bara mantelbärare); nollställs själv vid ny pjäs/teleportering
     // osynlig träffcylinder för klick (billigare och stabilare än att träffa den skinnade meshen)
     const h = this.meta.height;
     const hit = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, h, 10), new THREE.MeshBasicMaterial({ visible: false }));
@@ -163,12 +165,13 @@ export class Piece {
 
   /** Göm ben (och allt under dem), t.ex. en avslagen arm. Gäller efter varje animationsuppdatering. */
   hideBones(names) {
-    this.hidden = (this.hidden || []).concat(names.map((n) => this.bones?.[n.replace(/[^A-Za-z]/g, '')]).filter(Boolean));
+    this.hidden = (this.hidden || []).concat(names.map((n) => this.bones?.[n.replace(/[^A-Za-z0-9]/g, '')]).filter(Boolean));
   }
 
   update(dt) {
     this.mixer.update(dt);
     if (this.hidden) for (const b of this.hidden) b.scale.setScalar(0.0001);
+    this.cape?.update(dt); // före händelserna: fx.shatter i en händelse ska se den simulerade manteln
     for (const tm of this.timers) {
       if (!tm.done && tm.action === this.current && tm.action.time >= tm.t) { tm.done = true; tm.fn(); }
     }

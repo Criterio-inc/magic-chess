@@ -37,6 +37,12 @@ for s in ("L", "R"):
         (f"foot.{s}", f"shin.{s}", f"ankle.{s}", f"toe.{s}"),
         (f"prop.{s}", f"hand.{s}", f"grip.{s}", f"gripTip.{s}"),
     ]
+# mantelns fjäderben: hänger bakom ryggen (+Y), simuleras i spelet (src/capes.js). Alla pjäser har dem;
+# bara mantelbärarna viktar något på dem (pieces.cape_rig flyttar lederna till manteln och skriver längderna).
+BONES += [
+    ("cape.1", "chest", "cape0", "cape1"),
+    ("cape.2", "cape.1", "cape1", "cape2"),
+]
 BONE_NAMES = [b[0] for b in BONES]
 
 
@@ -51,6 +57,10 @@ def joints(H, sw=0.13, hw=0.06, chest_z=0.70, pelvis_z=0.53):
         "neck0": (0, 0, 0.83 * H),
         "head0": (0, 0, 0.875 * H),
         "headTop": (0, 0, 1.0 * H),
+        # mantelben (standardlägen; pieces.cape_rig lägger dem längs den riktiga manteln)
+        "cape0": (0, 0.09 * H, 0.78 * H),
+        "cape1": (0, 0.12 * H, 0.45 * H),
+        "cape2": (0, 0.15 * H, 0.12 * H),
     }
     for s, k in (("L", 1), ("R", -1)):
         J[f"clav0.{s}"] = (k * 0.03 * H, 0.0, 0.808 * H)

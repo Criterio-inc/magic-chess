@@ -10,6 +10,8 @@ Ut (råa exporter): build/models/rabbit.glb, foot.glb, patsy.glb + build/models/
   vid z = 0, origo mitt under sulan. Avbruten strax ovanför fotleden med en grov brottyta. Material: Stone.
 - patsy:  Kung Arthurs väpnare, 1,15 m, hukande i kåpa och luva med säck på ryggen och en kokosnötshalva i
   varje hand (styvt bundna till hand.L/hand.R). Standardskelettet. Klipp: idle, walk, clap, bow.
+  Material: Stone (hud: lagets marmor), Cloth (kåpa och luva: ofärgad säckväv i spelet), Sack (säcken),
+  Rope (rep, rem och knut), Wood (kokosnötterna). Spelet ger honom egna material i src/patsy.js.
 """
 import bpy
 import bmesh
@@ -48,6 +50,8 @@ lib.MAT_COLORS.update({
     "Fur": ((0.93, 0.92, 0.9, 1), 0.0, 0.7),
     "Eye": ((0.9, 0.03, 0.02, 1), 0.0, 0.25),
     "Tooth": ((0.95, 0.93, 0.85, 1), 0.0, 0.3),
+    "Sack": ((0.62, 0.5, 0.33, 1), 0.0, 0.95),
+    "Rope": ((0.72, 0.62, 0.43, 1), 0.0, 0.9),
 })
 
 
@@ -451,13 +455,13 @@ def sack(J, H):
         a = i / 5 * math.tau
         F.ell(top + V((0.014 * H * math.cos(a), 0.014 * H * math.sin(a), 0.03 * H)), (0.012 * H, 0.012 * H, 0.025 * H), b, 3.0,
               q=Quaternion(V((-math.sin(a), math.cos(a), 0)), 0.5))
-    sk = blob("sack", F, 4500, 0.004 * H, "Cloth")
+    sk = blob("sack", F, 4500, 0.004 * H, "Sack")
     out = [(sk, "chest")]
-    out.append((lib.torus("sacktie", top + V((0, 0, 0.005 * H)), 0.024 * H, 0.006 * H, material="Cloth", seg=16), "chest"))
+    out.append((lib.torus("sacktie", top + V((0, 0, 0.005 * H)), 0.024 * H, 0.006 * H, material="Rope", seg=16), "chest"))
     # rem: från säckens hals över vänster axel och snett ned över bröstet till bältet på höger sida
     out.append((tube("strap", [top + V((0.01 * H, -0.02 * H, -0.01 * H)), V((0.07 * H, 0.06 * H, 0.86 * H)), V((0.09 * H, -0.02 * H, 0.84 * H)),
                                V((0.05 * H, -0.085 * H, 0.75 * H)), V((-0.04 * H, -0.08 * H, 0.64 * H)), V((-0.08 * H, -0.05 * H, 0.6 * H))],
-                      0.009 * H, material="Cloth", seg=8), "chest"))
+                      0.009 * H, material="Rope", seg=8), "chest"))
     return out
 
 
@@ -512,9 +516,9 @@ def build_patsy():
             v.co.z += 0.012 * H * (math.sin(a * 5 + 0.7) * 0.6 + math.sin(a * 11) * 0.4)
     skirt_weights(sk, J, H, zs + 0.03 * H, z_hem)
     parts.append((sk, None))
-    parts.append((lib.torus("rope", J["spine0"] + V((0, 0, 0.004 * H)), 0.09 * H, 0.009 * H, material="Cloth", seg=40, sy=0.82), "spine"))
+    parts.append((lib.torus("rope", J["spine0"] + V((0, 0, 0.004 * H)), 0.09 * H, 0.009 * H, material="Rope", seg=40, sy=0.82), "spine"))
     parts.append((tube("ropeend", [V((0.05 * H, -0.075 * H, zs)), V((0.06 * H, -0.085 * H, zs - 0.08 * H)), V((0.055 * H, -0.09 * H, zs - 0.15 * H))],
-                       0.007 * H, material="Cloth", seg=8), "hips"))
+                       0.007 * H, material="Rope", seg=8), "hips"))
     for s_ in ("L", "R"):
         sh, e, w = J[f"shoulder.{s_}"], J[f"elbow.{s_}"], J[f"wrist.{s_}"]
         parts.append((sleeve(f"psleeveU.{s_}", sh + V((0, 0, 0.012 * H)), e, [(0.0, 0.0), (0.03 * H, 0.07), (0.043 * H, 0.22), (0.04 * H, 1.0)],

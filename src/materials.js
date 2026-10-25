@@ -137,6 +137,126 @@ export function withBake(m, { dirt = 0.4, edge = 0.5, ao = 1.0 } = {}) {
   return m;
 }
 
+/** Brädets ovansida (arena.json tileTop) och halva bredden; main.js sätter dem när arenan laddats.
+ *  Delade uniform-objekt: pjäsernas golvspärr och mantelsimuleringen (capes.js) läser samma värden. */
+export const boardFloor = { uFloorY: { value: 0.74 }, uFloorHalf: { value: 8.0 } };
+export function setBoardFloor(top, half = 8) {
+  boardFloor.uFloorY.value = top;
+  boardFloor.uFloorHalf.value = half;
+}
+
+const FLOOR_VERT = /* glsl */ `
+#ifdef USE_SKINNING
+  {
+    // golvspärr: inom brädet går ingen skinnad vertex under brädets ovansida (dräktfållar bundna till hips
+    // sjunker annars genom golvet när dumma gången sänker höften). Utanför brädet (kyrkogården, slungade
+    // pjäser) gäller ingen spärr.
+    vec4 bfW = modelMatrix * vec4(transformed, 1.0);
+    if (abs(bfW.x) < uFloorHalf && abs(bfW.z) < uFloorHalf && bfW.y < uFloorY)
+      transformed += inverse(mat3(modelMatrix)) * vec3(0.0, uFloorY - bfW.y, 0.0);
+  }
+#endif
+#include <project_vertex>`;
+
+/** Golvspärr för skinnade pjäsmaterial (efter skinningen, före projektionen). Kedjas efter withBake m.fl. */
+export function withFloor(m) {
+  const prev = m.onBeforeCompile;
+  const prevKey = m.customProgramCacheKey;
+  m.onBeforeCompile = (sh, r) => {
+    prev?.call(m, sh, r);
+    Object.assign(sh.uniforms, boardFloor);
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uFloorY;\nuniform float uFloorHalf;')
+      .replace('#include <project_vertex>', FLOOR_VERT);
+  };
+  m.customProgramCacheKey = () => (prevKey ? prevKey.call(m) : '') + '|floor';
+  return m;
+}
+
+// ------------------------------------------------------------- Patsys kostym (procedurell, utan UV:er)
+
+const REST_VERT_PARS = /* glsl */ `
+varying vec3 vRestPos;
+varying vec3 vRestNrm;
+`;
+const PROC_FRAG_PARS = /* glsl */ `
+varying vec3 vRestPos;
+varying vec3 vRestNrm;
+float bcHash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float bcNoise(vec3 x) {
+  vec3 i = floor(x), f = fract(x);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(bcHash(i), bcHash(i + vec3(1, 0, 0)), f.x), mix(bcHash(i + vec3(0, 1, 0)), bcHash(i + vec3(1, 1, 0)), f.x), f.y),
+             mix(mix(bcHash(i + vec3(0, 0, 1)), bcHash(i + vec3(1, 0, 1)), f.x), mix(bcHash(i + vec3(0, 1, 1)), bcHash(i + vec3(1, 1, 1)), f.x), f.y), f.z);
+}
+// tvåskaftsväv: varp och inslag byter plats i varannan ruta. x = höjd (0..1, glest i hörnen), y = trådens ton
+vec2 bcWeave(vec2 uv) {
+  vec2 c = floor(uv), f = fract(uv) - 0.5;
+  float px = cos(3.14159 * f.x), py = cos(3.14159 * f.y);
+  bool warp = mod(c.x + c.y, 2.0) < 1.0;
+  float h = warp ? px * (0.6 + 0.4 * py) : py * (0.6 + 0.4 * px);
+  float tone = warp ? bcHash(vec3(c.x, 1.3, 0.7)) : bcHash(vec3(2.9, c.y, 5.1));   // ojämnt spunna trådar
+  return vec2(h, tone);
+}
+vec3 bcPerturb(vec3 surf_pos, vec3 surf_norm, vec2 dHdxy, float faceDir) {
+  vec3 sx = normalize(dFdx(surf_pos)), sy = normalize(dFdy(surf_pos));
+  vec3 r1 = cross(sy, surf_norm), r2 = cross(surf_norm, sx);
+  float det = dot(sx, r1) * faceDir;
+  return normalize(abs(det) * surf_norm - sign(det) * (dHdxy.x * r1 + dHdxy.y * r2));
+}
+`;
+
+/** Gemensam stomme: vilopositionen (skinnade meshar) som varying, så att mönstret sitter fast i tyget. */
+function restSpace(m, key, uniforms, fragSetup, colorLine, bumpExpr) {
+  m.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, uniforms);
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\n' + REST_VERT_PARS)
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRestPos = position;')
+      .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nvRestNrm = objectNormal;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\n' + Object.keys(uniforms).map((k) => `uniform float ${k};`).join('\n') + PROC_FRAG_PARS)
+      .replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\n' + fragSetup)
+      .replace('#include <map_fragment>', colorLine)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        normal = bcPerturb(-vViewPosition, normal, ${bumpExpr}, faceDirection);`);
+  };
+  m.customProgramCacheKey = () => key;
+  return m;
+}
+
+/** Ofärgad säckväv: grov tvåskaftsväv (cell = trådavstånd i m) och fläckig ton; väven tonas bort på
+ *  avstånd (ingen moaré) så att bara den bruna tonen syns i översikten. */
+export function sackcloth({ color = 0x7a5b3b, cell = 0.0055, contrast = 0.3, mottle = 0.16, bump = 0.7, roughness = 0.95,
+  sheen = 0.35, sheenColor = 0xd9c29c } = {}) {
+  const m = new THREE.MeshPhysicalMaterial({ color, roughness, metalness: 0, sheen, sheenRoughness: 0.6,
+    sheenColor: new THREE.Color(sheenColor), side: THREE.DoubleSide });
+  return restSpace(m, 'sackcloth', { uCell: { value: 1 / cell }, uContrast: { value: contrast }, uMottle: { value: mottle },
+    uWBump: { value: bump } }, /* glsl */ `
+      vec3 wn = pow(abs(normalize(vRestNrm)), vec3(4.0)); wn /= (wn.x + wn.y + wn.z);
+      vec3 wp = vRestPos * uCell;
+      // trådarna slingrar lite (handvävt, inte rutmönster)
+      wp += (vec3(bcNoise(vRestPos * 31.0), bcNoise(vRestPos * 31.0 + 5.0), bcNoise(vRestPos * 31.0 + 9.0)) - 0.5) * 1.2;
+      vec2 wv = bcWeave(wp.zy) * wn.x + bcWeave(wp.xz) * wn.y + bcWeave(wp.xy) * wn.z;
+      float wh = wv.x;
+      float wf = 1.0 - smoothstep(0.3, 0.7, length(fwidth(wp)));
+      float mot = bcNoise(vRestPos * 23.0) * 0.6 + bcNoise(vRestPos * 71.0) * 0.4;
+    `, 'diffuseColor.rgb *= (1.0 + ((wh - 0.6) * uContrast + (wv.y - 0.5) * 0.22) * wf) * (1.0 + (mot - 0.5) * uMottle * 2.0);',
+  'vec2(dFdx(wh), dFdy(wh)) * wf * uWBump');
+}
+
+/** Kokosnötsskal: mörkbrunt med fibrer längs vilans x (skålarnas axel ungefär, så att de löper pol till pol)
+ *  och sheen som ger ett luddigt, hårigt ljus i kanten. */
+export function coconutShell({ color = 0x5a381f, sheenColor = 0xd8b27f, fiber = 170, bump = 0.6 } = {}) {
+  const m = new THREE.MeshPhysicalMaterial({ color, roughness: 0.8, metalness: 0, sheen: 1, sheenRoughness: 0.5,
+    sheenColor: new THREE.Color(sheenColor), side: THREE.DoubleSide });
+  return restSpace(m, 'coconut', { uFiber: { value: fiber }, uFBump: { value: bump } }, /* glsl */ `
+      vec3 cq = vRestPos * vec3(uFiber * 0.06, uFiber, uFiber);
+      float fib = bcNoise(cq) * 0.65 + bcNoise(cq * vec3(2.3, 2.1, 2.1) + 7.0) * 0.35;
+      fib = mix(0.5, fib, 1.0 - smoothstep(0.5, 1.2, length(fwidth(cq))));
+    `, 'diffuseColor.rgb *= mix(0.4, 1.6, fib);', 'vec2(dFdx(fib), dFdy(fib)) * uFBump');
+}
+
 /** Färgat skimrande tyg */
 export function cloth(color, sheenColor) {
   return new THREE.MeshPhysicalMaterial({
@@ -167,7 +287,7 @@ export function teamMaterials() {
     Wood: withBake(new THREE.MeshStandardMaterial({ color: 0x6b4527, roughness: 0.58 }), { dirt: 0.3, edge: 0.3 }),
     Dark: withBake(new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.9 }), { dirt: 0, edge: 0 }),
   };
-  return {
+  const sets = {
     w: {
       Stone: withBake(triplanarMarble({ albedo: wA, data: wD, tint: 0xffffff, roughness: 0.3, clearcoat: 0.28, sheen: 0.35 }),
         { dirt: 0.28, edge: 0.25, ao: 0.85 }),
@@ -185,6 +305,9 @@ export function teamMaterials() {
       ...shared,
     },
   };
+  // alla pjäsmaterial får golvspärren (de delade bara en gång)
+  for (const m of new Set([...Object.values(sets.w), ...Object.values(sets.b)])) withFloor(m);
+  return sets;
 }
 
 /** Arenans material, nycklade på Blender-namn. UV:er är i meter. */

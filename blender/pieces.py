@@ -85,7 +85,42 @@ def cape(name, J, H, z_top, z_bot, r_top, r_bot, spread=1.55, folds=9, amp=0.09,
     ob = lathe(name, prof, seg=40, material=material, sy=0.75, cap_bottom=False, cap_top=False,
                center=(0, yoff * H, 0), fold=(folds, amp, z_top, z_bot), arc=(c - spread, c + spread))
     add_solidify(ob, 0.008 * H, offset=-1)
+    cape_rig(ob, J, H, z_top, z_bot, r_top, r_bot, yoff * H, sy=0.75)
     return ob
+
+
+def _ss(a, b, x):
+    t = min(1.0, max(0.0, (x - a) / (b - a)))
+    return t * t * (3 - 2 * t)
+
+
+def cape_rig(ob, J, H, z_top, z_bot, r_top, r_bot, yc, sy=0.75):
+    """Mjuka vikter för manteln (fjäderbenen simuleras i spelet, src/capes.js): axelbandet upptill är 100 % chest
+    så att manteln sitter fast, sedan en lodrät gradient chest -> cape.1 -> cape.2 mot fållen. Delar som vetter framåt
+    (korkåpans flikar runt armarna) följer bröstet mer. Lederna cape0..2 läggs längs mantelns mittlinje bak, i J
+    (läggs i parts med ben None: vikterna finns redan)."""
+    def back(t):        # mittlinjen bak på höjden t (0 = överkant, 1 = fåll), samma profil som cape()
+        r = r_top + (r_bot - r_top) * t ** 0.8
+        return V((0, yc + sy * r, z_top - (z_top - z_bot) * t))
+    J["cape0"], J["cape1"], J["cape2"] = back(0.1), back(0.5), back(1.0)
+    g = {n: ob.vertex_groups.new(name=n) for n in ("chest", "cape.1", "cape.2")}
+    for v in ob.data.vertices:
+        t = min(1.0, max(0.0, (z_top - v.co.z) / (z_top - z_bot)))
+        r = r_top + (r_bot - r_top) * t ** 0.8
+        s = (v.co.y - yc) / max(1e-6, sy * r)        # sin(vinkeln): 1 = mitt bak, 0 = vid sidan, < 0 = framför
+        w = _ss(0.06, 0.3, t) * _ss(-0.5, 0.35, s)    # andel mantelben (0 i axelbandet)
+        b = _ss(0.35, 0.7, t)                         # cape.1 -> cape.2 kring mittleden
+        g["chest"].add([v.index], 1.0 - w, "REPLACE")
+        if w * (1 - b) > 1e-3:
+            g["cape.1"].add([v.index], w * (1 - b), "REPLACE")
+        if w * b > 1e-3:
+            g["cape.2"].add([v.index], w * b, "REPLACE")
+    return ob
+
+
+def cape_len(J):
+    """Mantelbenens längder (m) till pieces.json: spelet behöver det sista benets längd (glTF saknar benspetsar)."""
+    return [round((J["cape1"] - J["cape0"]).length, 4), round((J["cape2"] - J["cape1"]).length, 4)]
 
 
 def pteruges(name, J, H, z_top, length, r, n=14, mats=("Cloth", "Stone"), width=None, flare=0.25, sy=0.8):
@@ -785,7 +820,7 @@ def build_knight():
     vambraces(J, H, parts, material="Stone")
     sabatons(J, H, parts, material="Stone")
     gauntlets(J, H, parts, material="Stone")
-    parts.append((cape("cape", J, H, J["neck0"].z - 0.03 * H, 0.16 * H, 0.1 * H, 0.21 * H, spread=1.25, folds=8), "chest"))
+    parts.append((cape("cape", J, H, J["neck0"].z - 0.03 * H, 0.16 * H, 0.1 * H, 0.21 * H, spread=1.25, folds=8), None))
     for o in kite_shield(H, mid(J["elbow.L"], J["wrist.L"], 0.45) + V((0.05 * H, 0, 0.02 * H))):
         parts.append((o, "forearm.L"))
     for o in sword(H, J["grip.R"], length=0.5):
@@ -819,8 +854,8 @@ def build_knight():
                     (22, merge(sout, {"root": (0, -300, 0)})), (26, merge(sstrike, {"root": (0, -360, 0)})),
                     (36, merge(sstrike, {"root": (0, -360, 0)})), (52, merge(stance, {"root": (0, -360, 0)}))]
     ev = {"attack": [27, 53], "attack2": [26], "death": [35]}
-    A["silly"], silly_v = silly(stance, J, stride=0.6, lean=0.6)   # manteln är styvt bunden till chest: luta mindre
-    return arm, mesh, A, ev, {"height": H, "walkSpeed": walk_speed(H, 26, 22), "sillySpeed": silly_v}
+    A["silly"], silly_v = silly(stance, J, stride=0.6, lean=0.6)   # manteln hänger i chest upptill: luta mindre
+    return arm, mesh, A, ev, {"height": H, "walkSpeed": walk_speed(H, 26, 22), "sillySpeed": silly_v, "cape": cape_len(J)}
 
 
 # ======================================================================= LÖPARE: biskop med kräkla
@@ -854,7 +889,7 @@ def build_bishop():
     parts.append((fold_robe("robe", J["spine0"].z + 0.02 * H, 0.0, 0.08 * H, 0.15 * H, H, folds=13, amp=0.08), "hips"))
     parts.append((torso_shell("robetop", J, H, width=1.06, depth=0.8, keel=0.0, fold=(9, 0.035, J["neck0"].z, J["spine0"].z)), "chest"))
     parts.append((cape("cope", J, H, J["neck0"].z - 0.01 * H, 0.32 * H, 0.1 * H, 0.17 * H, spread=1.9, folds=10, amp=0.06,
-                       material="Cloth", yoff=0.0), "chest"))
+                       material="Cloth", yoff=0.0), None))
     # stola fram
     for k in (1, -1):
         st = tube(f"stole{k}", [J["neck0"] + V((k * 0.03 * H, -0.04 * H, -0.01 * H)), J["chest0"] + V((k * 0.045 * H, -0.08 * H, 0.03 * H)),
@@ -912,7 +947,7 @@ def build_bishop():
     ev = {"attack": [37], "attack2": [28], "death": [35]}
     # benen sparkar ut genom dräkten; grundare knäböj, annars sjunker fållen (bunden till hips) genom golvet
     A["silly"], silly_v = silly(stance, J, stride=0.4, dip=0.18, lean=0.6, staff=("R",))
-    return arm, mesh, A, ev, {"height": H, "walkSpeed": walk_speed(H, 24, 34, robe=True), "sillySpeed": silly_v}
+    return arm, mesh, A, ev, {"height": H, "walkSpeed": walk_speed(H, 24, 34, robe=True), "sillySpeed": silly_v, "cape": cape_len(J)}
 
 
 # ======================================================================= TORN: stengolem
@@ -1091,7 +1126,7 @@ def build_queen():
                 center=(0, 0.015 * H, 0), fold=(12, 0.08, J["neck0"].z, J["neck0"].z + 0.1 * H), cap_bottom=False, cap_top=False)
     add_solidify(col, 0.004 * H)
     parts.append((col, "chest"))
-    parts.append((cape("cape", J, H, J["neck0"].z - 0.03 * H, 0.0, 0.09 * H, 0.24 * H, spread=1.3, folds=11, amp=0.07), "chest"))
+    parts.append((cape("cape", J, H, J["neck0"].z - 0.03 * H, 0.0, 0.09 * H, 0.24 * H, spread=1.3, folds=11, amp=0.07), None))
     # puffärmar
     for s in ("L", "R"):
         sh, e, w = J[f"shoulder.{s}"], J[f"elbow.{s}"], J[f"wrist.{s}"]
@@ -1143,9 +1178,9 @@ def build_queen():
                                "chest": (12, 0, 0), "spine": (5, 0, 0), "head": (-4, 0, 0), "loc": (0, -0.12, -0.03)}), "R", 92)
     A["attack2"] = [(0, stance), (14, fgather), (24, add(fgather, {"chest": (-4, 0, 0)})), (30, fcast), (52, fcast), (66, stance)]
     ev = {"attack": [36], "attack2": [30], "death": [35]}
-    # som löparen: benen sparkar ut genom klänningen; golvlång mantel (styv på chest) svänger fram om bålen lutar mycket
+    # som löparen: benen sparkar ut genom klänningen; golvlång mantel (hänger i chest upptill) svänger fram om bålen lutar mycket
     A["silly"], silly_v = silly(stance, J, stride=0.4, dip=0.18, lean=0.35)
-    return arm, mesh, A, ev, {"height": H, "walkSpeed": walk_speed(H, 24, 32, robe=True), "sillySpeed": silly_v}
+    return arm, mesh, A, ev, {"height": H, "walkSpeed": walk_speed(H, 24, 32, robe=True), "sillySpeed": silly_v, "cape": cape_len(J)}
 
 
 # ======================================================================= KUNG
@@ -1174,7 +1209,7 @@ def build_king():
     parts.append((fold_robe("tunic", J["spine0"].z + 0.01 * H, 0.27 * H, 0.085 * H, 0.12 * H, H, folds=12, amp=0.06, flare=1.2), "hips"))
     parts.append((torus("kbelt", J["spine0"], 0.084 * H, 0.013 * H, sy=0.8, material="Trim"), "spine"))
     parts.append((ellipsoid("kbuckle", J["spine0"] + V((0, -0.068 * H, 0)), (0.024 * H, 0.01 * H, 0.02 * H), material="Gem"), "spine"))
-    parts.append((cape("kcape", J, H, J["neck0"].z - 0.02 * H, 0.01 * H, 0.11 * H, 0.26 * H, spread=1.45, folds=10, amp=0.08), "chest"))
+    parts.append((cape("kcape", J, H, J["neck0"].z - 0.02 * H, 0.01 * H, 0.11 * H, 0.26 * H, spread=1.45, folds=10, amp=0.08), None))
     ermine = torus("ermine", J["neck0"] - V((0, -0.008 * H, 0.03 * H)), 0.09 * H, 0.03 * H, material="Stone", seg=36, rseg=12, sy=0.8)
     add_subsurf(ermine, 1)
     parts.append((ermine, "chest"))
@@ -1213,7 +1248,7 @@ def build_king():
     A["attack2"] = [(0, stance), (16, vic), (26, add(vic, {"chest": (-5, 0, 0)})), (32, decree), (50, decree), (66, stance)]
     ev = {"attack": [34], "attack2": [32], "death": [35]}
     A["silly"], silly_v = silly(stance, J, stride=0.45, dip=0.26, lean=0.35)   # golvlång mantel: luta mindre
-    return arm, mesh, A, ev, {"height": H, "walkSpeed": walk_speed(H, 20, 32), "sillySpeed": silly_v}
+    return arm, mesh, A, ev, {"height": H, "walkSpeed": walk_speed(H, 20, 32), "sillySpeed": silly_v, "cape": cape_len(J)}
 
 
 BUILDERS = {"pawn": build_pawn, "knight": build_knight, "bishop": build_bishop, "rook": build_rook,
@@ -1326,6 +1361,8 @@ def main():
         allmeta[name] = {"height": meta["height"], "walkSpeed": meta["walkSpeed"], "sillySpeed": meta["sillySpeed"], "tris": tris,
                          "events": {k: [f / FPS for f in v] for k, v in events.items()},
                          "durations": {a: k[-1][0] / FPS for a, k in acts.items()}}
+        if "cape" in meta:      # mantelbärare: src/capes.js simulerar bara pjäser med längderna
+            allmeta[name]["cape"] = meta["cape"]
         if not arg("--no-export"):
             os.makedirs(RAW, exist_ok=True)
             rig.export_glb(os.path.join(RAW, f"{name}.glb"), [arm, mesh])

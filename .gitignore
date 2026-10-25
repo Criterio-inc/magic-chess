@@ -7,3 +7,4 @@ vault/
 .DS_Store
 *.blend1
 server/data/
+blender/__pycache__/
