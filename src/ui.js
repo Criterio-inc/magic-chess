@@ -17,7 +17,7 @@ export class UI {
     const elo = $('elo');
     const label = () => {
       const v = +elo.value;
-      $('elo-label').textContent = v >= 3190 ? 'Full engine' : String(v);
+      $('elo-label').textContent = v >= 3190 ? 'Full styrka' : String(v);
     };
     elo.addEventListener('input', label);
     label();
@@ -32,17 +32,17 @@ export class UI {
     $('online-create').addEventListener('click', () => this.emit('onlineCreate', { color: this.seg('ocolor'), ...this.readSettings() }));
     $('online-join').addEventListener('click', () => {
       const code = $('join-code').value.trim().toUpperCase();
-      if (code.length !== 6) { this.onlineMsg('The code has six characters.'); return; }
+      if (code.length !== 6) { this.onlineMsg('Koden har sex tecken.'); return; }
       this.emit('onlineJoin', { code, ...this.readSettings() });
     });
     $('join-code').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('online-join').click(); });
     $('invite-cancel').addEventListener('click', () => this.emit('onlineCancel'));
     $('invite-copy').addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(this.inviteLink); $('invite-copy').textContent = 'Copied!'; } catch { $('invite-copy').textContent = 'Copy failed'; }
-      setTimeout(() => { $('invite-copy').textContent = 'Copy link'; }, 1600);
+      try { await navigator.clipboard.writeText(this.inviteLink); $('invite-copy').textContent = 'Kopierad!'; } catch { $('invite-copy').textContent = 'Kunde inte kopiera'; }
+      setTimeout(() => { $('invite-copy').textContent = 'Kopiera länk'; }, 1600);
     });
     $('invite-share').addEventListener('click', () => {
-      const data = { title: 'Marble & Mayhem', text: `Duel me in Marble & Mayhem! Code: ${this.inviteCode}`, url: this.inviteLink };
+      const data = { title: 'Saecula: Kartbordet', text: `Duellera mot mig vid kartbordet! Kod: ${this.inviteCode}`, url: this.inviteLink };
       if (navigator.share) navigator.share(data).catch(() => {});
       else $('invite-copy').click();
     });
@@ -160,9 +160,9 @@ export class UI {
     const n = Math.ceil(saved.moves.length / 2);
     const m = saved.settings.mode;
     const legend = m === 'legend' && LEGENDS.find((l) => l.id === saved.settings.legend);
-    const who = legend ? legend.title : m === 'hotseat' ? 'Two players' : m === 'watch' ? 'Stockfish vs Stockfish'
-      : `You are ${m === 'white' ? 'White' : 'Black'} vs Stockfish ${saved.settings.elo >= 3190 ? '(full)' : saved.settings.elo}`;
-    $('continue-info').textContent = `Saved game: move ${n} · ${who}`;
+    const who = legend ? legend.title : m === 'hotseat' ? 'Två spelare' : m === 'watch' ? 'Stockfish mot Stockfish'
+      : `Du är ${m === 'white' ? 'vit' : 'svart'} mot Stockfish ${saved.settings.elo >= 3190 ? '(full styrka)' : saved.settings.elo}`;
+    $('continue-info').textContent = `Sparat parti: drag ${n} · ${who}`;
   }
 
   onlineMsg(text) { $('online-msg').textContent = text || ''; }
@@ -171,9 +171,9 @@ export class UI {
     this.inviteCode = code;
     this.inviteLink = link;
     $('invite-code').textContent = code;
-    $('invite-status').textContent = 'Waiting for your opponent';
+    $('invite-status').textContent = 'Väntar på din motståndare';
     $('invite-status').classList.add('waiting');
-    $('invite-share').textContent = navigator.share ? 'Share' : 'Copy';
+    $('invite-share').textContent = navigator.share ? 'Dela' : 'Kopiera';
     this.hide('menu');
     this.show('invite');
   }
@@ -213,7 +213,7 @@ export class UI {
   ready(onBegin) {
     const b = $('begin');
     b.disabled = false;
-    $('progress-label').textContent = 'The pieces await.';
+    $('progress-label').textContent = 'Pjäserna väntar.';
     b.addEventListener('click', () => {
       $('title').classList.add('fade');
       setTimeout(() => $('title').classList.add('hidden'), 1300);
@@ -304,12 +304,12 @@ export class UI {
         a.className = 'st-acc';
         for (const c of ['w', 'b']) {
           const v = st.acc[c];
-          a.insertAdjacentHTML('beforeend', `<div><span>${c === 'w' ? 'White' : 'Black'}</span><b>${v == null ? '–' : v + '%'}</b><i style="--v:${v ?? 0}"></i></div>`);
+          a.insertAdjacentHTML('beforeend', `<div><span>${c === 'w' ? 'Vit' : 'Svart'}</span><b>${v == null ? '–' : v + '%'}</b><i style="--v:${v ?? 0}"></i></div>`);
         }
         box.appendChild(a);
       }
-      if (st.blunder) row('Worst move', st.blunder.label);
-      if (st.mvp) row('MVP', `${st.mvp.name} · ${st.mvp.kills} ${st.mvp.kills === 1 ? 'kill' : 'kills'}`);
+      if (st.blunder) row('Värsta draget', st.blunder.label);
+      if (st.mvp) row('Främst i striden', `${st.mvp.name} · ${st.mvp.kills} slag`);
     }
     this.show('over');
   }
@@ -319,7 +319,7 @@ export class UI {
     const c = $('legend-card');
     c.querySelector('.lc-title').textContent = l.title;
     c.querySelector('.lc-where').textContent = l.where;
-    c.querySelector('.lc-players').textContent = `${l.white}  vs  ${l.black}`;
+    c.querySelector('.lc-players').textContent = `${l.white}  mot  ${l.black}`;
     c.classList.remove('hidden', 'go');
     void c.offsetWidth;
     c.classList.add('go');

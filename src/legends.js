@@ -3,7 +3,7 @@
 export const LEGENDS = [
   {
     id: 'legal',
-    title: "Légal's Mate",
+    title: 'Légals matt',
     where: 'Café de la Régence, Paris, 1750',
     white: 'Kermeur Sire de Légal',
     black: 'Saint Brie',
@@ -11,7 +11,7 @@ export const LEGENDS = [
   },
   {
     id: 'immortal',
-    title: 'The Immortal Game',
+    title: 'Det odödliga partiet',
     where: 'London, 1851',
     white: 'Adolf Anderssen',
     black: 'Lionel Kieseritzky',
@@ -20,7 +20,7 @@ export const LEGENDS = [
   },
   {
     id: 'evergreen',
-    title: 'The Evergreen Game',
+    title: 'Det eviggröna partiet',
     where: 'Berlin, 1852',
     white: 'Adolf Anderssen',
     black: 'Jean Dufresne',
@@ -29,10 +29,10 @@ export const LEGENDS = [
   },
   {
     id: 'opera',
-    title: 'The Opera Game',
-    where: 'Paris Opera, 1858',
+    title: 'Operapartiet',
+    where: 'Operan i Paris, 1858',
     white: 'Paul Morphy',
-    black: 'Duke of Brunswick & Count Isouard',
+    black: 'Hertigen av Braunschweig och greve Isouard',
     moves: 'e4 e5 Nf3 d6 d4 Bg4 dxe5 Bxf3 Qxf3 dxe5 Bc4 Nf6 Qb3 Qe7 Nc3 c6 Bg5 b5 Nxb5 cxb5 Bxb5+ Nbd7 O-O-O Rd8 '
       + 'Rxd7 Rxd7 Rd1 Qe6 Bxd7+ Nxd7 Qb8+ Nxb8 Rd8#',
   },

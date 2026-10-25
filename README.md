@@ -1,42 +1,38 @@
-# Marble & Mayhem
+# Saecula: Kartbordet
 
-[![Support me on Patreon](https://img.shields.io/badge/Patreon-Support%20my%20work-FF424D?style=flat&logo=patreon&logoColor=white)](https://www.patreon.com/AndersBjarby)
+Schack där varje slag blir en duell. Brädet står på kartbordet i Saeculas kartrum, med Europa utbrett runt
+pjäserna, spröjsade fönster, bokhyllor och en glob. Pjäserna är levande marmorstatyer som slåss när de tar
+varandra. Partiet börjar en eftermiddag och glider mot kväll: solen sjunker genom fönstren, månen tar över och
+kandelabrarna tänds en i taget. Med översiktsläget (M) ser man kartbordet uppifrån som ett kopparstick.
 
-Chess where every capture is a duel. The pieces are living marble statues — white Carrara with gold, black
-Nero Marquina with silver — standing on a polished board in a sunlit ruined colonnade. When one piece takes
-another, the camera cuts to a cinematic side shot, the attacker strikes (spear, sword, crozier, fists of stone,
-arcane bolt) and the victim topples and shatters.
+Under dueller kan det hända saker. En karolin vägrar falla utan tillstånd och anmäler varje hugg till
+krigskollegium. En älg kliver in från kartan. Biskopen kastar en bannbulla, en trumpojke marscherar efter
+springaren, och ibland tröttnar fältherren och slår ned med handen. Rösterna är svenska.
 
-- **Engine:** Stockfish 19 (lite NNUE, WebAssembly, in a Web Worker), adjustable from ~1320 Elo to full strength.
-- **Modes:** play White, play Black, two players on one screen, watch Stockfish play itself, or challenge a friend online
-  with a six-letter invite code (or link). Your last local game is saved and can be continued.
-- **Battles:** every piece has several attacks and its victims die in different ways — toppled, crumbled, launched, frozen
-  solid, smitten by lightning — plus a Holy Hand Grenade, knights on coconut-powered imaginary horses, flesh wounds, and a
-  Mortal-Kombat-style finish on checkmate. ~175 voiced lines full of game and Monty Python references.
-- **Extras:** the Black Knight ("'Tis but a scratch"), a killer rabbit, a giant foot, Patsy with coconuts, silly walks, veterans
-  with golden laurels, hints, move evaluation (!!/??), accuracy and MVP after the game, replays, photo mode, and four legendary
-  games (Légal 1750, the Immortal, the Evergreen, the Opera Game) replayed as cinema. Tap to skip any duel.
-- **Online:** invite code or link, rematch, spectators, Monty Python taunts.
-- **Mobile:** lighter models and textures, dynamic resolution, portrait-aware cameras, touch controls, installable as an app.
-- **Rendering:** three.js WebGL, HDRI sky with a matched sun and 4K shadows, triplanar marble, N8AO ambient
-  occlusion, bloom, depth of field in battles, AgX tone mapping, SMAA.
-- **Assets:** every model and animation is built procedurally in Blender (Python, headless): six rigged statue
-  types with idle/walk/attack/hit/death/victory, plus the arena. Voices and sound effects by ElevenLabs.
+## Bygger på Marble & Mayhem
+
+Spelet är en vidareutveckling av Anders Bjarbys [Marble & Mayhem](https://github.com/fltman/marble-mayhem),
+och det mesta av maskineriet är hans: Stockfish i en Web Worker, Blender-kedjan som bygger alla figurer i kod,
+filmkameran, onlinespelet, röktestet och den genomtänkta strukturen. Kartrummet, de nya figurerna, rösterna,
+humorn och översättningen är egna. Originalets lån ur Monty Python, Mortal Kombat och andra spel är borttagna.
+
+## Kör
 
 ```bash
 npm install
-npm run dev      # http://localhost:8240
-npm run server   # online play (WebSocket on :8241)
-npm run smoke    # plays every event in Chrome and fails on any console error
+npm run dev            # http://localhost:8240
+npm run server         # onlinespelet (WebSocket :8241)
+npm run smoke          # spelar igenom varje händelse i riktig Chrome
+node tools/shots.mjs   # bilder av dag, skymning, kväll och översikt till docs/stil/spel/
 ```
 
-Live at https://mayhem.bjarby.com.
+Figurerna byggs i Blender 5.2 (`blender/`), rösterna och effekterna med ElevenLabs (`tools/gen_audio.mjs`).
+Se `CLAUDE.md` för hela tillgångskedjan.
 
-See `CLAUDE.md` for the asset pipeline.
+## Krediter och licenser
 
-## Credits and licences
-
-- Stockfish.js (`public/engine/`) — GPL-3.0 (licence text in `public/engine/Copying.txt`), https://github.com/nmrugg/stockfish.js
-- Textures and HDRI — Poly Haven, CC0
-- Title music — generated with Suno; voices and sound effects — ElevenLabs
-- three.js, postprocessing, n8ao, chess.js — MIT / BSD
+- Grunden: Marble & Mayhem av Anders Bjarby.
+- Stockfish.js (`public/engine/`), GPL-3.0, licenstexten i `public/engine/Copying.txt`.
+- Kartan ur Saecula, byggd på Natural Earth (allmän egendom) och höjddata från Terrain Tiles (Mapzen/AWS).
+- Svenska röster och ljudeffekter: ElevenLabs.
+- three.js, postprocessing, n8ao och chess.js: MIT och BSD.

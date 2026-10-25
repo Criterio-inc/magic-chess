@@ -1,4 +1,4 @@
-// Marble & Mayhem: start, laddning och koppling mellan delarna.
+// Saecula: Kartbordet: start, laddning och koppling mellan delarna.
 import { World } from './world.js';
 import { Board } from './board.js';
 import { PieceLibrary } from './pieces.js';
@@ -24,12 +24,12 @@ const analyst = new Engine(); // egen motor för dragbedömningen, så att den a
 
 const steps = ['sky', 'arena', 'pawn', 'knight', 'bishop', 'rook', 'queen', 'king'];
 let done = 0;
-const LABELS = { sky: 'Raising the sky…', arena: 'Laying the marble…', pawn: 'Waking the pawns…', knight: 'Saddling the knights…',
-  bishop: 'Blessing the bishops…', rook: 'Stacking the towers…', queen: 'Crowning the queens…', king: 'Summoning the kings…' };
+const LABELS = { sky: 'Breder ut kartan…', arena: 'Lägger fram brädet…', pawn: 'Väcker bönderna…', knight: 'Rustar ryttarna…',
+  bishop: 'Välsignar löparna…', rook: 'Murar tornen…', queen: 'Krönar drottningarna…', king: 'Kallar på kungarna…' };
 const progress = (k) => { done++; ui.progress(done / (steps.length + 1), LABELS[steps[Math.min(done, steps.length - 1)]]); };
 
 async function boot() {
-  ui.progress(0.02, 'Carving marble…');
+  ui.progress(0.02, 'Breder ut kartan…');
   const meta = await world.load(progress);
   const board = new Board(world, meta);
   const lib = new PieceLibrary();
@@ -95,12 +95,12 @@ async function boot() {
       history.replaceState(null, '', location.pathname);
       online.forget();
       online.join(joinParam);
-      ui.toast('Joining…');
+      ui.toast('Ansluter…');
     } else if (watchParam) {
       extras.watch(watchParam);
     } else if (online.session?.started) {
       online.connect(); // återanslut till pågående onlineparti
-      ui.toast('Reconnecting…');
+      ui.toast('Återansluter…');
     } else {
       ui.showContinue(Game.loadLocal());
       ui.show('menu');
@@ -132,19 +132,19 @@ async function boot() {
 
   // ---------------------------------------------------------------- online
   const applySettings = (s) => { game.settings.battles = s.battles; game.settings.pace = s.pace; };
-  ui.on('onlineCreate', (s) => { applySettings(s); online.forget(); online.create(s.color); ui.onlineMsg('Creating your arena…'); });
-  ui.on('onlineJoin', (s) => { applySettings(s); online.forget(); online.join(s.code); ui.onlineMsg('Joining…'); });
+  ui.on('onlineCreate', (s) => { applySettings(s); online.forget(); online.create(s.color); ui.onlineMsg('Skapar ditt kartrum…'); });
+  ui.on('onlineJoin', (s) => { applySettings(s); online.forget(); online.join(s.code); ui.onlineMsg('Ansluter…'); });
   ui.on('onlineCancel', () => { online.leave(); ui.hide('invite'); ui.show('menu'); });
-  ui.on('offerDraw', () => { online.offerDraw(); ui.toast('Draw offered'); });
+  ui.on('offerDraw', () => { online.offerDraw(); ui.toast('Remi erbjuden'); });
   let resignArmed = 0;
   ui.on('resign', () => {
     if (performance.now() - resignArmed < 3000) { online.resign(); resignArmed = 0; return; }
     resignArmed = performance.now();
-    ui.toast('Tap ⚐ again to resign', true);
+    ui.toast('Tryck ⚐ igen för att ge upp', true);
   });
   ui.on('rematch', () => extras.requestRematch());
-  const ERR = { 'no-such-room': 'No arena with that code.', 'room-full': 'That arena already has two players.',
-    'bad-token': 'Your seat has expired.', 'rate-limited': 'Easy there — too many requests.', 'bad-request': 'Something went wrong.' };
+  const ERR = { 'no-such-room': 'No arena with that code.', 'room-full': 'Det kartrummet har redan två spelare.',
+    'bad-token': 'Din plats har gått ut.', 'rate-limited': 'Lugn i stormen, för många försök.', 'bad-request': 'Något gick fel.' };
   online
     .on('created', (m) => {
       ui.onlineMsg('');
@@ -167,21 +167,21 @@ async function boot() {
       game.startOnline(m.state, color);
     })
     .on('move', (m) => game.remoteMove(m))
-    .on('reject', (m) => { ui.toast('Move refused', true); game.startOnline(m.state, game.myColor, { fanfare: false }); })
+    .on('reject', (m) => { ui.toast('Draget nekades', true); game.startOnline(m.state, game.myColor, { fanfare: false }); })
     .on('opponent', (m) => {
       if (m.name) game.opponentName = m.name;
-      const t = { joined: 'Your opponent has arrived', disconnected: 'Your opponent lost connection', reconnected: 'Your opponent is back', left: 'Your opponent left' }[m.status];
-      if (m.status === 'joined') ui.inviteStatus('Opponent found!');
+      const t = { joined: 'Din motståndare har kommit', disconnected: 'Din motståndare tappade anslutningen', reconnected: 'Din motståndare är tillbaka', left: 'Din motståndare gick' }[m.status];
+      if (m.status === 'joined') ui.inviteStatus('Motståndare hittad!');
       else if (t) ui.toast(t, m.status !== 'reconnected');
     })
     .on('draw-offer', (m) => { if (m.by !== game.myColor) ui.askDraw().then((a) => online.answerDraw(a)); })
-    .on('draw-declined', () => ui.toast('Draw declined'))
+    .on('draw-declined', () => ui.toast('Remi avböjd'))
     .on('over', (m) => game.endOnline(m.result, m.reason))
     .on('error', (m) => {
       ui.onlineMsg(ERR[m.code] || m.message);
-      if (m.code === 'no-such-room' || m.code === 'room-full' || m.code === 'bad-token') { ui.hide('invite'); ui.show('menu'); ui.toast(ERR[m.code] || 'Error', true); }
+      if (m.code === 'no-such-room' || m.code === 'room-full' || m.code === 'bad-token') { ui.hide('invite'); ui.show('menu'); ui.toast(ERR[m.code] || 'Fel', true); }
     })
-    .on('connection', (c) => { if (game.settings.mode === 'online' && !c.online) ui.status('Connection lost — reconnecting…'); });
+    .on('connection', (c) => { if (game.settings.mode === 'online' && !c.online) ui.status('Anslutningen bröts, återansluter…'); });
   ui.on('menuClose', () => sound.setMusic(0, 2));
   ui.on('undo', () => game.undo());
   ui.on('flip', () => {
@@ -212,5 +212,5 @@ async function boot() {
 
 boot().catch((e) => {
   console.error(e);
-  ui.progress(1, 'Something went wrong: ' + e.message);
+  ui.progress(1, 'Något gick fel: ' + e.message);
 });

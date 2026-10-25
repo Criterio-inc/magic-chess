@@ -1,7 +1,7 @@
 {
-  "name": "Marble & Mayhem",
-  "short_name": "Mayhem",
-  "description": "Chess where every capture is a duel between living marble statues.",
+  "name": "Saecula: Kartbordet",
+  "short_name": "Kartbordet",
+  "description": "Schack på Saeculas kartbord, där varje slag blir en duell mellan levande marmorstatyer.",
   "start_url": "./",
   "display": "fullscreen",
   "orientation": "any",

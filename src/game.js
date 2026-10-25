@@ -179,7 +179,7 @@ export class Game {
       this.ui.legendCard(legendById(this.settings.legend));
       await wait(3.2);
       if (token !== this.token) return;
-    } else this.ui.toast('To battle!');
+    } else this.ui.toast('Till strid!');
     this.nextTurn();
   }
 
@@ -194,7 +194,7 @@ export class Game {
       if (this.remoteQueue?.length) return this.play(this.remoteQueue.shift());
       if (!this.isHumanTurn()) {
         this.busy = true;
-        if (!this.onlineOver) this.ui.status(this.online?.watching ? `Watching ${this.online.watching}` : `Waiting for ${this.opponentName || 'your opponent'}…`);
+        if (!this.onlineOver) this.ui.status(this.online?.watching ? `Ser på ${this.online.watching}` : `Väntar på ${this.opponentName || 'din motståndare'}…`);
         return;
       }
     }
@@ -217,7 +217,7 @@ export class Game {
     this.thinking = true;
     this.busy = true;
     if (window.BC_DEBUG) console.info('[BC] engine turn', this.chess.turn(), 'mode', this.settings.mode, 'token', token);
-    this.ui.status(`${this.chess.turn() === 'w' ? 'White' : 'Black'} — Stockfish is thinking…`);
+    this.ui.status(`${this.chess.turn() === 'w' ? 'Vit' : 'Svart'} drar, Stockfish funderar…`);
     const t0 = performance.now();
     const time = this.settings.mode === 'watch' ? 700 : this.engine.strong ? 1200 : 700;
     const fen = this.chess.fen();
@@ -249,9 +249,9 @@ export class Game {
   }
 
   updateStatus() {
-    const turn = this.chess.turn() === 'w' ? 'White' : 'Black';
+    const turn = this.chess.turn() === 'w' ? 'Vit' : 'Svart';
     const check = this.chess.inCheck();
-    this.ui.status(check ? `${turn} is in check` : `${turn} to move`, check);
+    this.ui.status(check ? `${turn} står i schack` : `${turn} drar`, check);
   }
 
   /** Utför ett drag och animerar det. */
@@ -288,8 +288,8 @@ export class Game {
     this.analyse(res, token);
     const mover = this.pieces.get(res.from);
     this.pieces.delete(res.from);
-    const side = res.color === 'w' ? 'White' : 'Black';
-    this.ui.status(res.captured ? `${side} attacks` : `${side} — ${res.san}`);
+    const side = res.color === 'w' ? 'Vit' : 'Svart';
+    this.ui.status(res.captured ? `${side} anfaller` : `${side}: ${res.san}`);
     const flags = res.flags;
     if (flags.includes('k') || flags.includes('q')) {
       const rank = res.color === 'w' ? '1' : '8';
@@ -343,7 +343,7 @@ export class Game {
     if (this.chess.inCheck() && !this.chess.isCheckmate()) {
       this.sound.check();
       this.voice?.herald('check');
-      this.ui.toast('Check', true);
+      this.ui.toast('Schack', true);
       const king = this.pieces.get(this.findKing(this.chess.turn()));
       if (king && Math.random() < 0.6) setTimeout(() => this.voice?.piece(king, 'check'), 1300);
     }
@@ -393,8 +393,8 @@ export class Game {
     let title, text, winner = null;
     if (c.isCheckmate()) {
       winner = c.turn() === 'w' ? 'b' : 'w';
-      title = 'Checkmate';
-      text = `${winner === 'w' ? 'White' : 'Black'} is victorious.`;
+      title = 'Schack matt';
+      text = `${winner === 'w' ? 'Vit' : 'Svart'} segrar.`;
       const ksq = this.findKing(c.turn());
       const king = this.pieces.get(ksq);
       const winners = [...this.pieces.values()].filter((p) => p.color === winner);
@@ -423,14 +423,14 @@ export class Game {
       this.sound.fanfare(!human || human === winner);
       if (this.settings.mode === 'legend') {
         const l = legendById(this.settings.legend);
-        text = `${winner === 'w' ? l.white : l.black} wins. ${l.title}, ${l.where}.`;
+        text = `${winner === 'w' ? l.white : l.black} vinner. ${l.title}, ${l.where}.`;
       }
     } else {
-      title = 'Draw';
-      text = c.isStalemate() ? 'Stalemate — no legal move remains.' : c.isThreefoldRepetition() ? 'Threefold repetition.'
-        : c.isInsufficientMaterial() ? 'Insufficient material.' : 'The fifty-move rule.';
+      title = 'Remi';
+      text = c.isStalemate() ? 'Patt. Inget lagligt drag återstår.' : c.isThreefoldRepetition() ? 'Samma ställning tre gånger.'
+        : c.isInsufficientMaterial() ? 'För lite material kvar.' : 'Femtiodragsregeln.';
       this.voice?.herald(c.isStalemate() ? 'stalemate' : c.isThreefoldRepetition() ? 'dejaVu' : 'draw');
-      this.ui.toast(c.isStalemate() ? 'Stalemate' : 'Draw');
+      this.ui.toast(c.isStalemate() ? 'Patt' : 'Remi');
     }
     this.ui.status(title);
     this.saveLocal(true);

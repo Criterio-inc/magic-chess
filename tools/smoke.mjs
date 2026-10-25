@@ -127,7 +127,7 @@ for (const m of MATES) {
     await ev(() => S.over());
     assert(finishers[n] === m.kind, `finish ${finishers[n]} ≠ ${m.kind}`);
     const stats = await ev(() => document.getElementById('over-stats').textContent);
-    if (m.name === 'mate-queen') { await shot('over-stats'); assert(/White|Black/.test(stats), 'ingen sammanfattning'); }
+    if (m.name === 'mate-queen') { await shot('over-stats'); assert(/Vit|Svart/.test(stats), 'ingen sammanfattning'); }
   });
 }
 

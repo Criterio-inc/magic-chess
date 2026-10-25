@@ -203,13 +203,20 @@ body.overview #btn-map { border-color: var(--gold); color: var(--gold-hi); } /* 
 @media (max-width: 720px) { .bars { height: 7vh; } .credits { font-size: 11px; } }
 
 /* genererad logga (gemini-imagegen), med glans som bara sveper över loggans egna pixlar */
-.logo { position: relative; width: min(860px, 92vw); margin: 0 auto 4px; aspect-ratio: 1364 / 669;
-  animation: logoIn 1.5s cubic-bezier(.2,1.3,.35,1) 0.35s both; }
-.logo-img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.85)) drop-shadow(0 0 40px rgba(255,120,40,0.18)); }
-.logo-shine { position: absolute; inset: 0; pointer-events: none;
-  -webkit-mask: url('/logo.webp') center / 100% 100% no-repeat; mask: url('/logo.webp') center / 100% 100% no-repeat;
-  background: linear-gradient(105deg, transparent 40%, rgba(255,250,235,0.55) 50%, transparent 60%) no-repeat;
-  background-size: 250% 100%; background-position: 160% 0; mix-blend-mode: screen; animation: sweep2 6s ease-in-out 2s infinite; }
+/* titeln är typografi i stället för en bild: SAECULA i guld, Kartbordet i kursiv mellan två guldlinjer.
+   Glansen löper i själva bokstäverna (ett ljuslager över guldet, båda klippta till texten). */
+.logo { position: relative; width: min(860px, 92vw); margin: 0 auto 18px; animation: logoIn 1.5s cubic-bezier(.2,1.3,.35,1) 0.35s both; }
+.logo-word { font-family: 'Cinzel', serif; font-weight: 900; font-size: clamp(58px, 12.5vw, 150px); letter-spacing: 0.14em; line-height: 1;
+  margin: 0; padding-left: 0.14em; white-space: nowrap; color: transparent; -webkit-background-clip: text; background-clip: text;
+  background-image: linear-gradient(105deg, transparent 40%, rgba(255,255,248,0.85) 50%, transparent 60%),
+    linear-gradient(180deg, #fff3d2 0%, #f1d08a 36%, #b98a3c 60%, #f4da92 100%);
+  background-size: 250% 100%, 100% 100%; background-repeat: no-repeat; background-position: 160% 0, 0 0;
+  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.85)) drop-shadow(0 0 36px rgba(255,170,60,0.2));
+  animation: sweepText 6s ease-in-out 2s infinite; }
+.logo-sub { font-family: 'EB Garamond', serif; font-style: italic; font-size: clamp(26px, 4.6vw, 52px); letter-spacing: 0.08em;
+  color: #eadfc4; margin: 6px 0 0; text-shadow: 0 4px 18px rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; gap: 0.6em; }
+.logo-sub::before, .logo-sub::after { content: ''; width: 2.6em; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-hi), transparent); }
+@keyframes sweepText { 0%, 55% { background-position: 160% 0, 0 0; } 100% { background-position: -60% 0, 0 0; } }
 @keyframes logoIn { 0% { opacity: 0; transform: scale(1.6); filter: blur(10px); } 55% { opacity: 1; filter: blur(0); transform: scale(0.97); } 100% { opacity: 1; transform: none; } }
 @keyframes sweep2 { 0%, 55% { background-position: 160% 0; } 100% { background-position: -60% 0; } }
 .tag { margin-top: -6px; }

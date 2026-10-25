@@ -25,17 +25,17 @@ const el = (tag, props = {}, parent = null) => {
   if (parent) parent.appendChild(e);
   return e;
 };
-const sideName = (c) => (c === 'w' ? 'White' : 'Black');
+const sideName = (c) => (c === 'w' ? 'Vit' : 'Svart');
 
 export function setupOnlineExtras({ online, game, ui, voice, world, sound }) {
   // ------------------------------------------------------------ knappar och rutor
 
   // "Watch" bredvid "Join" i onlinemenyn
-  const watchBtn = el('button', { id: 'online-watch', className: 'btn ghost', textContent: 'Watch', title: 'Watch this arena as a spectator' });
+  const watchBtn = el('button', { id: 'online-watch', className: 'btn ghost', textContent: 'Se på', title: 'Se på partiet som åskådare' });
   $('online-join')?.after(watchBtn);
   watchBtn.addEventListener('click', () => {
     const code = $('join-code').value.trim().toUpperCase();
-    if (code.length !== 6) { ui.onlineMsg('The code has six characters.'); return; }
+    if (code.length !== 6) { ui.onlineMsg('Koden har sex tecken.'); return; }
     const s = ui.readSettings();
     game.settings.battles = s.battles;
     game.settings.pace = s.pace;
@@ -52,7 +52,7 @@ export function setupOnlineExtras({ online, game, ui, voice, world, sound }) {
   };
 
   // glåpordsknappen i verktygsraden och menyn som fälls upp ovanför den
-  const tauntBtn = el('button', { id: 'btn-taunt', className: 'icon online-only', textContent: '❝', title: 'Taunt your opponent' });
+  const tauntBtn = el('button', { id: 'btn-taunt', className: 'icon online-only', textContent: '❝', title: 'Reta din motståndare' });
   ($('btn-resign') || $('toolbar').lastElementChild).after(tauntBtn);
   const menu = el('div', { id: 'taunt-menu', className: 'hidden' }, document.body);
   for (const [id, text] of Object.entries(TAUNTS)) {
@@ -111,7 +111,7 @@ export function setupOnlineExtras({ online, game, ui, voice, world, sound }) {
   function sendTaunt(id) {
     if (!TAUNTS[id] || online.watching || game.settings.mode !== 'online') return;
     fill();
-    if (bucket.tokens < 1) { ui.toast('Catch your breath first', true); refreshTauntCool(); return; }
+    if (bucket.tokens < 1) { ui.toast('Hämta andan först', true); refreshTauntCool(); return; }
     bucket.tokens -= 1;
     online.taunt(id); // servern ekar tillbaka; då hörs och syns det även här
     refreshTauntCool();
@@ -165,7 +165,7 @@ export function setupOnlineExtras({ online, game, ui, voice, world, sound }) {
     bubble(m.by, text, Math.min(6, Math.max(BUBBLE_S, secs + 0.5))); // bubblan står kvar medan repliken hörs
   });
   online.listen('error', (m) => {
-    if (m.code === 'rate-limited' && game.settings.mode === 'online') ui.toast('Easy there — one taunt at a time', true);
+    if (m.code === 'rate-limited' && game.settings.mode === 'online') ui.toast('Lugn i stormen, ett glåpord i taget', true);
   });
 
   // glåporden avkodas i förväg när ett onlineparti börjar (de är korta)
@@ -181,13 +181,13 @@ export function setupOnlineExtras({ online, game, ui, voice, world, sound }) {
     if (!rematchBtn) return;
     const accept = rm.theirs && !rm.mine && !rm.gone;
     rematchBtn.disabled = rm.mine || rm.gone;
-    rematchBtn.textContent = rm.mine ? 'Waiting…' : accept ? 'Accept rematch' : 'Rematch';
+    rematchBtn.textContent = rm.mine ? 'Väntar…' : accept ? 'Godta returmatch' : 'Returmatch';
     rematchBtn.classList.toggle('gold', accept);
     rematchBtn.classList.toggle('ghost', !accept);
-    const text = rm.gone ? 'Your opponent has left the arena.'
+    const text = rm.gone ? 'Din motståndare har lämnat kartrummet.'
       : rm.mine && rm.theirs ? 'To battle again!'
-      : rm.mine ? 'Rematch requested — waiting for your opponent.'
-      : rm.theirs ? 'Opponent wants a rematch!' : '';
+      : rm.mine ? 'Returmatch begärd, väntar på din motståndare.'
+      : rm.theirs ? 'Motståndaren vill ha returmatch!' : '';
     note.textContent = text;
     note.classList.toggle('hidden', !text);
   }
@@ -200,15 +200,15 @@ export function setupOnlineExtras({ online, game, ui, voice, world, sound }) {
     rm.mine = true;
     online.rematch();
     refreshRematch();
-    ui.toast(rm.theirs ? 'Rematch accepted' : 'Rematch requested');
+    ui.toast(rm.theirs ? 'Returmatch godtagen' : 'Returmatch begärd');
   }
 
   function onRematch(m) {
-    if (online.watching) { ui.toast(`${sideName(m.by)} wants a rematch`); return; }
+    if (online.watching) { ui.toast(`${sideName(m.by)} vill ha returmatch`); return; }
     if (m.by === game.myColor) return;
     rm.theirs = true;
     refreshRematch();
-    ui.toast('Opponent wants a rematch');
+    ui.toast('Motståndaren vill ha returmatch');
     // slutrutan stängd med "Look around": visa den igen så att det går att svara
     if (rm.dismissed && game.onlineOver && !game.playing && $('menu').classList.contains('hidden')) {
       rm.dismissed = false;
@@ -224,7 +224,7 @@ export function setupOnlineExtras({ online, game, ui, voice, world, sound }) {
   let watchedOk = false;
   function watch(code) {
     watchedOk = false;
-    ui.onlineMsg('Finding the arena…');
+    ui.onlineMsg('Letar upp kartrummet…');
     online.watch(code);
   }
 
@@ -248,13 +248,13 @@ export function setupOnlineExtras({ online, game, ui, voice, world, sound }) {
     setWatchers(m.state.watchers);
     primeTaunts();
     showSettled(m.state.over);
-    ui.toast(`Watching ${m.code}`);
+    ui.toast(`Ser på ${m.code}`);
   });
   online.listen('error', (m) => {
     if (!m.wasWatching) return;
     if (game.settings.mode === 'online') ui.setOnline(false); // inga spelarknappar när rummet är borta
-    if (m.code === 'room-full') ui.toast('Too many spectators already', true);
-    else if (m.code === 'no-such-room' && watchedOk) ui.toast('The arena has closed', true);
+    if (m.code === 'room-full') ui.toast('Redan för många åskådare', true);
+    else if (m.code === 'no-such-room' && watchedOk) ui.toast('Kartrummet har stängt', true);
     watchedOk = false;
   });
 

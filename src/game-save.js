@@ -48,7 +48,7 @@ export const SaveMethods = {
     const side = this.settings.mode === 'black' ? 'b' : this.settings.mode === 'hotseat' ? this.chess.turn() : 'w';
     await this.director.toHome(side, 1.8);
     if (token !== this.token) return;
-    this.ui.toast('The battle resumes');
+    this.ui.toast('Slaget fortsätter');
     this.busy = false;
     this.nextTurn();
   },

@@ -31,7 +31,7 @@ export const OnlineMethods = {
     if (token !== this.token) return;
     if (fanfare) {
       this.voice?.herald('begin');
-      this.ui.toast(!color ? 'To battle!' : color === 'w' ? 'You play White' : 'You play Black');
+      this.ui.toast(!color ? 'To battle!' : color === 'w' ? 'Du spelar vit' : 'Du spelar svart');
     }
     this.busy = false;
     this.nextTurn();
@@ -56,12 +56,12 @@ export const OnlineMethods = {
     const winner = result === '1-0' ? 'w' : result === '0-1' ? 'b' : null;
     const me = winner === this.myColor;
     const watching = !this.myColor; // åskådare: berätta ur båda sidors perspektiv
-    const loser = winner === 'w' ? 'Black' : 'White';
-    const title = reason === 'draw-agreed' ? 'Draw' : watching ? `${winner === 'w' ? 'White' : 'Black'} wins` : me ? 'Victory' : 'Defeat';
-    const text = reason === 'draw-agreed' ? 'Both sides agree to a draw.'
-      : watching ? (reason === 'resign' ? `${loser} lays down the sword.` : `${loser} fled the arena.`)
-      : reason === 'resign' ? (me ? 'Your opponent yields the field.' : 'You laid down your sword.')
-      : (me ? 'Your opponent fled the arena.' : 'You left the arena.');
+    const loser = winner === 'w' ? 'Svart' : 'Vit';
+    const title = reason === 'draw-agreed' ? 'Remi' : watching ? `${winner === 'w' ? 'Vit' : 'Svart'} vinner` : me ? 'Seger' : 'Nederlag';
+    const text = reason === 'draw-agreed' ? 'Båda sidor går med på remi.'
+      : watching ? (reason === 'resign' ? `${loser} lägger ned svärdet.` : `${loser} lämnade kartrummet.`)
+      : reason === 'resign' ? (me ? 'Din motståndare lämnar fältet.' : 'Du lade ned svärdet.')
+      : (me ? 'Din motståndare lämnade kartrummet.' : 'Du lämnade kartrummet.');
     if (!quiet) { // quiet = återansluten till ett redan avgjort parti
       this.voice?.herald(winner ? (winner === 'w' ? 'whiteWins' : 'blackWins') : 'draw');
       if (winner) this.sound.fanfare(me || watching);

@@ -1,455 +1,141 @@
 {
   "voices": {
-    "herald": "FF7KdobWPaiR0vkcALHF",
-    "pawn": "SOYHLrjzK2X1ezoPC6cr",
-    "knight": "L0Dsvb3SLTyegXwtm47J",
-    "bishop": "uVKHymY7OYMd6OailpG5",
-    "rook": "qNkzaJoHLLdpvgh5tISm",
-    "queen": "pFZP5JQG7iQjIQuC4Bku",
-    "king": "JBFqnCBsd6RMkjVDRZzb",
-    "patsy": "N2lVS1w4EtoT3dr4eOWO",
-    "taunter": "uVKHymY7OYMd6OailpG5",
-    "blackknight": "L0Dsvb3SLTyegXwtm47J"
+    "herald": "bV7jikEEhdB4L9kKI5lU",
+    "pawn": "ISDDl0xPNLMD73L5PQj4",
+    "knight": "zA8eaG1JhG82rhuCip6v",
+    "bishop": "8vE32fWOR99kGIH4Vg1s",
+    "rook": "nEJYXtiAMFuP7hh9yoi4",
+    "queen": "qR801wfGbt4yozOoeFIY",
+    "king": "SrEXuatZsaPiMUKtNYnc",
+    "drummer": "oJEeOXECH9V31Oci9WHK",
+    "taunter": "2z4pujvcLHrr5ilDhLnD",
+    "karolin": "GTaiOJIilTdNU9B8S57K"
   },
   "lines": {
     "herald": {
-      "begin": [
-        "[dramatic] Let the battle begin!",
-        "[shouting] To arms! The game is afoot!",
-        "[booming] Round one... fight!"
-      ],
-      "check": [
-        "[shouting] Check!",
-        "[dramatic] The king is in check!",
-        "[dramatic] The king is in danger!"
-      ],
-      "checkmate": [
-        "[shouting] Checkmate!"
-      ],
-      "whiteWins": [
-        "[dramatic] White is victorious!"
-      ],
-      "blackWins": [
-        "[dramatic] Black is victorious!"
-      ],
-      "stalemate": [
-        "[solemn] Stalemate. There is no victor this day.",
-        "[unimpressed] A stalemate. How thrilling."
-      ],
-      "draw": [
-        "[solemn] The battle ends in a draw."
-      ],
-      "promote": [
-        "[awed] A pawn ascends!",
-        "[dramatic] Level up!"
-      ],
-      "firstBlood": [
-        "[dramatic] First blood!"
-      ],
-      "finishHim": [
-        "[booming] Finish him!"
-      ],
-      "fatality": [
-        "[booming] Fatality!"
-      ],
-      "flawless": [
-        "[dramatic] Flawless victory!"
-      ],
-      "doubleKill": [
-        "[shouting] Double kill!"
-      ],
-      "killingSpree": [
-        "[shouting] Killing spree!"
-      ],
-      "comboBreaker": [
-        "[shouting] Combo breaker!"
-      ],
-      "toasty": [
-        "[high-pitched] Toasty!"
-      ],
-      "enPassant": [
-        "[shocked] Holy hell!",
-        "[dramatic] Google en passant!"
-      ],
-      "inquisition": [
-        "[shouting] Nobody expects the Spanish Inquisition!"
-      ],
-      "bongcloud": [
-        "[amused] Ah... the Bongcloud!"
-      ],
-      "horse": [
-        "[shouting] Horse!"
-      ],
-      "dejaVu": [
-        "[mysterious] Déjà vu..."
-      ],
-      "rabbit": [
-        "[ominous] That's no ordinary rabbit!",
-        "[terrified] Look at the bones!"
-      ],
-      "runAway": [
-        "[panicked] Run away! Run away!"
-      ],
-      "blunder": [
-        "[sarcastic] Brilliant move...",
-        "[shocked] What a blunder!",
-        "[dry] Oh. Oh no."
-      ],
-      "brilliant": [
-        "[awed] Brilliant!",
-        "[excited] What a move!"
-      ],
-      "silly": [
-        "[announcer] The Ministry of Silly Walks approves."
-      ],
-      "replay": [
-        "[excited] Let's see that again!",
-        "[dramatic] Instant replay!"
-      ],
-      "nightfall": [
-        "[solemn] Night falls upon the arena..."
-      ],
-      "foot": [
-        "[booming] And now for something completely different!"
-      ]
+      "begin": ["[dramatic] Låt slaget börja!", "[shouting] Till vapen! Partiet är i gång!", "[booming] Trumman går. Framåt marsch!"],
+      "check": ["[shouting] Schack!", "[dramatic] Kungen står i schack!", "[dramatic] Kungen är i fara!"],
+      "checkmate": ["[shouting] Schack matt!"],
+      "whiteWins": ["[dramatic] Vit segrar!"],
+      "blackWins": ["[dramatic] Svart segrar!"],
+      "stalemate": ["[solemn] Patt. Ingen segrare denna dag.", "[unimpressed] Patt. Så spännande."],
+      "draw": ["[solemn] Slaget slutar oavgjort."],
+      "promote": ["[awed] En bonde blir adlad!", "[dramatic] Upphöjd i ståndet!"],
+      "cavalry": ["[shouting] Bonden blir ryttare!"],
+      "firstCasualty": ["[dramatic] Det första offret!"],
+      "coupDeGrace": ["[booming] Ge honom nådastöten!", "[booming] Fullborda det!"],
+      "realmFalls": ["[booming] Riket har fallit!"],
+      "spotless": ["[dramatic] Seger utan en enda skråma!"],
+      "twoAtOnce": ["[shouting] Två i rad!"],
+      "rampage": ["[shouting] Ett härjningståg!", "[shouting] Ingen kan hejda honom!"],
+      "revenge": ["[shouting] Hämnden är ljuv!", "[shouting] Det där var för kamraten!"],
+      "quip": ["[amused] Det var som tusan!", "[dry] Det där kommer att stå i krönikorna.", "[amused] Någon får skriva till kungen om det här."],
+      "enPassant": ["[shocked] En passant! Det är faktiskt tillåtet.", "[dramatic] Slagen i förbifarten!"],
+      "chapter": ["[solemn] Domkapitlet har talat.", "[dramatic] Kyrkan slår till!"],
+      "bongcloud": ["[amused] Kungen tar en förmiddagspromenad."],
+      "dejaVu": ["[mysterious] Det här har vi sett förut..."],
+      "elk": ["[terrified] En älg! En älg på brädet!", "[shouting] Akta er, älgen har kommit in!"],
+      "elkLeaves": ["[relieved] Och där går älgen hem igen."],
+      "blunder": ["[sarcastic] Ett lysande drag...", "[shocked] Vilken miss!", "[dry] Åh. Åh nej."],
+      "brilliant": ["[awed] Briljant!", "[excited] Vilket drag!"],
+      "dance": ["[announcer] Hovdanslärarens kurs bär frukt.", "[amused] Ett litet danssteg för kronan."],
+      "replay": ["[excited] En gång till!", "[dramatic] Låt oss se det igen!"],
+      "nightfall": ["[solemn] Natten faller över kartrummet. Tänd ljusen."],
+      "hand": ["[booming] Fältherren har tröttnat på väntan!"]
     },
     "pawn": {
-      "select": [
-        "[eager] Yes, sir!",
-        "[determined] Ready for duty!",
-        "[nervous] Me? Right away!",
-        "[gruff] Work, work.",
-        "[eager] Something need doing?",
-        "[nervous] It's dangerous to go alone..."
-      ],
-      "attack": [
-        "[shouting] For the crown!",
-        "[shouting] Have at you!",
-        "[shouting] Leeroy Jenkins!",
-        "[shouting] This is SPARTA!"
-      ],
-      "death": [
-        "[groans] Tell my mother...",
-        "[gasps] Not like this...",
-        "[gasps] I used to be an adventurer like you... then I took a sword to the knee.",
-        "[groans] Not the face..."
-      ],
-      "move": [
-        "[determined] Onward!",
-        "[cheerful] Ready to work!"
-      ],
-      "retreat": [
-        "[panicked] Run away! Run away!"
-      ],
-      "hit": [
-        "[strained] 'Tis but a scratch!",
-        "[pained] Ow! My spleen!"
-      ],
-      "fleshwound": [
-        "[defiant] It's just a flesh wound!"
-      ],
-      "kill": [
-        "[smug] Who's the pawn now?",
-        "[laughs] Pawn stars!"
-      ],
-      "annoyed": [
-        "[annoyed] Stop poking me!",
-        "[exasperated] Me not that kind of pawn!"
-      ],
-      "bored": [
-        "[bored] Any day now...",
-        "[whistles] ...hmm hm hmm..."
-      ]
+      "select": ["[eager] Ja, herre!", "[determined] Redo för tjänst!", "[nervous] Jag? Genast!", "[eager] Ska bli!", "[nervous] Är det farligt? Det är farligt, va?"],
+      "attack": ["[shouting] För kronan!", "[shouting] Gud med oss!", "[shouting] Ta den här!", "[shouting] Framåt, gubbar!"],
+      "death": ["[groans] Hälsa mor...", "[gasps] Inte så här...", "[gasps] Jag som skulle bli korpral...", "[groans] Inte i ansiktet..."],
+      "move": ["[determined] Framåt!", "[cheerful] Ett steg i sänder."],
+      "retreat": ["[panicked] Reträtt! Reträtt!"],
+      "hit": ["[strained] Aj, mjälten!", "[pained] Det svider!"],
+      "maimed": ["[shocked] Armen! Det var min goda arm!"],
+      "kill": ["[smug] Vem är bonde nu?", "[laughs] Ett steg närmare adelskapet!"],
+      "annoyed": ["[annoyed] Sluta peta på mig!", "[exasperated] Jag har rättigheter enligt landslagen!"],
+      "bored": ["[bored] Någon gång i dag...", "[whistles] ...hmm hm hmm..."]
     },
     "knight": {
-      "select": [
-        "[confident] My sword is yours.",
-        "[calm] For honor.",
-        "At your command, my liege.",
-        "[stern] None shall pass.",
-        "[confident] We are the knights who say... Ni!"
-      ],
-      "attack": [
-        "[shouting] Yield, villain!",
-        "[shouting] By my oath!",
-        "[shouting] Ni! Ni! Ni!",
-        "[shouting] Have at you, you scoundrel!"
-      ],
-      "death": [
-        "[pained] I have... failed.",
-        "[groans] Avenge me...",
-        "[groans] All right... we'll call it a draw."
-      ],
-      "move": [
-        "[confident] Onward, for glory!",
-        "[cheerful] I'll take the long way round."
-      ],
-      "retreat": [
-        "[nervous] Run away!"
-      ],
-      "hit": [
-        "[defiant] 'Tis but a scratch!",
-        "[strained] I've had worse!"
-      ],
-      "fleshwound": [
-        "[defiant] 'Tis but a scratch!",
-        "[annoyed] Come back here, I'll bite your legs off!"
-      ],
-      "kill": [
-        "[smug] Flawless... technique.",
-        "[calm] Checkmate is a state of mind."
-      ],
-      "annoyed": [
-        "[annoyed] I fart in your general direction!",
-        "[irritated] Your mother was a hamster!"
-      ],
-      "bored": [
-        "[bored] My horse is getting restless. If I had one."
-      ]
+      "select": ["[confident] Min värja är er.", "[calm] För ära och fosterland.", "Till er tjänst, min konung.", "[confident] Ryttaren står redo."],
+      "attack": ["[shouting] Ge dig, skurk!", "[shouting] Vid min ed!", "[shouting] Till anfall!", "[shouting] För Göta rike!"],
+      "death": ["[pained] Jag har... svikit.", "[groans] Hämna mig...", "[groans] Säg till... regementet..."],
+      "move": ["[confident] Framåt, mot äran!", "[cheerful] Jag tar omvägen, som vanligt."],
+      "retreat": ["[nervous] Taktisk omgruppering!"],
+      "hit": ["[defiant] Jag har haft värre i Polen!", "[strained] Det där kändes."],
+      "maimed": ["[defiant] Min arm! Kronans egendom dessutom!", "[annoyed] Den där armen var nyputsad!"],
+      "kill": ["[smug] Rent och snyggt.", "[calm] Som jag lärde mig vid Breitenfeld."],
+      "annoyed": ["[annoyed] Petar ni på en kunglig ryttare?", "[irritated] Mina sporrar skaver redan som det är."],
+      "bored": ["[bored] Medan ni tänker kunde jag ha erövrat Livland."]
     },
     "bishop": {
-      "select": [
-        "[warmly] Bless you, my child.",
-        "The heavens guide my path.",
-        "[mutters] Yes, yes, I'm coming.",
-        "[eager] Hey! Listen!",
-        "[raspy] Deus vult."
-      ],
-      "attack": [
-        "[shouting] Repent!",
-        "[shouting] Feel the wrath of heaven!",
-        "[chanting] Wololo!",
-        "[shouting] By the power of the holy diagonal!"
-      ],
-      "death": [
-        "[gasps] Forgive them...",
-        "[groans] My prayers... unanswered...",
-        "[gasps] The cake... was a lie..."
-      ],
-      "move": [
-        "[mutters] Diagonally, as always.",
-        "[raspy] The Lord works in diagonal ways."
-      ],
-      "retreat": [
-        "[raspy] A strategic withdrawal..."
-      ],
-      "grenade": [
-        "[solemn] One... two... five! [hastily] Three, sir! Three!",
-        "[solemn] And the Lord spake... [hastily] oh, just throw it!"
-      ],
-      "hit": [
-        "[gasps] I'm not dead yet!",
-        "[groans] Oof, my sciatica."
-      ],
-      "fleshwound": [
-        "[raspy] Merely a flesh wound, my child."
-      ],
-      "kill": [
-        "[satisfied] Bring out your dead!",
-        "[smug] Amen."
-      ],
-      "annoyed": [
-        "[annoyed] Thou shalt not poke!",
-        "[raspy] Do you want a smiting? Because that is how you get a smiting."
-      ],
-      "bored": [
-        "[bored] I could have finished a whole sermon by now."
-      ]
+      "select": ["[warmly] Välsignelse, mitt barn.", "Himlen leder min väg.", "[mutters] Ja, ja, jag kommer.", "[raspy] Deus vult."],
+      "attack": ["[shouting] Omvänd dig!", "[shouting] Känn himlens vrede!", "[shouting] I kyrkoordningens namn!", "[shouting] Bannlyst!"],
+      "death": ["[gasps] Förlåt dem...", "[groans] Mina böner... obesvarade...", "[gasps] Vem ska nu predika på söndag?"],
+      "move": ["[mutters] Diagonalt, som alltid.", "[raspy] Herrens vägar är diagonala."],
+      "retreat": ["[raspy] En strategisk reträtt..."],
+      "bull": ["[solemn] Härmed förklaras ni bannlyst, i enlighet med kyrkoordningen, kapitel... [hastily] Nej, kasta bara!", "[solemn] Och domkapitlet har beslutat att... [hastily] Nå, kasta då!"],
+      "hit": ["[groans] Aj, min ischias!", "[gasps] Det där var inte kristligt."],
+      "maimed": ["[raspy] Min arm! Den var helgad!"],
+      "kill": ["[satisfied] Amen.", "[smug] Till skärselden med er."],
+      "annoyed": ["[annoyed] Du skall icke peta!", "[raspy] Ett peta till, och det blir bot och bättring."],
+      "bored": ["[bored] Jag hade hunnit med en hel högmässa."]
     },
     "rook": {
-      "select": [
-        "[slowly] Rook... moves.",
-        "[slowly] Stone. Ready.",
-        "[grumbles] Hmm. Yes.",
-        "[slowly] Job's done.",
-        "[slowly] Rook... smash?"
-      ],
-      "attack": [
-        "[roaring] Crush!",
-        "[shouting] Smash you flat!",
-        "[roaring] Rook smash!",
-        "[shouting] Falcon... PUNCH!"
-      ],
-      "death": [
-        "[groans] Rook... crumble...",
-        "[groans] Nooo...",
-        "[groans] Rook... was... a good rook."
-      ],
-      "move": [
-        "[slowly] Castle... coming through.",
-        "[grumbles] Straight lines only."
-      ],
-      "retreat": [
-        "[slowly] Rook... tactical... retreat."
-      ],
-      "hit": [
-        "[slowly] Rook... felt that.",
-        "[grumbles] Stone... does not bleed."
-      ],
-      "fleshwound": [
-        "[slowly] Just... a pebble."
-      ],
-      "kill": [
-        "[slowly] Rook... rocks.",
-        "[laughs] Haha. Pebbles."
-      ],
-      "annoyed": [
-        "[annoyed] Rook... is not... a toy.",
-        "[grumbles] Poke rook again... rook poke back."
-      ],
-      "bored": [
-        "[bored] Rook... waiting... rook... still waiting."
-      ]
+      "select": ["[slowly] Torn... går.", "[slowly] Sten. Redo.", "[grumbles] Hmm. Ja.", "[slowly] Klart.", "[slowly] Torn... krossa?"],
+      "attack": ["[roaring] Krossa!", "[shouting] Platta till!", "[roaring] Stenras!", "[shouting] Rasa!"],
+      "death": ["[groans] Torn... vittrar...", "[groans] Neeej...", "[groans] Torn... var... ett bra torn."],
+      "move": ["[slowly] Bastionen... kommer.", "[grumbles] Bara raka linjer."],
+      "retreat": ["[slowly] Torn... taktisk... reträtt."],
+      "hit": ["[slowly] Torn... kände det.", "[grumbles] Sten... blöder inte."],
+      "maimed": ["[slowly] Bara... en småsten."],
+      "kill": ["[slowly] Torn... står kvar.", "[laughs] Haha. Grus."],
+      "annoyed": ["[annoyed] Torn... är ingen... leksak.", "[grumbles] Peta torn igen... torn petar tillbaka."],
+      "bored": ["[bored] Torn... väntar... torn... väntar fortfarande."]
     },
     "queen": {
-      "select": [
-        "[regal] As I command.",
-        "[amused] How delightful.",
-        "[confident] Point the way.",
-        "[amused] I am the one who knocks.",
-        "[regal] Winter is coming."
-      ],
-      "attack": [
-        "[menacing] Kneel before your queen!",
-        "[shouting] Burn!",
-        "[shouting] Hadouken!",
-        "[menacing] Get over here!",
-        "[cold] Chill out."
-      ],
-      "death": [
-        "[gasps] Impossible...",
-        "[pained] My king... forgive me...",
-        "[dramatic] Tell the king... he's on his own."
-      ],
-      "move": [
-        "[confident] Anywhere I please, darling.",
-        "[amused] Queens move however they like."
-      ],
-      "retreat": [
-        "[haughty] This is not a retreat. It's a repositioning."
-      ],
-      "hit": [
-        "[annoyed] How dare you!",
-        "[gasps] My dress!"
-      ],
-      "fleshwound": [
-        "[haughty] Merely a flesh wound. Rather fetching, actually."
-      ],
-      "kill": [
-        "[amused] Next!",
-        "[smug] Off with their heads. Oh wait, done."
-      ],
-      "annoyed": [
-        "[annoyed] Do you mind? I'm royalty.",
-        "[cold] Touch me again and you're a pawn."
-      ],
-      "bored": [
-        "[impatient] Darling, I'm aging here."
-      ]
+      "select": ["[regal] Som jag befaller.", "[amused] Så förtjusande.", "[confident] Visa vägen.", "[amused] Hela brädet är mitt."],
+      "attack": ["[menacing] Knäfall för er drottning!", "[shouting] Brinn!", "[cold] Frys!", "[menacing] Ingen undkommer drottningen!"],
+      "death": ["[gasps] Omöjligt...", "[pained] Min kung... förlåt mig...", "[dramatic] Säg till kungen... att han får klara sig själv."],
+      "move": ["[confident] Vart jag behagar, min kära.", "[amused] Drottningar går hur de vill."],
+      "retreat": ["[haughty] Det här är ingen reträtt. Det är en omgruppering."],
+      "hit": ["[annoyed] Hur vågar ni!", "[gasps] Min klänning!"],
+      "maimed": ["[haughty] Min arm! Och jag som skulle på bal."],
+      "kill": ["[amused] Nästa!", "[smug] Ännu en för samlingen."],
+      "annoyed": ["[annoyed] Ursäkta? Jag är kunglig.", "[cold] Rör mig igen, så blir ni bonde."],
+      "bored": ["[impatient] Min kära, jag åldras här."]
     },
     "king": {
-      "select": [
-        "[regal] Very well.",
-        "[sighs] Must I do everything myself?",
-        "[dignified] The crown moves.",
-        "[smug] It's good to be the king.",
-        "[pompous] Bow, peasants."
-      ],
-      "attack": [
-        "[shouting] Off with your head!",
-        "[shouting] Bow to your king!",
-        "[shouting] By royal decree!",
-        "[shouting] For the realm!"
-      ],
-      "death": [
-        "[gasps] My kingdom...",
-        "[defeated] It is... finished.",
-        "[gasps] Et tu, pawn?"
-      ],
-      "move": [
-        "[weary] One square. As always. Riveting.",
-        "[pompous] Make way for the king!"
-      ],
-      "retreat": [
-        "[nervous] A king never runs. He... strolls briskly."
-      ],
-      "hit": [
-        "[pained] Treason!",
-        "[gasps] I'll have you hanged for that!"
-      ],
-      "fleshwound": [
-        "[pained] A mere flesh wound. Fetch my physician."
-      ],
-      "kill": [
-        "[smug] All your base are belong to us.",
-        "[smug] Long live me!"
-      ],
-      "check": [
-        "[panicked] Help! Help! I'm being repressed!",
-        "[panicked] Guards! GUARDS!"
-      ],
-      "annoyed": [
-        "[annoyed] I am your king! Stop that!",
-        "[haughty] I didn't vote for you!"
-      ],
-      "bored": [
-        "[impatient] We haven't got all day, you know."
-      ]
+      "select": ["[regal] Mycket väl.", "[sighs] Måste jag göra allt själv?", "[dignified] Kronan rör sig.", "[pompous] Res er, undersåtar. Nej förresten, sitt.", "[pompous] Buga, bönder."],
+      "attack": ["[shouting] Av med huvudet!", "[shouting] Buga för er kung!", "[shouting] Genom kungligt dekret!", "[shouting] För riket!"],
+      "death": ["[gasps] Mitt rike...", "[defeated] Det är... fullbordat.", "[gasps] Även du, bonde?"],
+      "move": ["[weary] Ett steg. Som alltid. Spännande.", "[pompous] Plats för kungen!"],
+      "retreat": ["[nervous] En kung flyr aldrig. Han... promenerar raskt."],
+      "hit": ["[pained] Förräderi!", "[gasps] Ni ska hängas för det där!"],
+      "maimed": ["[pained] Min arm! Hämta livmedikus!"],
+      "kill": ["[smug] Länge leve jag!", "[smug] Det var ingen fara. För mig."],
+      "check": ["[panicked] Vakter! VAKTER!", "[panicked] Det här står inte i protokollet!"],
+      "annoyed": ["[annoyed] Jag är er kung! Sluta!", "[haughty] Petar ni på kronan?"],
+      "bored": ["[impatient] Vi har inte hela dagen, vet ni."]
     },
-    "patsy": {
-      "model": [
-        "[whispering] It's only a model.",
-        "[whispering] Shh!"
-      ],
-      "clap": [
-        "[cheerful] Clip clop, clip clop!"
-      ]
+    "drummer": {
+      "march": ["[cheerful] I takt nu, i takt!", "[proud] Trumman går före!"]
     },
     "taunter": {
-      "fart": [
-        "[thick French accent, mocking] I fart in your general direction!"
-      ],
-      "hamster": [
-        "[thick French accent, mocking] Your mother was a hamster, and your father smelt of elderberries!"
-      ],
-      "goaway": [
-        "[thick French accent, haughty] Now go away, or I shall taunt you a second time!"
-      ],
-      "ni": [
-        "[booming] Ni! Ni! Ni!"
-      ],
-      "really": [
-        "[unimpressed] That was your move? Really?"
-      ],
-      "wellplayed": [
-        "[grudging] Well played. I mean it. Mostly."
-      ],
-      "expect": [
-        "[gleeful] Nobody expects my next move!"
-      ],
-      "hurry": [
-        "[impatient sigh] Any century now would be lovely."
-      ]
+      "dalkarl": ["[dry] Det där draget skulle få en dalkarl att gråta."],
+      "kanslist": ["[dry] Ni spelar som en kanslist en fredagskväll."],
+      "regler": ["[mocking] Har ni läst reglerna, eller bara bläddrat i dem?"],
+      "marknad": ["[mocking] Jag har sett vassare drag på marknaden i Uppsala."],
+      "riksdag": ["[dry] Ni är snabb som en riksdag."],
+      "verkligen": ["[unimpressed] Var det där ert drag? Verkligen?"],
+      "beundran": ["[grudging] Väl spelat. Det menar jag. Nästan."],
+      "skynda": ["[impatient sigh] Någon gång detta sekel vore trevligt."]
     },
-    "blackknight": {
-      "nonepass": [
-        "[stern] None shall pass."
-      ],
-      "scratch": [
-        "[dismissive] 'Tis but a scratch."
-      ],
-      "flesh": [
-        "[defiant] Just a flesh wound."
-      ],
-      "invincible": [
-        "[triumphant] I'm invincible!"
-      ],
-      "draw": [
-        "[reasonable] All right, we'll call it a draw."
-      ],
-      "bite": [
-        "[furious] Come back here! I'll bite your legs off!"
-      ]
+    "karolin": {
+      "halt": ["[stern] Halt! Visa passet!"],
+      "report": ["[indignant] Min arm! Det här ska anmälas till krigskollegium!"],
+      "protest": ["[outraged] Andra armen?! Jag begär skriftlig motivering!"],
+      "receipt": ["[stubborn] Jag kräver kvitto. På båda armarna."],
+      "complaint": ["[furious] Det här får konsekvenser! Jag skriver till kungen om..."]
     }
   }
 }
