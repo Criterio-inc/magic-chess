@@ -96,6 +96,7 @@ body.battle #side, body.battle #toolbar { opacity: 0; pointer-events: none; }
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: all 0.15s; }
 .icon:hover { border-color: var(--gold); color: var(--gold-hi); }
 .icon.off { opacity: 0.4; }
+body.overview #btn-map { border-color: var(--gold); color: var(--gold-hi); } /* översikten är på */
 
 .promo-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .promo-row button { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line); padding: 14px 0 8px; font-size: 44px; line-height: 1;

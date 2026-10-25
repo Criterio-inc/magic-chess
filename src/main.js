@@ -13,6 +13,7 @@ import { tier } from './quality.js';
 import { Online } from './online.js';
 import { setupOnlineExtras } from './online-extras.js';
 import { Title } from './title.js';
+import { Overview } from './kartrum/overview.js';
 
 const ui = new UI();
 const world = new World(document.getElementById('view'));
@@ -41,7 +42,6 @@ async function boot() {
   const fx = new FX(world);
   fx.setGround(meta.tileTop);
   setBoardFloor(meta.tileTop, meta.boardHalf); // pjäsernas golvspärr och mantlarna
-  for (const b of meta.braziers) fx.addBrazier(b);
   const game = new Game({ world, board, lib, fx, sound, engine, analyst, ui, voice });
   const online = (game.online = new Online());
   const extras = setupOnlineExtras({ online, game, ui, voice, world, sound }); // rematch, åskådare, glåpord
@@ -55,7 +55,10 @@ async function boot() {
   world.addUpdater((dt) => {
     if (world.tod > 0.62 && sound.bank && (owlT += dt) > 40 + Math.random() * 40) { owlT = 0; sound.bank.sfx('owl', { gain: 0.35, pan: Math.random() * 2 - 1 }); }
   });
-  window.BC = { world, game, fx, board, lib, engine, voice }; // för felsökning i konsolen
+  const overview = new Overview(world, game); // kartbordet uppifrån, som kopparstick (M eller ⌖)
+  ui.on('overview', () => overview.toggle());
+  window.addEventListener('keydown', (e) => { if (e.key === 'm' && !e.target.closest?.('input, textarea')) overview.toggle(); });
+  window.BC = { world, game, fx, board, lib, engine, voice, overview }; // för felsökning i konsolen
 
   // Bakgrundsparti medan titelskärmen visas: vit och svart står uppställda, kameran kretsar.
   game.syncFromBoard();

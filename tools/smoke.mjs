@@ -1,6 +1,7 @@
 // Röktest: bygger spelet, startar `vite preview` (ingen HMR som laddar om mitt i) och spelar igenom alla
 // händelser i en riktig Chrome: varje mattfinish, jättefoten, mördarkaninen, Svarte riddaren, köttsår, granaten,
-// alla dödssätt, Patsy, dum gång, repris, hoppa över, tips, veteraner, legendparti, sammanfattning, ångra, fotoläge.
+// alla dödssätt, Patsy, dum gång, repris, hoppa över, tips, veteraner, legendparti, sammanfattning, ångra, fotoläge,
+// kvällens kandelabrar och översiktsläget i kartrummet.
 // Felar vid konsolfel, sidfel eller ett påstående som inte håller. Bilder hamnar i build/smoke/.
 //
 //   node tools/smoke.mjs                 # bygg + kör (huvudlöst)
@@ -257,6 +258,43 @@ await scenario('undo-photo', async () => {
   const h = await ev(() => BC.game.chess.history().length);
   assert(h === 1, `ångra lämnade ${h} drag`);
   await ev(() => { BC.game.photo(true); BC.game.photo(false); });
+});
+
+// ---------------------------------------------------------------- kartrummet (src/kartrum/)
+await scenario('kvall', async () => {
+  await ev(() => S.fresh());
+  const lit = await ev(() => { BC.world.setTimeOfDay(1, true); return BC.world.room.room.flames.flat().filter((f) => f.visible).length; });
+  assert(lit === 9, `${lit} av 9 lågor tändes på kvällen`);
+  await ev(() => S.home());
+  await page.waitForTimeout(400);
+  await shot('kvall');
+  const day = await ev(() => { BC.world.setTimeOfDay(0, true); return BC.world.room.room.flames.flat().filter((f) => f.visible).length; });
+  assert(day === 0, `${day} lågor brann mitt på dagen`);
+});
+
+await scenario('oversikt', async () => {
+  await ev(() => S.fresh());
+  await ev(async () => { BC.overview.set(true); await S.until(() => BC.overview.k === 1, 8000); });
+  const on = await ev(() => ({ sel: BC.world.outline.selection.size, sepia: BC.world.sepia.blendMode.opacity.value }));
+  assert(on.sel > 0 && on.sepia > 0.6, `kopparsticket kom inte: ${JSON.stringify(on)}`);
+  await ev(() => S.home()); // med översikten på är hemmabilden kartbordet uppifrån
+  await page.waitForTimeout(400);
+  await shot('oversikt');
+  // en duell tonar bort kopparsticket men släpper inte översikten
+  for (const [a, b] of [['e2', 'e4'], ['d7', 'd5']]) await ev(([a, b]) => S.play(a, b), [a, b]);
+  const mid = await ev(async () => {
+    const p = S.play('e4', 'd5');
+    await S.until(() => BC.game.inBattle);
+    await S.sleep(800);
+    const k = BC.overview.k;
+    await p;
+    return k;
+  });
+  assert(mid < 0.5, `kopparsticket låg kvar under duellen (k = ${mid.toFixed(2)})`);
+  assert(await ev(() => BC.overview.active), 'duellen släppte översikten');
+  await ev(async () => { BC.overview.set(false); await S.until(() => BC.overview.k === 0, 8000); });
+  const off = await ev(() => ({ sel: BC.world.outline.selection.size, sepia: BC.world.sepia.blendMode.opacity.value, max: BC.world.controls.maxDistance }));
+  assert(off.sel === 0 && off.sepia === 0 && off.max === 46, `översikten städade inte efter sig: ${JSON.stringify(off)}`);
 });
 
 await browser.close();

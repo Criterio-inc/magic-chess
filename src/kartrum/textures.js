@@ -186,3 +186,31 @@ export function rugTexture({ field, border, gold, seed = 21 } = {}) {
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
   return t;
 }
+
+/** Himmel utanför fönstren: blå höjd, ljus horisont och en rad blånande kullar. Färgen multipliceras efter tiden. */
+export function skyTexture() {
+  const W = 512, H = 512;
+  const c = canvas(W, H);
+  const g = c.getContext('2d');
+  const sky = g.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#8fb0cc');
+  sky.addColorStop(0.62, '#e9e4d4');
+  sky.addColorStop(1, '#f2ead6');
+  g.fillStyle = sky;
+  g.fillRect(0, 0, W, H);
+  const hills = (base, amp, col, seed) => {
+    const n = valueNoise(seed, 6);
+    g.fillStyle = col;
+    g.beginPath();
+    g.moveTo(0, H);
+    for (let x = 0; x <= W; x += 4) g.lineTo(x, base - n((x / W) * 6, 0.5) * amp);
+    g.lineTo(W, H);
+    g.closePath();
+    g.fill();
+  };
+  hills(H * 0.74, 60, '#9aa79a', 31);
+  hills(H * 0.84, 46, '#6f7f68', 37);
+  const t = texture(c);
+  t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  return t;
+}

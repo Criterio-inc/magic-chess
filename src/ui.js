@@ -48,6 +48,7 @@ export class UI {
     });
     $('btn-draw').addEventListener('click', () => this.emit('offerDraw'));
     $('btn-photo').addEventListener('click', () => this.emit('photo', true));
+    $('btn-map').addEventListener('click', () => this.emit('overview'));
     $('ph-exit').addEventListener('click', () => this.emit('photo', false));
     $('ph-save').addEventListener('click', () => this.emit('photoSave'));
     $('ph-freeze').addEventListener('click', () => this.emit('photoFreeze'));

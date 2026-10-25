@@ -1,7 +1,7 @@
-// Kartrummet för stilprovet: bordet med Saeculas karta, vägg med spröjsade fönster, bokhylla, glob, kandelabrar och fanor.
-// Byggt i kod, som arenan i blender/arena.py, så att stilarna bara byter färger och ljus. Skala: K spelenheter per meter.
+// Kartrummet: bordet med Saeculas karta, vägg med spröjsade fönster, bokhylla, glob, kandelabrar och fanor.
+// Byggt i kod, som arenan i blender/arena.py. Ljuset och tiden på dygnet sköts av maproom.js. Skala: K spelenheter per meter.
 import * as THREE from 'three';
-import { woodTexture, plasterTexture, bannerTexture, rugTexture, mulberry32 } from './textures.js';
+import { woodTexture, plasterTexture, bannerTexture, rugTexture, skyTexture, mulberry32 } from './textures.js';
 
 export const K = 30; // en ruta (2 enheter) blir knappt 7 cm: ett halvmetersbräde på ett stort kartbord
 export const ROOM = { W: 6.4 * K, D: 5.2 * K, H: 3.5 * K };
@@ -11,6 +11,14 @@ const WALL_T = 0.32 * K;
 // fönstren sitter i vänsterväggen (x = -W/2): z är mitten, w bredden
 export const WINDOWS = [{ z: -26, w: 1.3 * K }, { z: 28, w: 1.3 * K }];
 const MAP_W = 48, MAP_H = MAP_W * 1548 / 2048;
+// Ljus puts och ek (stilprovets A); Saeculas mörkblått och guld bärs av fanorna och mattans bård.
+export const PALETTE = {
+  plaster: '#e2d5ba', ceiling: '#cfc0a2', mullion: '#e9e1cd',
+  table: ['#3d2312', '#7d4f2c'], floor: ['#4a2d16', '#8f5f36'], panel: ['#43280f', '#7a5030'],
+  trim: 0xb48a4a,
+  banner: { field: '#1d3a4c', border: '#c4aa73' },
+  rug: { field: '#6b1e19', border: '#1d3346', gold: '#c49a4a' },
+};
 /** Plats på kartan (u, v i bilden, v nedåt) till bordets koordinater. */
 const onMap = (u, v) => [(u - 0.5) * MAP_W, (v - 0.5) * MAP_H];
 
@@ -282,7 +290,10 @@ export function buildRoom(boardBottom, pal, mapTex, { half = 9.4, lift = 0.7, ta
   candelabra(g, 74, F, -62, M, 4.4, flames);
   globe(g, -58, F, -60, M, mapTex);
   banners(g, F, M, pal);
-  return { group: g, T, F, flames };
+  // himlen och kullarna utanför fönstren: obelyst, färgen sätts efter tiden på dygnet
+  const outside = add(g, new THREE.PlaneGeometry(260, 190), new THREE.MeshBasicMaterial({ map: skyTexture(), fog: false }), { x: -ROOM.W / 2 - 70, y: F + 80, cast: false, receive: false });
+  outside.rotation.y = Math.PI / 2;
+  return { group: g, T, F, flames, outside };
 }
 
 /**

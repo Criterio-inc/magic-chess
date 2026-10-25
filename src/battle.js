@@ -47,6 +47,7 @@ export class Director {
 
   /** Översiktsbild från en sida. På stående skärmar: brantare och vidare så att hela brädet får plats i bredd. */
   homePose(side) {
+    if (this.world.overview?.active) return this.world.overview.pose(side, this.cam.aspect);
     const z = side === 'w' ? 1 : -1;
     const a = this.cam.aspect;
     if (a >= 1.15) return { pos: new THREE.Vector3(0, 18.5, 22.5 * z), target: new THREE.Vector3(0, 0.6, 1.2 * z), fov: 38 };
