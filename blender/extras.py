@@ -1,17 +1,18 @@
-"""Extramodeller ur Monty Python and the Holy Grail, i samma marmorstil som pjäserna.
+"""Extramodeller i samma marmorstil som pjäserna: älgen, fältherrens hand och trumpojken.
 
-Körs: blender -b -P blender/extras.py -- [--only rabbit,foot,patsy] [--preview DIR]
-Ut (råa exporter): build/models/rabbit.glb, foot.glb, patsy.glb + build/models/patsy.json
+Körs: blender -b -P blender/extras.py -- [--only elk,hand,drummer] [--preview DIR]
+Ut (råa exporter): build/models/elk.glb, hand.glb, drummer.glb + build/models/drummer.json
 (tools/build_assets.sh komprimerar dem till public/models/ och gör *_lo.glb).
 
-- rabbit: Mördarkaninen från Caerbannog. Statisk, 0,34 m, sitter upp på bakbenen, tittar mot -Y.
-  Material: Fur (vit), Eye (röd, lyser i spelet), Dark (nos), Tooth (huggtänder).
-- foot:   Den jättelika foten som ett fragment av en marmorkoloss, 4,2 m lång, tårna mot -Y, sulan plan
-  vid z = 0, origo mitt under sulan. Avbruten strax ovanför fotleden med en grov brottyta. Material: Stone.
-- patsy:  Kung Arthurs väpnare, 1,15 m, hukande i kåpa och luva med säck på ryggen och en kokosnötshalva i
-  varje hand (styvt bundna till hand.L/hand.R). Standardskelettet. Klipp: idle, walk, clap, bow.
-  Material: Stone (hud: lagets marmor), Cloth (kåpa och luva: ofärgad säckväv i spelet), Sack (säcken),
-  Rope (rep, rem och knut), Wood (kokosnötterna). Spelet ger honom egna material i src/patsy.js.
+- elk:     En marmorälg som kliver in från kartan och stångar offret. Statisk, cirka 2,9 m hög med skovelhornen,
+           tittar mot -Y, origo mitt mellan klövarna på marken. Material: Stone.
+- hand:    Fältherrens hand som ett fragment av en marmorkoloss: höger hand med handflatan plant mot marken,
+           4,6 m från handleden till långfingrets spets, fingrarna mot -Y och tummen mot +X. Avbruten vid
+           handleden med en grov brottyta. Origo mitt under handen. Material: Stone.
+- drummer: Trumpojken, 1,15 m, i lång uniformsrock och trekantig hatt, med en marschtrumma framför magen och en
+           trumstock i varje hand (styvt bundna till hand.L/hand.R). Standardskelettet. Klipp: idle, walk, drum, bow.
+           Material: Stone (hud: lagets marmor), Cloth (rocken), Felt (hatten), Sack (trumskinnen),
+           Rope (bälten och sträng), Wood (trumman och stockarna). Spelet ger honom egna material i src/drummer.js.
 """
 import bpy
 import bmesh
@@ -53,13 +54,6 @@ lib.MAT_COLORS.update({
     "Sack": ((0.62, 0.5, 0.33, 1), 0.0, 0.95),
     "Rope": ((0.72, 0.62, 0.43, 1), 0.0, 0.9),
 })
-
-
-def mat_setup():
-    m = lib.mat("Eye")
-    b = m.node_tree.nodes.get("Principled BSDF")
-    b.inputs["Emission Color"].default_value = (1.0, 0.05, 0.02, 1)
-    b.inputs["Emission Strength"].default_value = 2.5
 
 
 def blob(name, forms, tris, res, material, fluff=0.0, fluff_size=0.01):
@@ -128,158 +122,12 @@ def cone(name, a, b, r, material, seg=10):
     return ob
 
 
-# ======================================================================= MÖRDARKANINEN
+# ======================================================================= BROTTYTOR
 
-def build_rabbit():
-    """Söt, fluffig vit kanin som sitter upp på bakbenen med tassarna framför bröstet — och röda ögon,
-    rynkad panna och två vassa huggtänder."""
-    F = anatomy.Forms(0.34)
-    b = "root"
-    for k in (1, -1):
-        F.ell((k * 0.043, 0.032, 0.056), (0.04, 0.058, 0.05), b, 2.4)            # lår (hopvikta bakben)
-        F.ell((k * 0.05, 0.05, 0.035), (0.026, 0.04, 0.03), b, 2.6)              # hasor
-        F.ell((k * 0.042, -0.022, 0.013), (0.019, 0.05, 0.013), b, 2.8)          # långa bakfötter
-        F.ell((k * 0.042, -0.066, 0.012), (0.016, 0.015, 0.011), b, 3.0)         # tår
-    F.ell((0, 0.04, 0.068), (0.062, 0.058, 0.058), b, 2.4)                        # rumpa
-    F.ell((0, 0.014, 0.128), (0.05, 0.05, 0.072), b, 2.4)                         # kropp, upprätt päronform
-    F.ell((0, -0.016, 0.118), (0.044, 0.04, 0.058), b, 2.5)                       # mage
-    F.ell((0, -0.026, 0.168), (0.034, 0.028, 0.03), b, 2.6)                       # bröstpäls
-    # framben och tassar, upplyfta framför bröstet
-    for k in (1, -1):
-        F.chain([(k * 0.028, -0.028, 0.168), (k * 0.026, -0.05, 0.14), (k * 0.02, -0.062, 0.122)], [0.013, 0.011, 0.01], b, 2.8)
-        F.ell((k * 0.019, -0.066, 0.114), (0.011, 0.013, 0.011), b, 3.0)
-    # huvud
-    hc = V((0, -0.022, 0.232))
-    head0 = len(F.items)
-    F.ell(hc, (0.041, 0.046, 0.039), b, 2.5)
-    F.ell(hc + V((0, 0.022, 0.008)), (0.037, 0.038, 0.035), b, 2.5)              # bakhuvud
-    F.ell(hc + V((0, -0.036, -0.012)), (0.025, 0.024, 0.021), b, 2.6)            # nosparti
-    for k in (1, -1):
-        F.ell(hc + V((k * 0.014, -0.049, -0.017)), (0.0145, 0.013, 0.013), b, 2.9)   # morrhårsdynor
-        F.ell(hc + V((k * 0.03, -0.01, -0.014)), (0.021, 0.022, 0.021), b, 2.6)      # runda kinder
-        F.ell(hc + V((k * 0.042, 0.0, -0.022)), (0.008, 0.01, 0.012), b, 3.2)        # kindtofs
-        # rynkad panna: en vulst över ögat som lutar ned mot mitten (det elaka)
-        F.ell(hc + V((k * 0.02, -0.036, 0.018)), (0.016, 0.008, 0.006), b, 3.2,
-              q=Quaternion(V((0, 1, 0)), k * 0.42))
-        F.ell(hc + V((k * 0.029, -0.031, 0.004)), (0.013, 0.008, 0.012), b, 3.0, neg=True)  # ögonhåla
-    F.ell(hc + V((0, -0.062, -0.03)), (0.0018, 0.008, 0.008), b, 3.5, neg=True)  # klyvd överläpp
-    F.ell(hc + V((0, -0.044, -0.036)), (0.012, 0.012, 0.006), b, 3.0)            # haka
-    # öron: långa, lätt utåtböjda, med urholkad insida framåt
-    for k in (1, -1):
-        base = hc + V((k * 0.017, 0.014, 0.028))
-        mid_ = base + V((k * 0.012, 0.006, 0.055))
-        tip = base + V((k * 0.026, 0.02, 0.106))
-        F.oriented(base, mid_, 0.0115, 0.0075, b, 3.0)
-        F.oriented(base + (mid_ - base) * 0.5, mid_ + (tip - mid_) * 0.5, 0.015, 0.0068, b, 3.0)
-        F.oriented(mid_, tip, 0.0125, 0.006, b, 3.0)
-        F.oriented(base + (mid_ - base) * 0.7 + V((0, -0.006, 0)), mid_ + (tip - mid_) * 0.7 + V((0, -0.006, 0)),
-                   0.0085, 0.004, b, 3.5)
-        F.items[-1] = F.items[-1][:6] + (True,)                                   # (negativ: örats insida)
-    # stort, sött huvud: skala huvudformerna kring hc
-    HS = 1.16
-    for i in range(head0, len(F.items)):
-        kind, c, r, bone, st, q, neg = F.items[i]
-        F.items[i] = (kind, hc + (c - hc) * HS, tuple(x * HS for x in r), bone, st, q, neg)
-    # bomullssvans
-    F.ball((0, 0.098, 0.05), 0.02, b, 2.8)
-    for i in range(7):
-        a = i / 7 * math.tau
-        F.ball((0.012 * math.cos(a), 0.104 + 0.004 * math.sin(a * 2), 0.05 + 0.012 * math.sin(a)), 0.009, b, 3.2)
-    fur = blob("rabbit_fur", F, 12000, 0.0021, "Fur", fluff=0.0008, fluff_size=0.0075)
-
-    parts = [fur]
-    for k in (1, -1):
-        ec = hc + V((k * 0.0275, -0.033, 0.003)) * HS
-        parts.append(ellipsoid(f"eye{k}", ec, (0.0105 * HS, 0.0105 * HS, 0.0118 * HS), material="Eye", seg=16, rings=10))
-        # liten vass huggtand under överläppen, pekar ned och lite framåt
-        a = hc + V((k * 0.0056, -0.0585, -0.031)) * HS
-        parts.append(cone(f"fang{k}", a, a + V((0.0, -0.0025, -0.0135)), 0.0032, "Tooth", seg=10))
-    parts.append(ellipsoid("nose", hc + V((0, -0.0605, -0.009)) * HS, (0.0072 * HS, 0.0045 * HS, 0.0052 * HS), material="Dark", seg=12, rings=8))
-    ob = join(parts, "rabbit")
-    # origo mitt mellan fötterna på marken, sedan exakt 0,34 m hög
+def cut_fracture(ob, p0, nrm, band=0.03):
+    """Kapa modellen i planet (p0, nrm), fyll hålet med koncentriska ringar och lägg en viktgrupp 'break'
+    som är 1 på brottytan och avtar en bit ned längs sidan (så blir kanten ojämn utan söm)."""
     me = ob.data
-    zmin = min(v.co.z for v in me.vertices)
-    feet = [v.co for v in me.vertices if v.co.z < zmin + 0.004]
-    cy = (min(c.y for c in feet) + max(c.y for c in feet)) / 2
-    me.transform(Matrix.Translation((0, -cy, -zmin)))
-    for v in me.vertices:              # sitter plant på marken
-        if v.co.z < 0.0025:
-            v.co.z = 0.0
-    hgt = max(v.co.z for v in me.vertices)
-    me.transform(Matrix.Scale(0.34 / hgt, 4))
-    smooth(ob, 60)
-    return ob, 0.34
-
-
-# ======================================================================= FOTEN
-
-FOOT_LEN = 4.2
-
-
-def build_foot():
-    """Höger fot i klassiska grekiska proportioner (andra tån längst) i människostorlek, skalas sedan upp
-    till en koloss. Stortån åt +X (medialt), tårna mot -Y."""
-    F = anatomy.Forms(1.0)
-    b = "root"
-    # häl: hälbenets runda bakdel sticker ut bakom hälsenan
-    F.ell((0.0, 0.094, 0.031), (0.03, 0.035, 0.032), b, 2.4)
-    F.ell((0.0, 0.106, 0.048), (0.02, 0.018, 0.026), b, 2.6)
-    # underbenets stump (smalast strax ovanför fotleden), hälsena och skenbenets kant; kapas vid brottet
-    F.chain([(0, 0.102, 0.06), (0, 0.094, 0.12), (0, 0.088, 0.27)], [0.012, 0.0115, 0.017], b, 2.3)
-    F.ell((0.002, 0.071, 0.13), (0.029, 0.031, 0.06), b, 2.4)
-    F.ell((0.003, 0.068, 0.23), (0.037, 0.037, 0.075), b, 2.4)
-    F.chain([(0.007, 0.046, 0.1), (0.009, 0.042, 0.27)], [0.012, 0.015], b, 2.8)
-    F.ell((0.003, 0.06, 0.074), (0.033, 0.032, 0.03), b, 2.4)                     # språngben
-    # fotknölar: den inre högre och längre fram; mjuka, inte kulor
-    F.ell((0.021, 0.066, 0.086), (0.0065, 0.011, 0.013), b, 2.2)
-    F.ell((-0.023, 0.078, 0.071), (0.0065, 0.011, 0.012), b, 2.2)
-    # mellanfot: en massa från häl till trampdyna, fotryggen högst på insidan
-    F.ell((-0.002, 0.022, 0.028), (0.036, 0.075, 0.03), b, 2.4)
-    F.ell((0.008, 0.034, 0.052), (0.03, 0.05, 0.028), b, 2.4)
-    F.ell((0.004, -0.03, 0.028), (0.04, 0.038, 0.022), b, 2.4)
-    F.ell((-0.026, 0.03, 0.011), (0.015, 0.062, 0.013), b, 2.3)                   # yttre fotranden mot marken
-    # sträcksenor på fotryggen
-    for (x0, x1) in ((0.026, 0.03), (0.01, 0.007), (-0.006, -0.01), (-0.018, -0.024)):
-        F.chain([(x0 * 0.6, 0.05, 0.074), (x1, -0.058, 0.033)], 0.003, b, 3.5)
-    # fotbollen och stortåns trampdyna
-    F.ell((0.004, -0.058, 0.016), (0.045, 0.026, 0.018), b, 2.5)
-    F.ell((0.028, -0.062, 0.018), (0.02, 0.022, 0.018), b, 2.7)
-    # fotvalvet: urgröpt underifrån, bara på insidan
-    F.ell((0.037, 0.025, -0.004), (0.016, 0.046, 0.016), b, 2.8, neg=True)
-    toes = [  # (rot, knoge, spets), radier — grekisk fot: andra tån längst
-        ((0.03, -0.074, 0.021), (0.032, -0.1, 0.017), (0.033, -0.121, 0.0135), (0.0135, 0.0125, 0.0115)),
-        ((0.008, -0.081, 0.017), (0.008, -0.105, 0.0135), (0.007, -0.129, 0.0095), (0.0086, 0.008, 0.0072)),
-        ((-0.008, -0.079, 0.0145), (-0.009, -0.1, 0.012), (-0.01, -0.121, 0.0088), (0.0081, 0.0076, 0.0069)),
-        ((-0.022, -0.074, 0.0125), (-0.024, -0.093, 0.0105), (-0.026, -0.11, 0.0082), (0.0076, 0.0071, 0.0064)),
-        ((-0.035, -0.066, 0.0115), (-0.038, -0.083, 0.0098), (-0.041, -0.097, 0.0078), (0.0071, 0.0066, 0.006)),
-    ]
-    for (r0, k1, tp, rr) in toes:
-        F.chain([r0, k1, tp], list(rr), b, 3.0)
-        F.ball(V(tp) + V((0, 0.002, -0.002)), rr[2] * 1.05, b, 3.2)              # tåns trampdyna
-        F.ball(V(k1) + V((0, 0.0, 0.002)), rr[1] * 1.02, b, 3.4)                 # knoge
-    for i in range(4):  # skåror mellan tåspetsarna
-        a, c = toes[i][2], toes[i + 1][2]
-        m = (V(a) + V(c)) / 2
-        F.ell(m + V((0, -0.004, 0.004)), (0.0022, 0.014, 0.012), b, 3.5, neg=True)
-    stone = blob("foot_stone", F, 30000, 0.0011, "Stone")
-    me = stone.data
-    # plan sula: allt under marken pressas upp till z = 0
-    for v in me.vertices:
-        if v.co.z < 0.0:
-            v.co.z = 0.0
-    # tånaglar
-    nails = []
-    for i, (r0, k1, tp, rr) in enumerate(toes):
-        d = (V(tp) - V(k1)).normalized()
-        c = V(tp) + V((0, 0.0, rr[2] * 0.9)) - d * rr[2] * 0.2
-        nl = ellipsoid(f"nail{i}", (0, 0, 0), (rr[2] * 0.8, rr[2] * 0.95, rr[2] * 0.24), seg=16, rings=8)
-        q = V((0, -1, 0)).rotation_difference(d)
-        nl.data.transform(Matrix.Translation(c) @ q.to_matrix().to_4x4())
-        nails.append(nl)
-    ob = join([stone] + nails, "foot")
-    me = ob.data
-    # brottet: snett plan strax ovanför fotleden, allt ovanför tas bort och hålet fylls med koncentriska ringar
-    p0, nrm = V((0, 0.07, 0.185)), V((0.0, 0.18, 1.0)).normalized()
     bm = bmesh.new()
     bm.from_mesh(me)
     geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
@@ -290,7 +138,7 @@ def build_foot():
     loop = list(f.verts)
     c = sum((v.co for v in loop), V()) / len(loop)
     bmesh.ops.delete(bm, geom=[f], context="FACES_ONLY")
-    rings, K = [loop], 8                    # tvärsnittet är stjärnformat kring mitten: skala mot den
+    rings, K = [loop], 8
     for k in range(1, K):
         rings.append([bm.verts.new(c + (v.co - c) * (1 - k / K)) for v in loop])
     cv = bm.verts.new(c)
@@ -304,22 +152,16 @@ def build_foot():
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     bm.to_mesh(me)
     bm.free()
-    # brottzonen: 1 på brottytan, avtagande en bit ned längs sidan (så blir kanten ojämn utan söm)
-    band = 0.03
     vg = ob.vertex_groups.new(name="break")
     for v in me.vertices:
         h = (v.co - p0).dot(nrm)
         if h > -band:
             vg.add([v.index], min(1.0, (1 + h / band)) ** 1.6 if h < -1e-6 else 1.0, "REPLACE")
-    # upp till kolossformat; origo mitt under sulan
-    s = FOOT_LEN / (max(v.co.y for v in me.vertices) - min(v.co.y for v in me.vertices))
-    me.transform(Matrix.Scale(s, 4))
-    sole = [v.co for v in me.vertices if v.co.z < 1e-4]
-    cx = (min(c.x for c in sole) + max(c.x for c in sole)) / 2
-    cy = (min(c.y for c in sole) + max(c.y for c in sole)) / 2
-    me.transform(Matrix.Translation((-cx, -cy, 0)))
-    # grov brottsten: lib.add_rock på brottzonen (bara längs brottplanets normal, ingen utbuktning)
-    lib.add_rock(ob, strength=0.3, size=0.8, levels=1, seed=7)
+
+
+def roughen_fracture(ob, strength=0.3, size=0.8):
+    """Grov brottsten på brottzonen (lib.add_rock, bara längs brottplanets normal)."""
+    lib.add_rock(ob, strength=strength, size=size, levels=1, seed=7)
     ob.modifiers.remove(ob.modifiers["Sub"])
     for mname in ("Rock", "Rock2"):
         m = ob.modifiers[mname]
@@ -327,15 +169,134 @@ def build_foot():
         m.direction = "Z"
     lib.apply_mods(ob)
     ob.vertex_groups.clear()
+
+
+# ======================================================================= ÄLGEN
+
+def build_elk():
+    """Stor älgtjur i marmor: hög manke, lång mule med hängande överläpp, skägg, långa smala ben och breda
+    skovelhorn med taggar. Står stilla med huvudet något sänkt, som inför en stångning."""
+    F = anatomy.Forms(2.9)
+    b = "root"
+    # bål: hög manke framtill, smalare bakdel
+    F.ell((0, 0.12, 1.45), (0.36, 0.92, 0.42), b, 2.3)                        # kropp
+    F.ell((0, -0.46, 1.74), (0.33, 0.46, 0.4), b, 2.3)                        # manke
+    F.ell((0, -0.66, 1.36), (0.31, 0.34, 0.42), b, 2.4)                       # bringa
+    F.ell((0, 0.82, 1.47), (0.31, 0.34, 0.36), b, 2.4)                        # länd och kors
+    F.ell((0, 0.1, 1.13), (0.32, 0.72, 0.26), b, 2.5)                         # buk
+    # hals och huvud, lätt sänkt framåt
+    F.chain([(0, -0.78, 1.78), (0, -1.06, 1.9), (0, -1.2, 1.94)], [0.27, 0.22, 0.19], b, 2.5)
+    tilt = Quaternion(V((1, 0, 0)), math.radians(-22))
+    F.ell((0, -1.36, 1.88), (0.16, 0.3, 0.17), b, 2.6, q=tilt)                 # skalle
+    F.ell((0, -1.62, 1.74), (0.14, 0.2, 0.14), b, 2.6, q=tilt)                 # mule
+    F.ell((0, -1.76, 1.68), (0.125, 0.1, 0.12), b, 2.8)                        # hängande överläpp
+    F.ell((0, -1.7, 1.6), (0.08, 0.08, 0.05), b, 3.0)                          # underkäke
+    for k in (1, -1):
+        F.ell((k * 0.07, -1.82, 1.7), (0.02, 0.02, 0.02), b, 3.2, neg=True)  # näsborrar
+        F.ell((k * 0.12, -1.36, 1.98), (0.03, 0.035, 0.025), b, 3.0)         # ögonvalv
+        F.oriented((k * 0.12, -1.24, 2.04), (k * 0.33, -1.14, 2.2), 0.06, 0.03, b, 3.0)   # öron
+    F.chain([(0, -1.3, 1.72), (0, -1.28, 1.52), (0, -1.26, 1.38)], [0.05, 0.035, 0.018], b, 2.8)   # skägget
+    # ben: framben raka, bakben med hasen bakåt; klövar
+    for k in (1, -1):
+        x = k * 0.2
+        F.chain([(x, -0.62, 1.25), (x * 0.98, -0.6, 0.72), (x * 0.95, -0.62, 0.14)], [0.12, 0.07, 0.05], b, 2.6)
+        F.chain([(x * 1.05, 0.72, 1.3), (x, 0.96, 0.68), (x * 0.95, 0.84, 0.14)], [0.15, 0.07, 0.05], b, 2.6)
+        F.ell((x, 0.92, 0.66), (0.06, 0.08, 0.06), b, 3.0)                    # hasen
+        for y in (-0.64, 0.82):
+            F.ell((x * 0.95, y - 0.02, 0.07), (0.07, 0.1, 0.07), b, 3.0)      # klöv
+    F.ell((0, 1.14, 1.55), (0.06, 0.08, 0.1), b, 3.0)                          # svans
+    body = blob("elk_body", F, 16000, 0.012, "Stone")
+    parts = [body]
+    # skovelhorn: en stam ut åt sidan, en bred skovel och taggar längs dess övre kant
+    for k in (1, -1):
+        root_ = V((k * 0.14, -1.24, 2.06))
+        beam = V((k * 0.44, -1.18, 2.2))
+        parts.append(tube(f"beam{k}", [root_, beam], [0.055, 0.045], material="Stone", seg=12))
+        pc = V((k * 0.74, -1.12, 2.36))
+        q = Quaternion(V((0, 1, 0)), -k * math.radians(28)) @ Quaternion(V((1, 0, 0)), math.radians(-12))
+        palm = ellipsoid(f"palm{k}", (0, 0, 0), (0.34, 0.13, 0.04), material="Stone", seg=24, rings=12)
+        palm.data.transform(Matrix.Translation(pc) @ q.to_matrix().to_4x4())
+        parts.append(palm)
+        for i in range(6):
+            t = i / 5
+            base = pc + q @ V((k * (-0.26 + 0.52 * t), 0.0, 0.02 + 0.03 * math.sin(t * math.pi)))
+            up = (q @ V((k * 0.12 * (t - 0.3), -0.02, 1.0))).normalized()
+            parts.append(cone(f"tine{k}_{i}", base, base + up * (0.16 + 0.06 * math.sin(t * math.pi)), 0.035, "Stone", seg=10))
+    ob = join(parts, "elk")
+    me = ob.data
+    zmin = min(v.co.z for v in me.vertices)
+    me.transform(Matrix.Translation((0, 0, -zmin)))
+    for v in me.vertices:              # klövarna står plant på marken
+        if v.co.z < 0.004:
+            v.co.z = 0.0
+    smooth(ob, 50)
+    return ob, max(v.co.z for v in me.vertices)
+
+
+# ======================================================================= HANDEN
+
+HAND_LEN = 4.6
+
+
+def build_hand():
+    """Höger hand med handflatan plant mot marken i människostorlek, skalas sedan upp till en koloss.
+    Fingrarna mot -Y, tummen utspärrad mot +X. Avbruten strax ovanför handleden."""
+    F = anatomy.Forms(1.0)
+    b = "root"
+    F.ell((0.004, 0.004, 0.02), (0.043, 0.052, 0.017), b, 2.4)               # handflata
+    F.ell((0.002, 0.012, 0.028), (0.038, 0.044, 0.012), b, 2.5)              # handrygg, lätt välvd
+    F.ell((-0.03, 0.01, 0.016), (0.014, 0.045, 0.014), b, 2.6)               # lillfingerranden
+    F.ell((0.036, 0.022, 0.018), (0.022, 0.03, 0.017), b, 2.4)               # tumvalken
+    F.chain([(0, 0.05, 0.022), (0, 0.09, 0.03), (0, 0.17, 0.042)], [0.03, 0.028, 0.032], b, 2.4)   # handled och underarm
+    for (x0, x1) in ((0.028, 0.03), (0.01, 0.01), (-0.01, -0.011), (-0.026, -0.029)):
+        F.chain([(x0 * 0.7, 0.04, 0.03), (x1, -0.04, 0.03)], 0.003, b, 3.5)   # senor på handryggen
+    fingers = [  # (knoge, mellanled, ytterled, spets), radier: pek-, lång-, ring- och lillfinger
+        ((0.029, -0.045, 0.024), (0.033, -0.075, 0.019), (0.035, -0.097, 0.014), (0.036, -0.115, 0.009), (0.0098, 0.009, 0.0082, 0.0075)),
+        ((0.009, -0.049, 0.025), (0.01, -0.083, 0.02), (0.01, -0.108, 0.015), (0.01, -0.128, 0.0095), (0.0102, 0.0094, 0.0086, 0.0078)),
+        ((-0.01, -0.047, 0.024), (-0.012, -0.078, 0.019), (-0.013, -0.1, 0.014), (-0.014, -0.119, 0.009), (0.0096, 0.0089, 0.0081, 0.0074)),
+        ((-0.027, -0.04, 0.022), (-0.031, -0.063, 0.017), (-0.033, -0.08, 0.013), (-0.034, -0.095, 0.0085), (0.0085, 0.0079, 0.0072, 0.0066)),
+    ]
+    for (k1, k2, k3, tp, rr) in fingers:
+        F.chain([k1, k2, k3, tp], list(rr), b, 3.0)
+        F.ball(V(k1) + V((0, 0.003, 0.004)), rr[0] * 1.05, b, 3.2)            # knoge
+        F.ball(V(tp) + V((0, 0.002, -0.002)), rr[3] * 1.05, b, 3.2)           # fingertopp
+    thumb = [(0.03, 0.025, 0.017), (0.052, -0.004, 0.014), (0.066, -0.028, 0.012), (0.074, -0.045, 0.01)]
+    F.chain(thumb, [0.015, 0.012, 0.0105, 0.0095], b, 2.9)                   # tummen, utspärrad
+    for i in range(3):  # skåror mellan fingrarna
+        m = (V(fingers[i][1]) + V(fingers[i + 1][1])) / 2
+        F.ell(m + V((0, 0.012, 0.006)), (0.0022, 0.018, 0.01), b, 3.5, neg=True)
+    stone = blob("hand_stone", F, 30000, 0.0011, "Stone")
+    for v in stone.data.vertices:      # handflatan och fingrarna plant mot marken
+        if v.co.z < 0.0:
+            v.co.z = 0.0
+    nails = []
+    tips = [(f[2], f[3], f[4][3]) for f in fingers] + [(thumb[2], thumb[3], 0.0095)]
+    for i, (k3, tp, r) in enumerate(tips):
+        d = (V(tp) - V(k3)).normalized()
+        c = V(tp) + V((0, 0.0, r * 0.85)) - d * r * 0.3
+        nl = ellipsoid(f"nail{i}", (0, 0, 0), (r * 0.75, r * 1.0, r * 0.22), seg=16, rings=8)
+        q = V((0, -1, 0)).rotation_difference(d)
+        nl.data.transform(Matrix.Translation(c) @ q.to_matrix().to_4x4())
+        nails.append(nl)
+    ob = join([stone] + nails, "hand")
+    cut_fracture(ob, V((0, 0.12, 0.03)), V((0.0, 1.0, 0.25)).normalized())
+    me = ob.data
+    # upp till kolossformat; origo mitt under handen
+    s = HAND_LEN / (max(v.co.y for v in me.vertices) - min(v.co.y for v in me.vertices))
+    me.transform(Matrix.Scale(s, 4))
+    flat = [v.co for v in me.vertices if v.co.z < 1e-4]
+    cx = (min(c.x for c in flat) + max(c.x for c in flat)) / 2
+    cy = (min(c.y for c in flat) + max(c.y for c in flat)) / 2
+    me.transform(Matrix.Translation((-cx, -cy, 0)))
+    roughen_fracture(ob)
     smooth(ob, 35)
-    return ob, 3.4
+    return ob, 1.6
 
+# ======================================================================= TRUMPOJKEN
 
-# ======================================================================= PATSY
-
-PATSY_H = 1.15
-CLAP_N = 15                        # 0,5 s
-CLAP_HITS = (4, 11)                # bildrutor då kokosnötterna slår ihop (två per cykel)
+DRUMMER_H = 1.15
+BEAT_N = 15                        # 0,5 s
+BEAT_HITS = (4, 11)                # bildrutor då en stock träffar skinnet: vänster, sedan höger
 
 
 def nelder_mead(f, x0, step, iters=400, tol=1e-10):
@@ -376,95 +337,6 @@ def bone_xform(arm, bone):
     return pb.matrix @ pb.bone.matrix_local.inverted()
 
 
-def coconut_shell(name, R, material="Wood"):
-    """Halv kokosnöt: skål med öppningen mot +Z, kanten i z = 0 och polen i z = -0,92·R, lite fibrig."""
-    t = 0.09 * R
-    prof = []
-    for i in range(9):                  # utsidan, polen -> kanten
-        a = math.pi / 2 * i / 8
-        prof.append((R * math.sin(a), -0.92 * R * math.cos(a)))
-    prof.append((R - t * 0.5, 0.004 * R))
-    for i in range(8, -1, -1):          # insidan, kanten -> polen
-        a = math.pi / 2 * i / 8
-        prof.append(((R - t) * math.sin(a), -0.92 * (R - t) * math.cos(a) + 0.002 * R))
-    ob = lathe(name, prof, seg=28, material=material, cap_bottom=False, cap_top=False)
-    for v in ob.data.vertices:          # fibrer: grunda fåror längs nöten
-        if v.co.z < -0.02 * R:
-            a = math.atan2(v.co.y, v.co.x)
-            r = math.hypot(v.co.x, v.co.y)
-            if r > (R - t) * 0.999 * math.sin(math.acos(min(1.0, -v.co.z / (0.92 * R)))) - 1e-6:
-                v.co.x *= 1 + 0.025 * math.sin(a * 9)
-                v.co.y *= 1 + 0.025 * math.sin(a * 9)
-    return ob
-
-
-def hood(J, H):
-    """Luva med ansiktsöppning, spetsig strut i nacken och en krage över axlarna."""
-    hc = face_head(J, H)
-    c = hc + V((0, 0.01 * H, 0.012 * H))
-    bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=20, radius=1.0)
-    bmesh.ops.scale(bm, vec=(0.068 * H, 0.074 * H, 0.083 * H), verts=bm.verts)
-    # ansiktsöppningen: bort med ytorna som vetter framåt i en oval
-    kill = []
-    for f in bm.faces:
-        d = f.calc_center_median()
-        dn = V((d.x / 0.068, d.y / 0.074, d.z / 0.083)).normalized()
-        if dn.y < -0.42 and -0.75 < dn.z < 0.62 and abs(dn.x) < 0.78:
-            kill.append(f)
-        elif dn.z < -0.55:              # halsen
-            kill.append(f)
-    bmesh.ops.delete(bm, geom=kill, context="FACES")
-    bmesh.ops.translate(bm, vec=c, verts=bm.verts)
-    hd = lib._obj_from_bm("hood", bm, "Cloth")
-    for v in hd.data.vertices:          # lite slokande, tygaktigt
-        v.co.z -= 0.006 * H * max(0.0, (v.co.y - c.y) / (0.074 * H))
-    add_solidify(hd, 0.007 * H, offset=1)
-    add_subsurf(hd, 1)
-    out = [(hd, "head")]
-    # strut (liripipe) från luvans topp ned längs ryggen
-    out.append((tube("liripipe", [c + V((0, 0.045 * H, 0.055 * H)), c + V((0, 0.08 * H, 0.01 * H)), c + V((0, 0.088 * H, -0.05 * H)),
-                                   c + V((0.006 * H, 0.084 * H, -0.1 * H))], [0.026 * H, 0.016 * H, 0.009 * H, 0.004 * H],
-                      material="Cloth", seg=12), "head"))
-    # krage (gugel) över axlarna, med veck
-    zn = J["neck0"].z
-    col = lathe("cowl", [(0.05 * H, zn + 0.04 * H), (0.08 * H, zn + 0.024 * H), (0.125 * H, zn + 0.008 * H), (0.155 * H, zn - 0.018 * H),
-                         (0.166 * H, zn - 0.05 * H), (0.167 * H, zn - 0.085 * H), (0.16 * H, zn - 0.112 * H)], seg=56, material="Cloth",
-                sy=0.76, center=(0, 0.012 * H, 0), fold=(11, 0.035, zn + 0.01 * H, zn - 0.115 * H), cap_bottom=False, cap_top=False)
-    for v in col.data.vertices:        # ojämn kant
-        if v.co.z < zn - 0.09 * H:
-            a = math.atan2(v.co.y, v.co.x)
-            v.co.z += 0.01 * H * math.sin(a * 7 + 1.3)
-    add_solidify(col, 0.008 * H, offset=1)
-    out.append((col, "chest"))
-    return out
-
-
-def sack(J, H):
-    """Stor knölig säck på ryggen, hopknuten upptill, med en rem över vänster axel."""
-    F = anatomy.Forms(H)
-    b = "chest"
-    c = V((0, 0.155 * H, 0.59 * H))     # lågt på ryggen: när han hukar får säcken inte sticka upp över axlarna
-    F.ell(c, (0.095 * H, 0.08 * H, 0.135 * H), b, 2.4)
-    for (dx, dy, dz, r) in ((0.04, 0.02, -0.07, 0.06), (-0.045, 0.015, -0.05, 0.056), (0.025, 0.035, 0.05, 0.05),
-                            (-0.03, 0.03, 0.04, 0.05), (0.0, 0.05, -0.02, 0.062), (0.0, 0.005, -0.1, 0.068)):
-        F.ball(c + V((dx * H, dy * H, dz * H)), r * H, b, 2.4)               # knölar av innehållet
-    top = c + V((0, 0.0, 0.155 * H))
-    F.chain([c + V((0, 0, 0.11 * H)), top], [0.045 * H, 0.02 * H], b, 2.8)   # strypt hals
-    for i in range(5):                                                        # tygvippa ovanför knuten
-        a = i / 5 * math.tau
-        F.ell(top + V((0.014 * H * math.cos(a), 0.014 * H * math.sin(a), 0.03 * H)), (0.012 * H, 0.012 * H, 0.025 * H), b, 3.0,
-              q=Quaternion(V((-math.sin(a), math.cos(a), 0)), 0.5))
-    sk = blob("sack", F, 4500, 0.004 * H, "Sack")
-    out = [(sk, "chest")]
-    out.append((lib.torus("sacktie", top + V((0, 0, 0.005 * H)), 0.024 * H, 0.006 * H, material="Rope", seg=16), "chest"))
-    # rem: från säckens hals över vänster axel och snett ned över bröstet till bältet på höger sida
-    out.append((tube("strap", [top + V((0.01 * H, -0.02 * H, -0.01 * H)), V((0.07 * H, 0.06 * H, 0.86 * H)), V((0.09 * H, -0.02 * H, 0.84 * H)),
-                               V((0.05 * H, -0.085 * H, 0.75 * H)), V((-0.04 * H, -0.08 * H, 0.64 * H)), V((-0.08 * H, -0.05 * H, 0.6 * H))],
-                      0.009 * H, material="Rope", seg=8), "chest"))
-    return out
-
-
 def skirt_weights(ob, J, H, z_top, z_hem):
     """Kjolen följer låren nedtill (mjuka vikter: hips -> thigh.L/R) så att knäna inte sticker igenom."""
     groups = {n: ob.vertex_groups.new(name=n) for n in ("hips", "thigh.L", "thigh.R")}
@@ -480,11 +352,60 @@ def skirt_weights(ob, J, H, z_top, z_hem):
             groups["thigh.R"].add([v.index], wt * (1 - side), "REPLACE")
 
 
-def build_patsy():
-    H = PATSY_H
+def tricorne(J, H):
+    """Trekantig hatt: låg kulle och ett brett brätte som är uppvikt på tre sidor, med ett hörn rakt fram."""
+    hc = face_head(J, H)
+    top = hc + V((0, 0.006 * H, 0.062 * H))
+    crown = lathe("hatcrown", [(0.062 * H, top.z - 0.004 * H), (0.064 * H, top.z + 0.018 * H), (0.058 * H, top.z + 0.034 * H),
+                               (0.04 * H, top.z + 0.046 * H), (0.0, top.z + 0.05 * H)],
+                  seg=36, material="Felt", sy=1.08, center=(top.x, top.y, 0), cap_bottom=False)
+    bm = bmesh.new()
+    n, r0, r1 = 72, 0.058 * H, 0.118 * H
+    inner, outer = [], []
+    for i in range(n):
+        a = i / n * math.tau
+        up = 0.5 - 0.5 * math.cos(3 * (a + math.pi / 2))   # 0 i hörnen (rakt fram och snett bakåt), uppvikt mellan dem
+        ca, sa = math.cos(a), math.sin(a)
+        inner.append(bm.verts.new(top + V((r0 * ca, r0 * sa * 1.08, 0.002 * H))))
+        outer.append(bm.verts.new(top + V((r1 * ca, r1 * sa * 1.08, 0.004 * H + 0.05 * H * up))))
+    for i in range(n):
+        j = (i + 1) % n
+        bm.faces.new((inner[i], inner[j], outer[j], outer[i]))
+    brim = lib._obj_from_bm("hatbrim", bm, "Felt")
+    add_solidify(brim, 0.006 * H, offset=0)
+    add_subsurf(brim, 1)
+    return [(crown, "head"), (brim, "head")]
+
+
+def drum_parts(center, R, h):
+    """Marschtrumma med lodrät axel: träskal, skinn upptill och nedtill, ringar och en sicksackad sträng."""
+    c = V(center)
+    out = [lathe("drumshell", [(R, c.z - h / 2), (R * 1.01, c.z), (R, c.z + h / 2)], seg=40, material="Wood",
+                 center=(c.x, c.y, 0), cap_bottom=False, cap_top=False)]
+    for s, z in (("top", c.z + h / 2), ("bot", c.z - h / 2)):
+        out.append(lathe(f"drumhead{s}", [(0.0, z), (R * 0.98, z)], seg=40, material="Sack", center=(c.x, c.y, 0),
+                         cap_bottom=False, cap_top=False))
+        out.append(lib.torus(f"drumhoop{s}", (c.x, c.y, z), R * 1.02, R * 0.06, material="Wood", seg=40))
+    pts = []
+    for i in range(17):
+        a = i / 16 * math.tau
+        z = c.z + (h / 2 - R * 0.06) * (1 if i % 2 == 0 else -1)
+        pts.append(V((c.x + R * 1.03 * math.cos(a), c.y + R * 1.03 * math.sin(a), z)))
+    out.append(tube("drumcord", pts, R * 0.025, material="Rope", seg=6))
+    return out
+
+
+def drumstick(name, butt, tip, H):
+    parts = [tube(name, [butt, tip], [0.0075 * H, 0.0055 * H], material="Wood", seg=8),
+             ellipsoid(name + "bead", tip, (0.0095 * H, 0.0095 * H, 0.0095 * H), material="Wood", seg=10, rings=6)]
+    return join(parts, name)
+
+
+def build_drummer():
+    H = DRUMMER_H
     J = rig.joints(H, sw=0.125, hw=0.058)
     parts = []
-    # syns: ansikte, händer och bara fötter (resten av den skulpterade kroppen göms av kåpan)
+    # syns: ansikte, händer och underben (resten av den skulpterade kroppen göms av rocken)
     T = anatomy.Forms(H)
     anatomy.torso(T, J, 0.92)
     anatomy.neck(T, J)
@@ -494,53 +415,46 @@ def build_patsy():
         A_ = anatomy.Forms(H)
         anatomy.arm(A_, J, s_, 0.95, "open")
         parts.append((anatomy.sculpt(f"body_arm{s_}", A_, 2400), None))
-        L_ = anatomy.Forms(H)                       # bara underben och bara fötter: låren göms av kjolen
+        L_ = anatomy.Forms(H)                       # bara underben: låren göms av rockskörtet
         anatomy.leg(L_, J, s_, 1.0, "bare")
         L_.items = [it for it in L_.items if it[3] != f"thigh.{s_}"]
         parts.append((anatomy.sculpt(f"body_leg{s_}", L_, 2200), None))
-    hc = face_head(J, H)
-    parts.append((ellipsoid("patsynose", hc + V((0, -0.058 * H, -0.014 * H)), (0.011 * H, 0.011 * H, 0.012 * H), seg=14, rings=10), "head"))
-    for k in (1, -1):                   # buskiga ögonbryn under luvan
-        parts.append((ellipsoid(f"pbrow{k}", hc + V((k * 0.02 * H, -0.047 * H, 0.017 * H)), (0.014 * H, 0.006 * H, 0.0045 * H), seg=12, rings=6), "head"))
-    parts += hood(J, H)
-    # kåpa: överdel på chest, kjol på hips/lår, repbälte, vida ärmar
+    parts += tricorne(J, H)
+    # lång uniformsrock: överdel på chest, skört på hips/lår, bälte, ärmar med uppslag
     zs = J["spine0"].z
-    top = pieces.torso_shell("tunic", J, H, width=1.08, depth=0.82, keel=0.0, material="Cloth",
-                             fold=(9, 0.04, J["neck0"].z, zs), z_bottom=zs - 0.05 * H)
+    top = pieces.torso_shell("coat", J, H, width=1.08, depth=0.82, keel=0.0, material="Cloth",
+                             fold=(9, 0.03, J["neck0"].z, zs), z_bottom=zs - 0.05 * H)
     parts.append((top, "chest"))
-    z_hem = 0.21 * H
-    sk = fold_robe("skirt", zs + 0.03 * H, z_hem, 0.1 * H, 0.165 * H, H, folds=12, amp=0.09, material="Cloth", flare=1.0)
-    for v in sk.data.vertices:          # ojämn, trasig fåll
-        if v.co.z < z_hem + 0.03 * H:
-            a = math.atan2(v.co.y, v.co.x)
-            v.co.z += 0.012 * H * (math.sin(a * 5 + 0.7) * 0.6 + math.sin(a * 11) * 0.4)
+    z_hem = 0.27 * H
+    sk = fold_robe("coatskirt", zs + 0.03 * H, z_hem, 0.1 * H, 0.15 * H, H, folds=10, amp=0.06, material="Cloth", flare=0.8)
     skirt_weights(sk, J, H, zs + 0.03 * H, z_hem)
     parts.append((sk, None))
-    parts.append((lib.torus("rope", J["spine0"] + V((0, 0, 0.004 * H)), 0.09 * H, 0.009 * H, material="Rope", seg=40, sy=0.82), "spine"))
-    parts.append((tube("ropeend", [V((0.05 * H, -0.075 * H, zs)), V((0.06 * H, -0.085 * H, zs - 0.08 * H)), V((0.055 * H, -0.09 * H, zs - 0.15 * H))],
-                       0.007 * H, material="Rope", seg=8), "hips"))
+    parts.append((lib.torus("belt", J["spine0"] + V((0, 0, 0.004 * H)), 0.09 * H, 0.008 * H, material="Rope", seg=40, sy=0.82), "spine"))
     for s_ in ("L", "R"):
         sh, e, w = J[f"shoulder.{s_}"], J[f"elbow.{s_}"], J[f"wrist.{s_}"]
-        parts.append((sleeve(f"psleeveU.{s_}", sh + V((0, 0, 0.012 * H)), e, [(0.0, 0.0), (0.03 * H, 0.07), (0.043 * H, 0.22), (0.04 * H, 1.0)],
+        parts.append((sleeve(f"dsleeveU.{s_}", sh + V((0, 0, 0.012 * H)), e, [(0.0, 0.0), (0.03 * H, 0.07), (0.04 * H, 0.22), (0.037 * H, 1.0)],
                              material="Cloth", seg=20), f"upperarm.{s_}"))
-        parts.append((sleeve(f"psleeveF.{s_}", e + V((0, 0, 0.01 * H)), w + V((0, 0, 0.012 * H)),
-                             [(0.04 * H, 0), (0.045 * H, 0.6), (0.054 * H, 1.0), (0.05 * H, 1.0)], material="Cloth", seg=22,
-                             fold=(7, 0.1, 0.2, 1.0)), f"forearm.{s_}"))
-    parts += sack(J, H)
+        parts.append((sleeve(f"dsleeveF.{s_}", e + V((0, 0, 0.01 * H)), w + V((0, 0, 0.012 * H)),
+                             [(0.037 * H, 0), (0.038 * H, 0.6), (0.049 * H, 0.78), (0.049 * H, 1.0)], material="Cloth", seg=22),
+                      f"forearm.{s_}"))
+    # bandolär över höger axel ned mot vänster höft, där trumman hänger
+    parts.append((tube("baldric", [V((-0.07 * H, 0.06 * H, 0.86 * H)), V((-0.09 * H, -0.02 * H, 0.84 * H)),
+                                   V((-0.05 * H, -0.085 * H, 0.75 * H)), V((0.04 * H, -0.08 * H, 0.64 * H)),
+                                   V((0.08 * H, -0.05 * H, 0.6 * H))], 0.009 * H, material="Rope", seg=8), "chest"))
     return J, H, parts
 
 
-def patsy_rig(J, H, parts):
-    """Riggar Patsy, löser klapp-posen och fäster kokosnötterna så att kanterna möts exakt i den."""
-    arm = rig.build_armature("patsy", J)
+def drummer_rig(J, H, parts):
+    """Riggar trumpojken, löser slagposen och placerar trumman och stockarna så att spetsarna träffar skinnet.
+    Trumman binds vid bröstet: händerna sitter också på bröstets kedja, så de möts på samma ställe i varje hållning."""
+    arm = rig.build_armature("drummer", J)
     R = 0.046 * H
     g = (J["wrist.L"] + J["handEnd.L"]) / 2 - V((0, 0, 0.004 * H))
     palm = g + V((-0.013 * H, -0.004 * H, 0.0))          # handflatan vetter medialt (-X) i vila
-    target = V((0.0, -0.2 * H, 0.66 * H))                 # framför bröstet
+    target = V((0.0, -0.2 * H, 0.66 * H))                 # framför magen
     pole_x = 0.92 * R
 
     def pose_of(v):
-        # handen roteras inte: den mjukt viktade skulpterade handen följer handbenet bara delvis vid handleden
         return {"upperarm.L": (v[0], v[1], v[2]), "forearm.L": (v[3], v[4], 0.0)}
 
     def err(v):
@@ -549,8 +463,7 @@ def patsy_rig(J, H, parts):
         M = bone_xform(arm, "hand.L")
         p = M @ palm
         n = (M.to_3x3() @ V((-1, 0, 0))).normalized()
-        lim = sum(max(0.0, abs(x) - 95) ** 2 for x in v) * 1e-3          # inga vridna ledgångar
-        # handflatans läge är målet; dess riktning bara ungefär (skålen placeras ändå exakt mot x = 0)
+        lim = sum(max(0.0, abs(x) - 95) ** 2 for x in v) * 1e-3
         return (300 * ((p.x - pole_x) ** 2 + (p.y - target.y) ** 2 + (p.z - target.z) ** 2)
                 + 0.08 * (n - V((-1, 0, 0))).length_squared + lim + 2e-6 * sum(x * x for x in v))
 
@@ -566,35 +479,41 @@ def patsy_rig(J, H, parts):
     bpy.context.view_layer.update()
     M = bone_xform(arm, "hand.L")
     p = M @ palm
-    print(f"  klapp-pose: {[round(a, 1) for a in best[0]]}  handflata {tuple(round(c, 3) for c in p)}  fel {best[1]:.2e}")
-    # kokosnötshalvan placeras i klapp-posen med kanten exakt i x = 0 (öppningen mot -X), polen mot handflatan,
-    # och förs sedan tillbaka till vilopositionen med handens invers: då möts kanterna exakt i varje klapp
-    shellL = coconut_shell("coconut.L", R)
-    place = Matrix.Translation(V((0.0, p.y, p.z))) @ V((0, 0, 1)).rotation_difference(V((-1, 0, 0))).to_matrix().to_4x4()
-    shellL.data.transform(M.inverted() @ place)
-    rim_rest = M.inverted() @ V((0.0, p.y, p.z))
-    rim_n_rest = (M.inverted().to_3x3() @ V((-1, 0, 0))).normalized()
-    shellR = lib.mirror_x(shellL, "coconut.R")
-    shellR.data.materials.append(lib.mat("Wood"))
+    print(f"  slagpose: {[round(a, 1) for a in best[0]]}  handflata {tuple(round(c, 3) for c in p)}  fel {best[1]:.2e}")
+    # trumman i vila (= slagposen relativt bröstet): skinnet en bit under och framför händerna
+    head_z = p.z - 0.11 * H
+    drum_c = V((0.0, p.y - 0.05 * H, head_z - 0.055 * H))
+    drum = drum_parts(drum_c, 0.1 * H, 0.11 * H)
+    # vänster stock i slagposen: spetsen på skinnet strax vänster om mitten, greppet i handflatan, skaftet bakåt;
+    # sedan tillbaka till vilan med handens invers, så träffar spetsen skinnet i varje slag
+    tip = V((0.025 * H, drum_c.y - 0.01 * H, head_z + 0.008 * H))
+    butt = p + (p - tip).normalized() * 0.12 * H
+    stickL = drumstick("stick.L", butt, tip, H)
+    stickL.data.transform(M.inverted())
+    tip_rest = M.inverted() @ tip
+    stickR = lib.mirror_x(stickL, "stick.R")
+    if "Wood" not in [m.name for m in stickR.data.materials]:
+        stickR.data.materials.append(lib.mat("Wood"))
     rig.apply_pose(arm, {})
     objs = []
-    for (o, bone) in parts + [(shellL, "hand.L"), (shellR, "hand.R")]:
+    for (o, bone) in parts + [(stickL, "hand.L"), (stickR, "hand.R")] + [(o, "chest") for o in drum]:
         if bone is not None:
             rig.bind(o, bone)
         objs.append(o)
-    mesh = join(objs, "patsy")
+    mesh = join(objs, "drummer")
     smooth(mesh, 50)
-    # kokosnötterna bakas på avstånd: i vilan hänger de mot kjolen, men i spelet hålls de framför bröstet
+    # stockarna och trumman bakas på avstånd: i vilan hänger händerna mot rocken
     me = mesh.data
-    wi = [i for i, m in enumerate(me.materials) if m.name == "Wood"]
-    wood = {v for p in me.polygons if p.material_index in wi for v in p.vertices}
+    wi = [i for i, m in enumerate(me.materials) if m.name in ("Wood", "Sack")]
+    wood = {v for p_ in me.polygons if p_.material_index in wi for v in p_.vertices}
     for i in wood:
         me.vertices[i].co.z += 20.0
     bake_vertex_ao(mesh, H)
     for i in wood:
         me.vertices[i].co.z -= 20.0
     rig.skin(mesh, arm)
-    mesh["rimL"], mesh["rimLn"] = list(rim_rest), list(rim_n_rest)
+    mesh["tipL"] = list(tip_rest)
+    mesh["headC"] = list(drum_c + V((0, 0, 0.055 * H)))
     ao_report(mesh)
     return arm, mesh, hit, R
 
@@ -633,101 +552,97 @@ def trot_pose(stance, phi, legs, stride=0.36, ds=0.42, bounce=0.06, lift=0.14, b
     return p
 
 
-def trot_speed(legs, stride=0.36, ds=0.42, n=CLAP_N):
+def trot_speed(legs, stride=0.36, ds=0.42, n=BEAT_N):
     return round(stride * (legs[0] + legs[1]) / (ds * n / FPS), 3)
 
 
-def patsy_clips(arm, J, H, hit):
+def drummer_clips(arm, J, H, hit):
     legs = pieces.leg_lengths(J)
-    # hukande grundhållning; armarna i klapp-posen (relativt bröstet) = kokosnötterna mot varandra
-    stance = merge(hit, {"spine": (18, 0, 0), "chest": (24, 0, 0), "neck": (-12, 0, 0), "head": (-26, 0, 0),
-                         "thigh.L": (-12, 0, -3), "thigh.R": (-12, 0, 3), "shin.L": (24, 0, 0), "shin.R": (24, 0, 0),
-                         "foot.L": (-12, 0, 0), "foot.R": (-12, 0, 0), "loc": (0, 0, -0.02 * H)})
-    apartL = {"upperarm.L": (hit["upperarm.L"][0] + 5, hit["upperarm.L"][1], hit["upperarm.L"][2] - 18),
-              "forearm.L": (hit["forearm.L"][0] + 6, hit["forearm.L"][1] - 16, 0.0)}
-    apart = merge(hit, apartL, rig.mirror_pose(apartL))
+    # rak marschhållning; armarna i slagposen (relativt bröstet) = stockarna på skinnet
+    stance = merge(hit, {"spine": (5, 0, 0), "chest": (8, 0, 0), "neck": (-4, 0, 0), "head": (-8, 0, 0),
+                         "thigh.L": (-4, 0, -3), "thigh.R": (-4, 0, 3), "shin.L": (8, 0, 0), "shin.R": (8, 0, 0),
+                         "foot.L": (-4, 0, 0), "foot.R": (-4, 0, 0), "loc": (0, 0, -0.006 * H)})
+    # mellan slagen lyfts stocken: underarmen böjs mer så att handen och spetsen stiger
+    liftL = {"upperarm.L": (hit["upperarm.L"][0] - 6, hit["upperarm.L"][1], hit["upperarm.L"][2]),
+             "forearm.L": (hit["forearm.L"][0] - 26, hit["forearm.L"][1], 0.0)}
+    lifted = merge(hit, liftL, rig.mirror_pose(liftL))
     A = {}
-    # idle: står och väntar med kokosnötterna ihop, andas, tittar sig omkring (armarna rör sig inte mot bröstet)
     look = lambda y, x=0: add(stance, {"head": (x, y, 0), "neck": (0, y * 0.5, 0)})
     breath = add(stance, {"chest": (-2, 0, 0), "spine": (-1, 0, 0), "head": (1.5, 0, 0)})
     A["idle"] = [(0, stance), (22, breath), (40, look(18, -4)), (55, look(18, -4)), (68, look(-14, 2)), (80, breath), (90, stance)]
-    # walk: studsande jogg, kokosnötterna isär framför sig och lite gungande
+    # walk: marschsteg med stockarna lyfta över trumman
     A["walk"] = []
-    for f in range(CLAP_N + 1):
-        phi = (f % CLAP_N) / CLAP_N
-        sw = math.sin(math.tau * phi)
-        arms = add(apart, {"upperarm.L": (-8 * sw, 0, 0), "upperarm.R": (8 * sw, 0, 0)})
-        A["walk"].append((f, trot_pose(merge(stance, {k: v for k, v in arms.items() if "arm" in k or "hand" in k}), phi, legs)))
-    # clap: samma jogg, kokosnötterna slås ihop två gånger per cykel (exakt klapp-posen vid CLAP_HITS)
-    A["clap"] = []
-    for f in range(CLAP_N + 1):
-        ff = f % CLAP_N
-        d = min(min(abs(ff - h), CLAP_N - abs(ff - h)) for h in CLAP_HITS)
-        gap = 3.5
-        sep = min(1.0, d / gap) ** 0.75
+    for f in range(BEAT_N + 1):
+        phi = (f % BEAT_N) / BEAT_N
+        A["walk"].append((f, trot_pose(merge(stance, {k: v for k, v in lifted.items() if "arm" in k or "hand" in k}), phi, legs,
+                                       bounce=0.035, lift=0.1)))
+    # drum: samma marsch, vänster stock slår vid BEAT_HITS[0] och höger vid BEAT_HITS[1] (exakt slagposen)
+    A["drum"] = []
+    for f in range(BEAT_N + 1):
+        ff = f % BEAT_N
         arms = {}
-        for bname in ("upperarm.L", "forearm.L", "hand.L", "upperarm.R", "forearm.R", "hand.R"):
-            h0, a0 = hit.get(bname, (0, 0, 0)), apart.get(bname, (0, 0, 0))
-            arms[bname] = tuple(h0[i] + (a0[i] - h0[i]) * sep for i in range(3))
-        A["clap"].append((f, trot_pose(merge(stance, arms), ff / CLAP_N, legs)))
-    # bow: djup bugning med en svepande gest, slutar upprätt
-    flourish = merge(stance, {"upperarm.L": (-20, 0, -60), "forearm.L": (-30, 0, 0), "upperarm.R": (-20, 0, 60), "forearm.R": (-30, 0, 0),
-                              "chest": (-6, 0, 0), "spine": (-2, 0, 0), "head": (-22, 0, 0)})
-    bowp = merge(stance, {"spine": (28, 0, 0), "chest": (36, 0, 0), "neck": (8, 0, 0), "head": (6, 0, 0),
-                          "upperarm.L": (30, 0, -38), "forearm.L": (-20, 0, 0), "upperarm.R": (-75, 0, 18), "forearm.R": (-80, 0, 0),
-                          "thigh.L": (-22, 0, -3), "thigh.R": (-2, 0, 3), "shin.L": (30, 0, 0), "shin.R": (10, 0, 0),
-                          "foot.L": (-8, 0, 0), "foot.R": (-8, 0, 0), "loc": (0, 0.05 * H, -0.04 * H)})
+        for s_, h in (("L", BEAT_HITS[0]), ("R", BEAT_HITS[1])):
+            d = min(abs(ff - h), BEAT_N - abs(ff - h))
+            sep = min(1.0, d / 3.0) ** 0.75
+            for bname in (f"upperarm.{s_}", f"forearm.{s_}", f"hand.{s_}"):
+                h0, a0 = hit.get(bname, (0, 0, 0)), lifted.get(bname, (0, 0, 0))
+                arms[bname] = tuple(h0[i] + (a0[i] - h0[i]) * sep for i in range(3))
+        A["drum"].append((f, trot_pose(merge(stance, arms), ff / BEAT_N, legs, bounce=0.035, lift=0.1)))
+    # bow: bugning med stockarna i ena handen, slutar upprätt
+    flourish = merge(stance, {"upperarm.R": (-20, 0, 60), "forearm.R": (-30, 0, 0), "chest": (-6, 0, 0), "head": (-14, 0, 0)})
+    bowp = merge(stance, {"spine": (24, 0, 0), "chest": (30, 0, 0), "neck": (8, 0, 0), "head": (6, 0, 0),
+                          "upperarm.R": (-70, 0, 18), "forearm.R": (-80, 0, 0),
+                          "thigh.L": (-18, 0, -3), "thigh.R": (-2, 0, 3), "shin.L": (24, 0, 0), "shin.R": (8, 0, 0),
+                          "foot.L": (-6, 0, 0), "foot.R": (-6, 0, 0), "loc": (0, 0.04 * H, -0.03 * H)})
     A["bow"] = [(0, stance), (9, flourish), (20, bowp), (30, add(bowp, {"chest": (4, 0, 0), "head": (6, 0, 0)})), (45, stance)]
-    return A, stance, trot_speed(legs)
+    return A, stance, trot_speed(legs, n=BEAT_N)
 
 
-def build_and_export_patsy(prev):
-    J, H, parts = build_patsy()
-    arm, mesh, hit, R = patsy_rig(J, H, parts)
-    A, stance, speed = patsy_clips(arm, J, H, hit)
-    tris = tri_count(mesh)
-    print(f"[patsy] tris={tris}")
-    # kontroll: kokosnötternas kantcentrum och öppningsnormaler i klappögonblicken (ska sammanfalla)
-    rimL, nL = mesh["rimL"], V(mesh["rimLn"])
-    rimL = V(rimL)
-    rimR, nR = V((-rimL.x, rimL.y, rimL.z)), V((-nL.x, nL.y, nL.z))
-    for fr in CLAP_HITS + (0, 8):
-        rig.apply_pose(arm, dict(A["clap"])[fr])
+def build_and_export_drummer(prev):
+    J, H, parts = build_drummer()
+    arm, mesh, hit, R = drummer_rig(J, H, parts)
+    A, stance, speed = drummer_clips(arm, J, H, hit)
+    print(f"[drummer] tris={tri_count(mesh)}")
+    # kontroll: stockspetsens avstånd till skinnets plan i slagögonblicken (ska vara nära noll)
+    tipL, headC = V(mesh["tipL"]), V(mesh["headC"])
+    for fr, s_ in ((BEAT_HITS[0], "L"), (BEAT_HITS[1], "R"), (0, "L"), (8, "R")):
+        rig.apply_pose(arm, dict(A["drum"])[fr])
         bpy.context.view_layer.update()
-        ML, MR = bone_xform(arm, "hand.L"), bone_xform(arm, "hand.R")
-        cL, cR = ML @ rimL, MR @ rimR
-        a = math.degrees((ML.to_3x3() @ nL).angle(-(MR.to_3x3() @ nR)))
-        print(f"  clap f{fr}: kantavstånd {(cL - cR).length * 1000:.2f} mm, vinkel {a:.2f} grader")
+        Mh, Mc = bone_xform(arm, f"hand.{s_}"), bone_xform(arm, "chest")
+        tp = Mh @ (tipL if s_ == "L" else V((-tipL.x, tipL.y, tipL.z)))
+        hc, n = Mc @ headC, (Mc.to_3x3() @ V((0, 0, 1))).normalized()
+        print(f"  drum f{fr} {s_}: spetsen {(tp - hc).dot(n) * 1000:+.1f} mm över skinnet")
     if prev:
         os.makedirs(prev, exist_ok=True)
-        preview_patsy(arm, A, prev)
+        preview_drummer(arm, A, prev)
     for aname, keys in A.items():
         rig.make_action(arm, aname, keys)
-    rig.export_glb(os.path.join(RAW, "patsy.glb"), [arm, mesh])
-    meta = {"height": PATSY_H, "walkSpeed": speed,
-            "events": {"clap": [h / FPS for h in CLAP_HITS]},
+    rig.export_glb(os.path.join(RAW, "drummer.glb"), [arm, mesh])
+    meta = {"height": DRUMMER_H, "walkSpeed": speed,
+            "events": {"drum": [h / FPS for h in BEAT_HITS]},
             "durations": {a: k[-1][0] / FPS for a, k in A.items()}}
-    with open(os.path.join(RAW, "patsy.json"), "w") as f:
+    with open(os.path.join(RAW, "drummer.json"), "w") as f:
         json.dump(meta, f, indent=1)
-    print(f"  patsy.json: {meta}")
+    print(f"  drummer.json: {meta}")
 
 
-def preview_patsy(arm, A, outdir):
+def preview_drummer(arm, A, outdir):
     lib.preview_setup(target=(0, 0, 0.6), dist=3.3, elev=10, azim=-30)
     lib.box("prevground", (0, 0, -0.01), (100, 100, 0.02), material="Plinth")
     shots = [("rest", None, None, -30), ("idle", "idle", 40, -30), ("walk", "walk", 4, -60),
-             ("clap_hit", "clap", CLAP_HITS[0], -30), ("clap_side", "clap", CLAP_HITS[1], -90), ("clap_open", "clap", 8, -30),
-             ("bow", "bow", 20, -60), ("back", "idle", 0, 150), ("idle_side", "idle", 0, -90)]
+             ("drum_L", "drum", BEAT_HITS[0], -30), ("drum_R", "drum", BEAT_HITS[1], -90), ("bow", "bow", 20, -60),
+             ("back", "idle", 0, 150)]
     for label, act, frame, az in shots:
         rig.apply_pose(arm, dict(A[act])[frame] if act else {})
         bpy.context.view_layer.update()
         lib.set_cam((0, 0, 0.6), 3.3, 10, az)
-        lib.render(os.path.join(outdir, f"patsy_{label}.png"))
-    lib.set_cam((0, -0.15, 0.72), 1.3, 6, -25)
-    rig.apply_pose(arm, dict(A["clap"])[CLAP_HITS[0]])
+        lib.render(os.path.join(outdir, f"drummer_{label}.png"))
+    lib.set_cam((0, -0.15, 0.62), 1.3, 14, -25)
+    rig.apply_pose(arm, dict(A["drum"])[BEAT_HITS[0]])
     bpy.context.view_layer.update()
-    lib.render(os.path.join(outdir, "patsy_clap_close.png"))
+    lib.render(os.path.join(outdir, "drummer_drum_close.png"))
     rig.apply_pose(arm, {})
+
 
 # ======================================================================= förhandsbilder
 
@@ -749,34 +664,31 @@ def preview_static(name, outdir, target, dist, shots, lens=60, res=(800, 800)):
 
 def main():
     only = arg("--only")
-    names = only.split(",") if only else ["rabbit", "foot", "patsy"]
+    names = only.split(",") if only else ["elk", "hand", "drummer"]
     prev = arg("--preview")
     os.makedirs(RAW, exist_ok=True)
     for name in names:
         lib.reset()
-        mat_setup()
-        if name == "rabbit":
-            ob, H = build_rabbit()
+        if name == "elk":
+            ob, H = build_elk()
             bake_vertex_ao(ob, H)
-            print(f"[rabbit] tris={tri_count(ob)} storlek={dims(ob)}")
+            print(f"[elk] tris={tri_count(ob)} storlek={dims(ob)}")
             if prev:
                 os.makedirs(prev, exist_ok=True)
-                preview_static("rabbit", prev, (0, 0, 0.17), 1.05,
-                               [("front34", 8, -32), ("side", 4, -90), ("front", 2, 0), ("back", 14, 150)])
-            rig.export_glb(os.path.join(RAW, "rabbit.glb"), [ob], animations=False)
-        elif name == "foot":
-            ob, H = build_foot()
+                preview_static("elk", prev, (0, 0, 1.4), 8.0,
+                               [("front34", 8, -32), ("side", 4, -90), ("front", 4, 0), ("back", 14, 150)])
+            rig.export_glb(os.path.join(RAW, "elk.glb"), [ob], animations=False)
+        elif name == "hand":
+            ob, H = build_hand()
             bake_vertex_ao(ob, H)
-            print(f"[foot] tris={tri_count(ob)} storlek={dims(ob)}")
+            print(f"[hand] tris={tri_count(ob)} storlek={dims(ob)}")
             if prev:
                 os.makedirs(prev, exist_ok=True)
-                preview_static("foot", prev, (0, 0, 1.1), 11.0,
-                               [("front34", 14, -40), ("side", 6, -90), ("top", 60, -20), ("back", 20, 140)])
-                lib.set_cam((0.1, -1.4, 0.3), 3.2, 18, -20)
-                lib.render(os.path.join(prev, "foot_toes.png"))
-            rig.export_glb(os.path.join(RAW, "foot.glb"), [ob], animations=False)
-        elif name == "patsy":
-            build_and_export_patsy(prev)
+                preview_static("hand", prev, (0, 0, 0.6), 11.0,
+                               [("front34", 18, -40), ("side", 6, -90), ("top", 70, -20), ("back", 20, 140)])
+            rig.export_glb(os.path.join(RAW, "hand.glb"), [ob], animations=False)
+        elif name == "drummer":
+            build_and_export_drummer(prev)
 
 
 if __name__ == "__main__":

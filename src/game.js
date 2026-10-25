@@ -305,11 +305,11 @@ export class Game {
       const victim = this.pieces.get(vsq);
       this.pieces.delete(vsq);
       this.ui.captured(res.captured, victim.color);
-      if (mover.type === 'b' && Math.random() < 0.15) this.voice?.herald('inquisition');  // ingen väntar sig den
+      if (mover.type === 'b' && Math.random() < 0.15) this.voice?.herald('chapter');  // domkapitlet har talat
       mover.onAttackCry = () => this.voice?.piece(mover, 'attack');
-      mover.onGrenade = () => this.voice?.piece(mover, 'grenade');
+      mover.onBull = () => this.voice?.piece(mover, 'bull');
       victim.onDeathCry = () => this.voice?.piece(victim, 'death');
-      victim.onFleshwound = () => this.voice?.piece(victim, 'fleshwound');
+      victim.onMaim = () => this.voice?.piece(victim, 'maimed');
       this.setInBattle(true);
       await this.chor.capture(mover, victim, res.from, res.to, vsq, { afterKill: () => this.announceCapture(mover, victim, flags) });
       this.setInBattle(false);
@@ -325,7 +325,7 @@ export class Game {
     mover.square = res.to;
     this.pieces.set(res.to, mover);
     if (res.promotion) {
-      this.voice?.herald(res.promotion === 'n' ? 'horse' : 'promote');
+      this.voice?.herald(res.promotion === 'n' ? 'cavalry' : 'promote');
       const np = await this.chor.promote(mover, () => {
         const q = this.spawn(res.promotion, res.color, res.to);
         q.uid = mover.uid;
@@ -359,13 +359,13 @@ export class Game {
     const st = this.stats;
     st.lost[victim.color]++;
     let said = false;
-    if (flags.includes('e')) { this.voice?.herald('enPassant'); said = true; }  // "Holy hell!"
-    else if (st.captures === 0) { this.voice?.herald('firstBlood'); said = true; }
-    else if (st.lastCapturer === victim && Math.random() < 0.6) { this.voice?.herald('comboBreaker'); said = true; }
+    if (flags.includes('e')) { this.voice?.herald('enPassant'); said = true; }
+    else if (st.captures === 0) { this.voice?.herald('firstCasualty'); said = true; }
+    else if (st.lastCapturer === victim && Math.random() < 0.6) { this.voice?.herald('revenge'); said = true; }
     if (st.streakPiece === mover) st.streak++; else { st.streakPiece = mover; st.streak = 1; }
-    if (!said && st.streak === 2) { this.voice?.herald('doubleKill'); said = true; }
-    else if (!said && st.streak >= 3) { this.voice?.herald('killingSpree'); said = true; }
-    if (!said && Math.random() < 0.08) { this.voice?.herald('toasty'); said = true; }
+    if (!said && st.streak === 2) { this.voice?.herald('twoAtOnce'); said = true; }
+    else if (!said && st.streak >= 3) { this.voice?.herald('rampage'); said = true; }
+    if (!said && Math.random() < 0.08) { this.voice?.herald('quip'); said = true; }
     if (!said && Math.random() < 0.55) setTimeout(() => this.voice?.piece(mover, 'kill'), 250);
     st.captures++;
     st.lastCapturer = mover;
@@ -398,27 +398,27 @@ export class Game {
       const ksq = this.findKing(c.turn());
       const king = this.pieces.get(ksq);
       const winners = [...this.pieces.values()].filter((p) => p.color === winner);
-      this.ui.toast('Finish him!', true);
-      this.voice?.herald('finishHim');
+      this.ui.toast('Nådastöten!', true);
+      this.voice?.herald('coupDeGrace');
       // vem gav matt? helst den som just drog, annars någon av angriparna
       const atk = this.chess.attackers(ksq, winner);
       const lastTo = this.lastMove?.[1];
       const checkerSq = atk.includes(lastTo) ? lastTo : atk[0];
       const checker = checkerSq ? this.pieces.get(checkerSq) : null;
-      if (checker) checker.onGrenade = () => this.voice?.piece(checker, 'grenade');
+      if (checker) checker.onBull = () => this.voice?.piece(checker, 'bull');
       this.setInBattle(true);
       if (king) await this.chor.checkmate(king, winners, () => {
-        this.ui.toast('Fatality', true);
-        setTimeout(() => this.voice?.herald('fatality'), 500);
+        this.ui.toast('Riket har fallit', true);
+        setTimeout(() => this.voice?.herald('realmFalls'), 500);
       }, checker);
       this.setInBattle(false);
       if (token !== this.token) return;
       this.board.setMarks([]);
       await wait(1.2);
       if (token !== this.token) return;
-      const flawless = this.stats?.lost[winner] === 0;
-      this.voice?.herald(flawless ? 'flawless' : winner === 'w' ? 'whiteWins' : 'blackWins');
-      if (flawless) this.ui.toast('Flawless victory');
+      const spotless = this.stats?.lost[winner] === 0;
+      this.voice?.herald(spotless ? 'spotless' : winner === 'w' ? 'whiteWins' : 'blackWins');
+      if (spotless) this.ui.toast('Seger utan en skråma');
       const human = this.settings.mode === 'white' ? 'w' : this.settings.mode === 'black' ? 'b' : null;
       this.sound.fanfare(!human || human === winner);
       if (this.settings.mode === 'legend') {

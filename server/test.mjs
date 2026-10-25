@@ -443,25 +443,25 @@ step('watch: okänd kod → no-such-room, fel typ → bad-request, eget rum → 
 });
 
 step(`glåpord: ekas till alla med by; okänt id → bad-request; skur på 2, sedan 1 per ${TAUNT_MS} ms`, async () => {
-  P.send({ t: 'taunt', id: 'fart' });
-  assert.deepEqual(await all([P, Q, S], 'taunt'), { t: 'taunt', id: 'fart', by: 'w' });
+  P.send({ t: 'taunt', id: 'dalkarl' });
+  assert.deepEqual(await all([P, Q, S], 'taunt'), { t: 'taunt', id: 'dalkarl', by: 'w' });
   for (const id of ['nope', 'toString', 42, undefined]) {
     P.send({ t: 'taunt', id });
     assert.equal((await P.next('error')).code, 'bad-request', String(id));
   }
-  S.send({ t: 'taunt', id: 'ni' });
+  S.send({ t: 'taunt', id: 'riksdag' });
   assert.equal((await S.next('error')).code, 'spectator');
-  P.send({ t: 'taunt', id: 'ni' }); // andra i skuren
-  assert.equal((await all([P, Q, S], 'taunt')).id, 'ni');
-  P.send({ t: 'taunt', id: 'hurry' }); // hinken är tom
+  P.send({ t: 'taunt', id: 'riksdag' }); // andra i skuren
+  assert.equal((await all([P, Q, S], 'taunt')).id, 'riksdag');
+  P.send({ t: 'taunt', id: 'skynda' }); // hinken är tom
   assert.equal((await P.next('error')).code, 'rate-limited');
   await Q.quiet();
   await S.quiet();
-  Q.send({ t: 'taunt', id: 'hamster' }); // motståndaren har en egen hink
-  assert.deepEqual(await all([P, Q, S], 'taunt'), { t: 'taunt', id: 'hamster', by: 'b' });
+  Q.send({ t: 'taunt', id: 'kanslist' }); // motståndaren har en egen hink
+  assert.deepEqual(await all([P, Q, S], 'taunt'), { t: 'taunt', id: 'kanslist', by: 'b' });
   await sleep(TAUNT_MS + 60);
-  P.send({ t: 'taunt', id: 'expect' }); // påfylld
-  assert.equal((await all([P, Q, S], 'taunt')).id, 'expect');
+  P.send({ t: 'taunt', id: 'marknad' }); // påfylld
+  assert.equal((await all([P, Q, S], 'taunt')).id, 'marknad');
 });
 
 step('fler åskådare räknas; den som lämnar eller tappar anslutningen räknas bort', async () => {

@@ -1,16 +1,15 @@
 // De särskilda händelserna under ett slag och vid matt. Metoderna kopplas in i Choreographer (battle.js).
+// Alla hör till Saeculas epok: karolinen som anmäler varje hugg, älgen, bannbullan och fältherrens hand.
 import * as THREE from 'three';
 import { tween, wait, ease, rand } from './util.js';
 import { ensureBakeColor } from './pieces.js';
 
 export const SpectacleMethods = {
-  /** Svarte riddaren: armarna och benen huggs av en i taget medan offret hävdar att det bara är en skråma.
-   *  Till sist står bålen på marken, erbjuder remi och krossas med ett sista hugg. */
-  async blackKnight(att, vic, vpos, away, mv, hitT) {
-    const say = (k) => wait(Math.min(2.2, this.voice?.say('blackknight', k, { gain: 1 }) || 1.2));
+  /** Karolinen: offret vägrar falla utan tillstånd. Armarna huggs av en i taget medan han anmäler varje hugg
+   *  till krigskollegium och kräver kvitto, och han faller till sist mitt i en klagoskrift. */
+  async karolin(att, vic, vpos, away, mv, hitT) {
+    const say = (k) => wait(Math.min(2.4, this.voice?.say('karolin', k, { gain: 1 }) || 1.3));
     const pan = this.pan(vpos);
-    const H = vic.meta.height;
-    let hops = null;
     const strike = (bones, hide) => new Promise((resolve) => {
       att.play(mv.clip, { timeScale: 0.9, events: [
         [Math.max(0, hitT - 0.14), () => this.sound.whoosh(this.pan(att.position))],
@@ -25,50 +24,25 @@ export const SpectacleMethods = {
         }],
       ] }).then(() => att.idle(0.25));
     });
-    const limb = (side, part) => part === 'arm'
-      ? [[`upperarm.${side}`, `forearm.${side}`, `hand.${side}`, `prop.${side}`], [`upperarm.${side}`]]
-      : [[`thigh.${side}`, `shin.${side}`, `foot.${side}`], [`thigh.${side}`]];
+    const arm = (side) => [[`upperarm.${side}`, `forearm.${side}`, `hand.${side}`, `prop.${side}`], [`upperarm.${side}`]];
 
     att.idle(0.2);
-    await say('nonepass');
+    await say('halt');
     await wait(0.3);
-    // vänster arm
-    await strike(...limb('L', 'arm'));
+    await strike(...arm('L'));
     vic.play('hit', { timeScale: 0.8 }).then(() => vic.idle(0.2));
     await wait(0.5);
-    await say('scratch');
-    // höger arm
-    await strike(...limb('R', 'arm'));
+    await say('report');
+    await strike(...arm('R'));
     vic.play('hit', { timeScale: 0.8 }).then(() => vic.idle(0.2));
     await wait(0.5);
-    await say('flesh');
-    // ett ben: offret hoppar trotsigt på det andra
-    await strike(...limb('L', 'leg'));
-    const y0 = vic.root.position.y;
-    let hopping = true;
-    hops = (async () => {
-      while (hopping) {
-        await tween(0.32, (k) => { vic.root.position.y = y0 + Math.sin(k * Math.PI) * 0.16 * H / 2; vic.root.rotation.z = Math.sin(k * Math.PI) * 0.06; }, ease.linear);
-        this.sound.step(0.9, pan);
-      }
-    })();
-    await say('invincible');
+    await say('protest');
+    await wait(0.3);
+    await say('receipt');
     await wait(0.4);
-    // det andra benet: bålen sjunker ner på marken
-    await strike(...limb('R', 'leg'));
-    hopping = false;
-    await hops;
-    const drop = 0.47 * H;
-    this.fx.dust(vpos.clone().setY(this.board.top + 0.1), 14, 0.8);
-    await tween(0.28, (k) => { vic.root.position.y = y0 - drop * k; vic.root.rotation.z = 0; }, ease.in);
-    this.sound.thud(pan, 1.1);
-    this.world.shake = Math.max(this.world.shake, 0.15);
-    await wait(0.6);
-    await say('draw');
-    await wait(0.4);
-    // sista hugget, medan bålen hotar att bita benen av angriparen
-    this.voice?.say('blackknight', 'bite', { gain: 1 });
-    await wait(0.6);
+    // sista hugget, mitt i klagoskriften
+    this.voice?.say('karolin', 'complaint', { gain: 1 });
+    await wait(0.7);
     await new Promise((resolve) => {
       att.play(mv.clip, { timeScale: 1, events: [[hitT, () => {
         this.fx.sparks(vic.chest(new THREE.Vector3()), away, 0xffd9a0, 50);
@@ -80,96 +54,98 @@ export const SpectacleMethods = {
     });
   },
 
-  /** Mördarkaninen från Caerbannog hoppar in, biter huvudet av offret och skuttar iväg. */
-  async killerRabbit(att, vic, vpos, away) {
-    const r = this.makeRabbit();
+  /** Älgen: en marmorälg kliver in bortifrån kartan, stångar offret av brädet och lufsar iväg. */
+  async elk(att, vic, vpos, away) {
+    const e = this.makeElk();
     const side = Math.random() < 0.5 ? 1 : -1;
-    const startP = vpos.clone().add(new THREE.Vector3(side * 5.5, 0, (Math.random() - 0.5) * 3)).setY(this.board.top);
-    const near = vpos.clone().addScaledVector(new THREE.Vector3(side, 0, 0), 1.3).setY(this.board.top);
-    r.position.copy(startP);
-    this.world.scene.add(r);
-    this.director.followObj = r;
-    await this.hops(r, startP, near, 5);
+    const startP = vpos.clone().add(new THREE.Vector3(side * 7, 0, (Math.random() - 0.5) * 3)).setY(this.board.top);
+    const near = vpos.clone().addScaledVector(new THREE.Vector3(side, 0, 0), 1.9).setY(this.board.top);
+    e.position.copy(startP);
+    this.world.scene.add(e);
+    this.director.followObj = e;
+    await this.trot(e, startP, near, 4);
     this.director.followObj = null;
-    r.lookAt(vpos.x, r.position.y, vpos.z);
+    e.lookAt(vpos.x, e.position.y, vpos.z);
     att.play('hit', { timeScale: 0.7 });
-    this.voice?.herald('rabbit');
-    // lågt, bakom kaninen: den lilla vita saken i förgrunden, offret bakom
+    this.voice?.herald('elk');
+    // lågt, bredvid älgen: den stora djurkroppen i förgrunden, offret bakom
     const out = near.clone().sub(vpos).setY(0).normalize();
     const toCam = this.world.camera.position.clone().sub(near).setY(0).normalize();
-    const look = near.clone().lerp(vpos, 0.45).setY(this.board.top + 0.6);
+    const look = near.clone().lerp(vpos, 0.5).setY(this.board.top + 1.2);
     this.director.stopDrift();
-    this.world.setFocus(near.clone().setY(this.board.top + 0.3), 1);
-    this.director.fly(near.clone().addScaledVector(out, 2.6).addScaledVector(toCam, 1.2).setY(this.board.top + 0.5), look, 0.6, 40);
+    this.world.setFocus(near.clone().setY(this.board.top + 1), 1);
+    this.director.fly(near.clone().addScaledVector(out, 3.4).addScaledVector(toCam, 2).setY(this.board.top + 1.1), look, 0.6, 42);
     await wait(1.1);
-    // språnget mot halsen
-    const head = vic.chest(new THREE.Vector3()).add(new THREE.Vector3(0, vic.meta.height * 0.3, 0));
-    this.sound.bank?.sfx('rabbit_snarl', { pan: this.pan(vpos), rate: 1 });
-    const p0 = r.position.clone();
-    await tween(0.28, (k) => { r.position.lerpVectors(p0, head, k); r.position.y += Math.sin(k * Math.PI) * 0.5; }, ease.in);
+    // stångningen: huvudet sänks, ett kort ryck framåt, offret lyfter
+    this.sound.bank?.sfx('elk_bellow', { pan: this.pan(vpos), rate: 1 });
+    const p0 = e.position.clone(), hit = p0.clone().lerp(vpos.clone().setY(this.board.top), 0.45);
+    await tween(0.22, (k) => { e.position.lerpVectors(p0, hit, k); e.rotation.x = -0.25 * Math.sin(k * Math.PI); }, ease.in);
     this.world.hitstop(0.1);
-    this.fx.shatter(vic, away, { bones: ['head', 'neck'], keep: true, power: 1.2, dust: 0.4 });
-    vic.hideBones(['neck']);
+    this.world.shake = Math.max(this.world.shake, 0.25);
     vic.onDeathCry?.();
     this.world.slowmo(0.3, 0.8);
-    await tween(0.35, (k) => { r.position.lerpVectors(head, near, k); r.position.y = THREE.MathUtils.lerp(head.y, this.board.top, k) + Math.sin(k * Math.PI) * 0.4; }, ease.out);
-    const dying = this.die(vic, 'topple', away);
-    await wait(0.5);
-    this.voice?.herald('runAway');
-    const exit = near.clone().add(new THREE.Vector3(side * 7, 0, 2));
-    this.hops(r, r.position.clone(), exit, 6).then(() => r.removeFromParent());
+    const dying = this.die(vic, 'launch', vpos.clone().sub(p0).setY(0).normalize());
+    await tween(0.35, (k) => { e.position.lerpVectors(hit, p0, k); e.rotation.x = 0; }, ease.out);
+    await wait(0.4);
+    this.voice?.herald('elkLeaves');
+    const exit = near.clone().add(new THREE.Vector3(side * 8, 0, 2));
+    this.trot(e, e.position.clone(), exit, 4).then(() => e.removeFromParent());
     await dying;
   },
 
-  makeRabbit() {
-    const src = this.lib.extras.rabbit;
-    const r = src.scene.clone(true);
-    const mats = {
-      Fur: new THREE.MeshPhysicalMaterial({ color: 0xf4f1ec, roughness: 0.85, sheen: 1, sheenColor: new THREE.Color(0xffffff), sheenRoughness: 0.6 }),
-      Eye: new THREE.MeshStandardMaterial({ color: 0x400000, emissive: 0xff1a0a, emissiveIntensity: 4 }),
-      Tooth: new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.3 }),
-      Dark: new THREE.MeshStandardMaterial({ color: 0x1a0d0d, roughness: 0.8 }),
-    };
-    r.traverse((o) => { if (o.isMesh) { o.material = mats[o.material.name] || o.material; o.castShadow = true; } });
-    r.scale.setScalar(1.25);
-    return r;
+  makeElk() {
+    const e = this.lib.extras.elk.scene.clone(true);
+    const stone = this.lib.mats.w.Stone;
+    e.traverse((o) => {
+      if (!o.isMesh) return;
+      ensureBakeColor(o);
+      o.material = o.material.name === 'Stone' ? stone : o.material;
+      o.castShadow = true;
+    });
+    return e;
   },
 
-  /** Skutt från a till b i n hopp, med tryck och sträckning. */
-  async hops(obj, a, b, n) {
+  /** Tunga kliv från a till b i n steg, med en lätt gungning. */
+  async trot(obj, a, b, n) {
     for (let i = 0; i < n; i++) {
       const p0 = a.clone().lerp(b, i / n), p1 = a.clone().lerp(b, (i + 1) / n);
       obj.lookAt(p1.x, obj.position.y, p1.z);
-      this.sound.bank?.sfx('rabbit_hop', { gain: 0.5, pan: this.pan(p1) });
-      await tween(0.3, (k) => {
+      this.sound.bank?.sfx('elk_step', { gain: 0.6, pan: this.pan(p1) });
+      await tween(0.42, (k) => {
         obj.position.lerpVectors(p0, p1, k);
-        obj.position.y = p0.y + Math.sin(k * Math.PI) * 0.45;
-        const sq = 1 + Math.sin(k * Math.PI) * 0.18;
-        obj.scale.set(1.25 / Math.sqrt(sq), 1.25 * sq, 1.25 / Math.sqrt(sq));
+        obj.position.y = p0.y + Math.sin(k * Math.PI) * 0.12;
+        obj.rotation.z = Math.sin(k * Math.PI * 2) * 0.03;
       }, ease.linear);
     }
-    obj.scale.setScalar(1.25);
+    obj.rotation.z = 0;
   },
 
-  /** Den heliga handgranaten från Antiochia: guldklot med kors i en båge, sedan himmelsk explosion. */
-  async holyHandGrenade(att, vic, vpos) {
-    if (!this.grenadeMesh) {
+  /** Bannbullan: biskopen kastar en sigillförsedd rulle som brister i himmelskt ljus. */
+  async papalBull(att, vic, vpos) {
+    if (!this.bullMesh) {
       const g = new THREE.Group();
-      const gold = new THREE.MeshPhysicalMaterial({ color: 0xf2c25a, metalness: 1, roughness: 0.22, clearcoat: 0.5 });
-      g.add(new THREE.Mesh(new THREE.SphereGeometry(0.11, 24, 16), gold));
+      const paper = new THREE.MeshStandardMaterial({ color: 0xeadcb6, roughness: 0.85 });
+      const wood = new THREE.MeshStandardMaterial({ color: 0x5a3318, roughness: 0.6 });
+      const wax = new THREE.MeshPhysicalMaterial({ color: 0x9c1414, roughness: 0.35, clearcoat: 0.6 });
+      const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.3, 20), paper);
+      roll.rotation.z = Math.PI / 2;
+      g.add(roll);
+      for (const s of [-1, 1]) {
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 8), wood);
+        knob.position.x = s * 0.17;
+        g.add(knob);
+      }
+      const seal = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.018, 20), wax);
+      seal.position.set(0, -0.02, 0.06);
+      seal.rotation.x = Math.PI / 2;
+      const ribbon = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.12, 0.006), wax);
+      ribbon.position.set(0, -0.09, 0.055);
+      g.add(seal, ribbon);
       g.scale.setScalar(1.6);
-      const band = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.012, 8, 32), gold);
-      band.rotation.x = Math.PI / 2;
-      g.add(band);
-      const v = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.14, 0.03), gold);
-      v.position.y = 0.17;
-      const h = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.03, 0.03), gold);
-      h.position.y = 0.19;
-      g.add(v, h);
       for (const m of g.children) m.castShadow = true;
-      this.grenadeMesh = g;
+      this.bullMesh = g;
     }
-    const g = this.grenadeMesh;
+    const g = this.bullMesh;
     this.world.scene.add(g);
     const from = att.propTip(new THREE.Vector3(), 0.1);
     const to = vic.chest(new THREE.Vector3());
@@ -177,10 +153,10 @@ export const SpectacleMethods = {
     await tween(0.85, (k) => {
       g.position.lerpVectors(from, to, k);
       g.position.y += Math.sin(k * Math.PI) * 2.2;
-      g.rotation.set(k * 9, k * 4, 0);
+      g.rotation.set(k * 2, k * 9, k * 3);
     }, ease.linear);
     g.removeFromParent();
-    this.sound.bank?.sfx('holy_grenade', { pan: this.pan(vpos), rate: 1 }) || this.sound.boom(this.pan(vpos));
+    this.sound.bank?.sfx('bull_burst', { pan: this.pan(vpos), rate: 1 }) || this.sound.boom(this.pan(vpos));
     this.fx.holyBurst(to, 0xfff2c0);
     this.fx.beam(vpos, 0xfff2c0, 0.8);
     this.fx.shockwave(vpos.clone().setY(this.board.top + 0.05), 0xfff0d0);
@@ -204,9 +180,9 @@ export const SpectacleMethods = {
     return np;
   },
 
-  /** Schackmatt: "Finish him!" — den pjäs som gav matt utför finishen, eller så kommer jättefoten.
+  /** Schackmatt: den pjäs som gav matt ger kungen nådastöten, eller så slår fältherrens hand ned.
    *  Utan känd mattsättare: blixt från himlen. */
-  async checkmate(king, winners, onFatality, checker = null) {
+  async checkmate(king, winners, onFall, checker = null) {
     const kp = king.position.clone();
     const cinematic = this.settings.battles === 'cinematic';
     if (cinematic) await this.director.closeUp(kp);
@@ -214,23 +190,23 @@ export const SpectacleMethods = {
     await wait(0.9);
     const away = new THREE.Vector3(0, 0, king.color === 'w' ? 1 : -1);
     let kind = 'lightning';
-    if (this.lib?.extras?.foot && Math.random() < (this.footChance ?? 0.25)) kind = 'foot';
-    else if (checker) kind = { q: 'freeze', b: 'grenade', r: 'leap', n: 'leap', p: 'charge' }[checker.type] || 'lightning';
+    if (this.lib?.extras?.hand && Math.random() < (this.handChance ?? 0.25)) kind = 'hand';
+    else if (checker) kind = { q: 'freeze', b: 'bull', r: 'leap', n: 'leap', p: 'charge' }[checker.type] || 'lightning';
     if (window.BC_DEBUG) console.info('[BC] finisher', kind, checker?.name);
-    const fatality = () => {
-      this.sound.bank?.sfx('fatality', { rate: 1 });
-      onFatality?.();
+    const fall = () => {
+      this.sound.bank?.sfx('gong', { rate: 1 });
+      onFall?.();
     };
-    if (kind === 'foot') {
-      this.voice?.herald('foot');
-      // backa och titta upp mot himlen: foten ska synas komma
+    if (kind === 'hand') {
+      this.voice?.herald('hand');
+      // backa och titta uppåt: handen ska synas komma
       if (cinematic) {
         const cam = this.world.camera.position.clone();
         const dir = cam.clone().sub(kp).setY(0).normalize();
         await this.director.fly(kp.clone().addScaledVector(dir, 14).setY(kp.y + 3), kp.clone().setY(kp.y + 3.4), 1.4, 50);
       } else await wait(1.6);
-      await this.giantFoot(king, away);
-    } else if (kind === 'freeze' || kind === 'grenade' || kind === 'leap' || kind === 'charge') {
+      await this.giantHand(king, away);
+    } else if (kind === 'freeze' || kind === 'bull' || kind === 'leap' || kind === 'charge') {
       await this.finisherByPiece(kind, checker, king, away);
     } else {
       this.fx.lightning(king.chest(new THREE.Vector3()));
@@ -240,7 +216,7 @@ export const SpectacleMethods = {
     }
     this.sound.shatter(0);
     this.world.shake = Math.max(this.world.shake, 0.3);
-    fatality();
+    fall();
     for (const w of winners) setTimeout(() => w.play('victory').then(() => w.idle()), rand(200, 900));
     await wait(1.6);
   },
@@ -256,12 +232,12 @@ export const SpectacleMethods = {
       await this.fx.stream((o) => att.propTip(o, 0.05), king.chest(new THREE.Vector3()), 0xbfe9ff, 0.7);
       this.world.slowmo(0.3, 1);
       await this.die(king, 'freeze', away);
-    } else if (kind === 'grenade') {
-      const d = att.onGrenade?.() || 0;
+    } else if (kind === 'bull') {
+      const d = att.onBull?.() || 0;
       await wait(Math.min(3.4, d * 0.8));
       att.play('attack2');
       await wait(0.9);
-      await this.holyHandGrenade(att, king, kp);
+      await this.papalBull(att, king, kp);
       this.world.slowmo(0.3, 1);
       await this.die(king, 'launch', away);
     } else {
@@ -294,27 +270,25 @@ export const SpectacleMethods = {
     }
   },
 
-  /** "And now for something completely different": en jättelik marmorfot trampar ned från himlen. */
-  async giantFoot(king, away) {
-    const src = this.lib.extras.foot;
-    const foot = src.scene.clone(true);
+  /** Fältherren har tröttnat: en jättelik marmorhand slår ned ur höjden, som när man rensar ett kartbord. */
+  async giantHand(king, away) {
+    const hand = this.lib.extras.hand.scene.clone(true);
     const stone = this.lib.mats.w.Stone;
-    foot.traverse((o) => { if (o.isMesh) { ensureBakeColor(o); o.material = o.material.name === 'Stone' ? stone : o.material; o.castShadow = true; o.frustumCulled = false; } });
+    hand.traverse((o) => { if (o.isMesh) { ensureBakeColor(o); o.material = o.material.name === 'Stone' ? stone : o.material; o.castShadow = true; o.frustumCulled = false; } });
     const kp = king.position.clone();
-    // i profil, som i Monty Python: tårna pekar åt sidan sett från kameran
-    foot.rotation.y = Math.atan2(this.world.camera.position.x - kp.x, this.world.camera.position.z - kp.z) + Math.PI / 2;
-    foot.scale.setScalar(1.4);
-    foot.position.set(kp.x, 18, kp.z);
-    this.world.scene.add(foot);
-    await tween(0.75, (k) => { foot.position.y = THREE.MathUtils.lerp(18, kp.y, k * k); }, ease.linear);
-    this.sound.bank?.sfx('foot_stomp', { rate: 1 }) || this.sound.thud(0, 1.6);
+    // fingrarna pekar bort från kameran, som när man själv lägger handen på bordet
+    hand.rotation.y = Math.atan2(kp.x - this.world.camera.position.x, kp.z - this.world.camera.position.z);
+    hand.position.set(kp.x, 18, kp.z);
+    this.world.scene.add(hand);
+    await tween(0.7, (k) => { hand.position.y = THREE.MathUtils.lerp(18, kp.y, k * k); }, ease.linear);
+    this.sound.bank?.sfx('hand_slam', { rate: 1 }) || this.sound.thud(0, 1.6);
     this.world.hitstop(0.12);
     this.world.shake = 0.8;
     this.fx.shockwave(kp.clone().setY(this.board.top + 0.05));
     this.fx.dust(kp.clone().setY(this.board.top + 0.2), 40, 2.4);
     await this.die(king, 'squash', away);
     await wait(1.0);
-    await tween(1.1, (k) => { foot.position.y = THREE.MathUtils.lerp(kp.y, 40, k * k); }, ease.linear);
-    foot.removeFromParent();
+    await tween(1.1, (k) => { hand.position.y = THREE.MathUtils.lerp(kp.y, 40, k * k); }, ease.linear);
+    hand.removeFromParent();
   },
 };

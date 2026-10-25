@@ -9,7 +9,7 @@ mkdir -p build/models public/models public/tex public/hdri
 if [ "${1:-}" != "--skip-blender" ]; then
   "$BLENDER" -b -P blender/pieces.py -- "$@" 2>&1 | grep -E "Error|Traceback|tris=" || true
   "$BLENDER" -b -P blender/arena.py 2>&1 | grep -E "Error|Traceback|ARENA" || true
-  "$BLENDER" -b -P blender/extras.py 2>&1 | grep -E "Error|Traceback|tris=|klapp|clap f" || true
+  "$BLENDER" -b -P blender/extras.py 2>&1 | grep -E "Error|Traceback|tris=|slagpose|drum f" || true
 fi
 
 for f in build/models/*.glb; do
@@ -20,8 +20,8 @@ for f in build/models/*.glb; do
   node tools/optimize.mjs "$f" "public/models/${n%.glb}_lo.glb" --lod $r >/dev/null 2>&1
   printf "%-12s %6s KB -> %6s KB\n" "$n" $(( $(stat -f%z "$f") / 1024 )) $(( $(stat -f%z "public/models/$n") / 1024 ))
 done
-# Patsys metadata (gånghastighet, klapptider, klipplängder) skrivs av extras.py
-if [ -f build/models/patsy.json ]; then cp build/models/patsy.json public/models/patsy.json; fi
+# trumpojkens metadata (gånghastighet, slagtider, klipplängder) skrivs av extras.py
+if [ -f build/models/drummer.json ]; then cp build/models/drummer.json public/models/drummer.json; fi
 
 # Poly Haven-texturer -> 1K/2K jpg i public/tex
 tex() { # namn karta upplösning

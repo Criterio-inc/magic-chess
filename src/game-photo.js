@@ -20,10 +20,10 @@ export const PhotoMethods = {
     const att = this.spawnTemp(lb.att.type, lb.att.color, lb.from);
     const vic = this.spawnTemp(lb.vic.type, lb.vic.color, lb.victimSquare);
     att.onAttackCry = () => this.voice?.piece(att, 'attack');
-    att.onGrenade = () => this.voice?.piece(att, 'grenade');
+    att.onBull = () => this.voice?.piece(att, 'bull');
     vic.onDeathCry = () => this.voice?.piece(vic, 'death');
-    vic.onFleshwound = () => this.voice?.piece(vic, 'fleshwound');
-    this.chor.force = { death: lb.death, fleshwound: lb.fleshwound, blackKnight: lb.blackKnight };
+    vic.onMaim = () => this.voice?.piece(vic, 'maimed');
+    this.chor.force = { death: lb.death, maim: lb.maim, karolin: lb.karolin };
     this.setInBattle(true);
     try {
       await this.chor.capture(att, vic, lb.from, lb.to, lb.victimSquare, { move: lb.move });

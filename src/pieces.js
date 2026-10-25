@@ -37,13 +37,13 @@ export class PieceLibrary {
     return new Piece(this, name, type, color);
   }
 
-  /** Kaninen, jättefoten och Patsy (valfria: saknas en fil hoppas den händelsen över). */
+  /** Älgen, fältherrens hand och trumpojken (valfria: saknas en fil hoppas den händelsen över). */
   async loadExtras() {
     this.extras = {};
-    await Promise.all(['rabbit', 'foot', 'patsy'].map(async (n) => {
+    await Promise.all(['elk', 'hand', 'drummer'].map(async (n) => {
       try { this.extras[n] = await gltfLoader.loadAsync(`/models/${n}${tier.lod}.glb`); } catch { /* saknas */ }
     }));
-    try { this.extras.patsyMeta = await fetch('/models/patsy.json').then((r) => (r.ok ? r.json() : null)); } catch { /* saknas */ }
+    try { this.extras.drummerMeta = await fetch('/models/drummer.json').then((r) => (r.ok ? r.json() : null)); } catch { /* saknas */ }
   }
 
   /** Små statyer till kyrkogården vid brädkanten: förenklade modeller, stillastående pose. */

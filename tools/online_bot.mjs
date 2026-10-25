@@ -8,7 +8,7 @@
 import WebSocket from 'ws';
 import { Chess } from 'chess.js';
 
-const TAUNTS = ['fart', 'hamster', 'goaway', 'ni', 'really', 'wellplayed', 'expect', 'hurry'];
+const TAUNTS = ['dalkarl', 'kanslist', 'regler', 'marknad', 'riksdag', 'verkligen', 'beundran', 'skynda'];
 const args = process.argv.slice(2);
 const flag = (f) => args.includes(f);
 const opt = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : undefined; };

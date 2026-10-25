@@ -1,24 +1,24 @@
 // Koreografi för drag och slag, och filmkameran som följer dem.
 import * as THREE from 'three';
 import { tween, wait, ease } from './util.js';
-import { Patsy } from './patsy.js';
+import { Drummer } from './drummer.js';
 import { SpectacleMethods } from './spectacle.js';
 
 // Attackvarianter per pjäs: klipp, hur nära angriparen går (m), träffeffekt och möjliga dödssätt.
-// fleshwound = tvåhuggsattack där första hugget kan slå av en arm ("'Tis but a scratch!").
+// maim = tvåhuggsattack där första hugget kan slå av en arm (offret klagar och slåss vidare).
 export const MOVES = {
   pawn: [
     { clip: 'attack', reach: 2.05, fx: 'sparks', deaths: ['topple', 'topple', 'crumble'] },
-    { clip: 'attack2', reach: 1.5, fx: 'sparks', first: 'bash', deaths: ['topple', 'launch'], fleshwound: true },
+    { clip: 'attack2', reach: 1.5, fx: 'sparks', first: 'bash', deaths: ['topple', 'launch'], maim: true },
   ],
   knight: [
-    { clip: 'attack', reach: 1.55, fx: 'sparks', deaths: ['topple', 'crumble'], fleshwound: true },
+    { clip: 'attack', reach: 1.55, fx: 'sparks', deaths: ['topple', 'crumble'], maim: true },
     { clip: 'attack2', reach: 1.6, fx: 'sparks', deaths: ['launch', 'topple'] },
   ],
   bishop: [
     { clip: 'attack', reach: 1.7, fx: 'holy', deaths: ['topple', 'crumble'] },
     { clip: 'attack2', reach: 4.2, fx: 'beam', deaths: ['smite'] },
-    { clip: 'attack2', reach: 4.6, fx: 'grenade', deaths: ['launch'], weight: 0.8 },
+    { clip: 'attack2', reach: 4.6, fx: 'bull', deaths: ['launch'], weight: 0.8 },
   ],
   rook: [
     { clip: 'attack', reach: 1.75, fx: 'slam', deaths: ['crumble', 'topple'] },
@@ -74,20 +74,20 @@ export class Choreographer {
 
   async move(piece, from, to) {
     const pts = this.path(piece, from, to).slice(1);
-    // Ministry of Silly Walks: ibland går en pjäs som John Cleese
-    const silly = piece.actions.silly && piece.meta.sillySpeed && piece.type !== 'n' && Math.random() < (this.sillyChance ?? 0.08);
-    if (silly && Math.random() < 0.6) this.voice?.herald('silly');
+    // hovdansen: ibland tar en pjäs danssteg i stället för att gå (klippet heter silly i modellerna)
+    const dance = piece.actions.silly && piece.meta.sillySpeed && piece.type !== 'n' && Math.random() < (this.danceChance ?? 0.08);
+    if (dance && Math.random() < 0.6) this.voice?.herald('dance');
     const steps = this.footsteps(piece);
-    await piece.walk(pts, this.settings.pace, silly ? { clip: 'silly', speed: piece.meta.sillySpeed } : {});
+    await piece.walk(pts, this.settings.pace, dance ? { clip: 'silly', speed: piece.meta.sillySpeed } : {});
     steps();
     await piece.face(piece.homeAngle());
   }
 
   footsteps(piece) {
-    // springaren får sällskap av Patsy och hans kokosnötter
-    if (piece.type === 'n' && this.lib?.extras?.patsy) {
-      const patsy = new Patsy(this, piece);
-      return () => patsy.finish();
+    // springaren får sällskap av trumpojken och hans marschtrumma
+    if (piece.type === 'n' && this.lib?.extras?.drummer) {
+      const drummer = new Drummer(this, piece);
+      return () => drummer.finish();
     }
     const heavy = piece.type === 'r' ? 1.6 : piece.type === 'q' || piece.type === 'b' ? 0.6 : 1;
     const interval = (piece.actions.walk.getClip().duration / 2) / this.settings.pace;
@@ -97,8 +97,6 @@ export class Choreographer {
       acc += dt;
       if (acc > interval) {
         acc -= interval;
-        // springaren rider på en låtsashäst: kokosnötter i stället för steg
-        if (piece.type === 'n' && this.sound.bank?.sfx('coconut', { pan: this.pan(piece.position), gain: 0.8 })) return;
         this.sound.step(heavy, this.pan(piece.position));
         if (piece.type === 'r') { this.world.shake = Math.max(this.world.shake, 0.04); this.fx.dust(piece.position.clone().setY(this.board.top + 0.05), 4, 0.5); }
       }
@@ -141,7 +139,7 @@ export class Choreographer {
     const strikeLen = Math.max(0, total - mv.reach);
     const { point: strike, index } = along(path, strikeLen);
     const approach = [...path.slice(1, index + 1), strike];
-    const force = this.force || {}; // felsökning: BC.game.chor.force = { death: 'freeze', fleshwound: true }
+    const force = this.force || {}; // felsökning: BC.game.chor.force = { death: 'freeze', maim: true }
     const death = force.death || hooks.death || pick(mv.deaths);
     if (window.BC_DEBUG) console.info('[BC] battle', att.name, mv.clip, mv.fx, '->', death);
 
@@ -162,9 +160,9 @@ export class Choreographer {
     const away = vpos.clone().sub(att.position).setY(0).normalize();
     const hitPoint = () => vic.chest(new THREE.Vector3());
     const col = (w, b) => (att.color === 'w' ? w : b);
-    const fleshwound = force.fleshwound ?? (mv.fleshwound && impacts.length > 1 && vic.type !== 'r' && Math.random() < 0.55);
+    const maim = force.maim ?? (mv.maim && impacts.length > 1 && vic.type !== 'r' && Math.random() < 0.55);
     // repris: allt som behövs för att spela upp samma strid igen
-    this.lastBattle = { att: { type: att.type, color: att.color }, vic: { type: vic.type, color: vic.color }, from, to, victimSquare, move: mv, death, fleshwound };
+    this.lastBattle = { att: { type: att.type, color: att.color }, vic: { type: vic.type, color: vic.color }, from, to, victimSquare, move: mv, death, maim };
 
     // ---------- dödssätt
     const kill = () => {
@@ -176,7 +174,7 @@ export class Choreographer {
 
     // ---------- träffar
     const hurt = (i) => {
-      if (fleshwound && i === 0) {
+      if (maim && i === 0) {
         // armen åker av, men "det är bara ett köttsår"
         const side = Math.random() < 0.5 ? 'L' : 'R';
         const bones = [`upperarm.${side}`, `forearm.${side}`, `hand.${side}`, `prop.${side}`];
@@ -184,7 +182,7 @@ export class Choreographer {
         vic.hideBones([`upperarm.${side}`]);
         this.sound.bank?.sfx('arm_crack', { pan: this.pan(vpos) });
         vic.play('hit', { timeScale: 0.9 }).then(() => vic.current === vic.actions.hit && vic.idle(0.2));
-        setTimeout(() => vic.onFleshwound?.(), 350);
+        setTimeout(() => vic.onMaim?.(), 350);
         return;
       }
       if (cinematic) this.world.hitstop(0.07);
@@ -254,8 +252,8 @@ export class Choreographer {
             last ? kill() : hurt(i);
           }]);
           break;
-        case 'grenade':
-          evList.push([t, () => this.holyHandGrenade(att, vic, vpos).then(() => (last ? kill() : hurt(i)))]);
+        case 'bull':
+          evList.push([t, () => this.papalBull(att, vic, vpos).then(() => (last ? kill() : hurt(i)))]);
           break;
         default:
           evList.push([Math.max(0, t - 0.14), () => this.sound.whoosh(this.pan(att.position))]);
@@ -263,20 +261,20 @@ export class Choreographer {
       }
     });
     if (mv.fx === 'bolt') this.fx.charge((o) => att.propTip(o), tipColor, impacts[0] * 0.9);
-    if (mv.fx === 'grenade') {
-      const d = att.onGrenade?.() || 0;  // "One... two... five!" "Three, sir!"
+    if (mv.fx === 'bull') {
+      const d = att.onBull?.() || 0;  // biskopen läser bullan innan han kastar
       await wait(Math.min(3.4, d * 0.8));
     } else att.onAttackCry?.();
 
     let atk;
     const melee = ['sparks', 'holy', 'slam', 'uppercut'].includes(mv.fx);
-    if (cinematic && melee && vic.type !== 'k' && (force.blackKnight || (!this.force && Math.random() < (this.blackKnightChance ?? 0.03)))) {
-      // "None shall pass": offret blir Svarte riddaren och vägrar ge sig, lem för lem
-      this.lastBattle.blackKnight = true;
-      atk = this.blackKnight(att, vic, vpos, away, mv, impacts[0]).then(resolveDeath);
-    } else if (cinematic && !this.force && this.lib?.extras?.rabbit && Math.random() < (this.rabbitChance ?? 0.04)) {
-      // "That's no ordinary rabbit!" — kaninen tar offret i stället
-      atk = this.killerRabbit(att, vic, vpos, away).then(resolveDeath);
+    if (cinematic && melee && vic.type !== 'k' && (force.karolin || (!this.force && Math.random() < (this.karolinChance ?? 0.03)))) {
+      // karolinen: offret vägrar falla utan tillstånd och anmäler varje hugg
+      this.lastBattle.karolin = true;
+      atk = this.karolin(att, vic, vpos, away, mv, impacts[0]).then(resolveDeath);
+    } else if (cinematic && !this.force && this.lib?.extras?.elk && Math.random() < (this.elkChance ?? 0.04)) {
+      // älgen kliver in och tar offret i stället
+      atk = this.elk(att, vic, vpos, away).then(resolveDeath);
     } else {
       atk = att.play(mv.clip, { timeScale: ts, events: evList });
     }

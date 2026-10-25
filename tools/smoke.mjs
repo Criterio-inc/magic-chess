@@ -1,13 +1,13 @@
 // Röktest: bygger spelet, startar `vite preview` (ingen HMR som laddar om mitt i) och spelar igenom alla
-// händelser i en riktig Chrome: varje mattfinish, jättefoten, mördarkaninen, Svarte riddaren, köttsår, granaten,
-// alla dödssätt, Patsy, dum gång, repris, hoppa över, tips, veteraner, legendparti, sammanfattning, ångra, fotoläge,
+// händelser i en riktig Chrome: varje mattfinish, fältherrens hand, älgen, karolinen, lemlästning, bannbullan,
+// alla dödssätt, trumpojken, hovdansen, repris, hoppa över, tips, veteraner, legendparti, sammanfattning, ångra, fotoläge,
 // kvällens kandelabrar och översiktsläget i kartrummet.
 // Felar vid konsolfel, sidfel eller ett påstående som inte håller. Bilder hamnar i build/smoke/.
 //
 //   node tools/smoke.mjs                 # bygg + kör (huvudlöst)
 //   node tools/smoke.mjs --no-build      # kör mot förra bygget
 //   node tools/smoke.mjs --headed        # se det hända
-//   node tools/smoke.mjs --only foot,rabbit
+//   node tools/smoke.mjs --only hand,elk
 import { spawn, execSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { chromium } from 'playwright-core';
@@ -63,7 +63,7 @@ await page.evaluate(() => {
       await g.newGame({ mode: 'hotseat', elo: 1800, battles: 'cinematic', pace: 2.4, ...extra });
       g.director.toHome = async () => {};
       if (fen) { g.chess.load(fen); g.syncFromBoard(); }
-      Object.assign(g.chor, { footChance: 0, rabbitChance: 0, sillyChance: 0, blackKnightChance: 0, force: null });
+      Object.assign(g.chor, { handChance: 0, elkChance: 0, danceChance: 0, karolinChance: 0, force: null });
       delete g.chor.chooseMove;
       BC.world.timeScale = 4;
     },
@@ -113,7 +113,7 @@ const assert = (c, msg) => { if (!c) throw new Error(msg); };
 // ---------------------------------------------------------------- mattfinisher per pjäs
 const MATES = [
   { name: 'mate-queen', fen: null, moves: [['f2', 'f3'], ['e7', 'e5'], ['g2', 'g4']], mate: ['d8', 'h4'], kind: 'freeze' },
-  { name: 'mate-bishop', fen: '6bk/7p/8/8/8/8/8/2B3K1 w - - 0 1', mate: ['c1', 'b2'], kind: 'grenade' },
+  { name: 'mate-bishop', fen: '6bk/7p/8/8/8/8/8/2B3K1 w - - 0 1', mate: ['c1', 'b2'], kind: 'bull' },
   { name: 'mate-rook', fen: '6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1', mate: ['a1', 'a8'], kind: 'leap' },
   { name: 'mate-knight', fen: '6rk/6pp/8/6N1/8/8/8/6K1 w - - 0 1', mate: ['g5', 'f7'], kind: 'leap' },
   { name: 'mate-pawn', fen: '7k/5K1p/6P1/8/8/8/8/8 w - - 0 1', mate: ['g6', 'g7'], kind: 'charge' },
@@ -131,15 +131,15 @@ for (const m of MATES) {
   });
 }
 
-await scenario('foot', async () => {
+await scenario('hand', async () => {
   await ev(() => S.fresh());
   for (const [a, b] of [['f2', 'f3'], ['e7', 'e5'], ['g2', 'g4']]) await ev(([a, b]) => S.play(a, b), [a, b]);
-  await ev(() => { BC.game.chor.footChance = 1; window.__f = S.freezeAfter(BC.game.chor, 'giantFoot', 0.62); BC.game.play({ from: 'd8', to: 'h4' }); });
+  await ev(() => { BC.game.chor.handChance = 1; window.__f = S.freezeAfter(BC.game.chor, 'giantHand', 0.62); BC.game.play({ from: 'd8', to: 'h4' }); });
   await ev(() => window.__f);
-  await shot('foot');
+  await shot('hand');
   await ev(() => S.resume());
   await ev(() => S.over());
-  assert(finishers[finishers.length - 1] === 'foot', 'ingen fot');
+  assert(finishers[finishers.length - 1] === 'hand', 'ingen hand');
 });
 
 // ---------------------------------------------------------------- slag
@@ -155,31 +155,31 @@ const capture = async (name, setup, shotAt, arg) => scenario(name, async () => {
   const hist = await ev(() => BC.game.chess.history().join(' '));
   assert(hist === 'e4 d5 exd5', `historik ${hist}`);
 });
-await capture('rabbit', () => { BC.game.chor.rabbitChance = 1; window.__rab = 0; const o = BC.game.chor.killerRabbit.bind(BC.game.chor); BC.game.chor.killerRabbit = (...a) => { window.__rab++; return o(...a); }; }, ['killerRabbit', 2.3]);
-await capture('blackknight', () => { BC.game.chor.force = { blackKnight: true }; }, ['blackKnight', 12.5]);
-await capture('fleshwound', () => { BC.game.chor.force = { fleshwound: true, death: 'topple' }; BC.game.chor.chooseMove = () => ({ clip: 'attack2', reach: 1.5, fx: 'sparks', first: 'bash', deaths: ['topple'], fleshwound: true }); });
+await capture('elk', () => { BC.game.chor.elkChance = 1; window.__elk = 0; const o = BC.game.chor.elk.bind(BC.game.chor); BC.game.chor.elk = (...a) => { window.__elk++; return o(...a); }; }, ['elk', 2.3]);
+await capture('karolin', () => { BC.game.chor.force = { karolin: true }; }, ['karolin', 8]);
+await capture('maim', () => { BC.game.chor.force = { maim: true, death: 'topple' }; BC.game.chor.chooseMove = () => ({ clip: 'attack2', reach: 1.5, fx: 'sparks', first: 'bash', deaths: ['topple'], maim: true }); });
 for (const d of ['topple', 'crumble', 'launch', 'freeze', 'smite']) await capture(`death-${d}`, (d) => { BC.game.chor.force = { death: d }; }, null, d);
 
-await scenario('grenade', async () => {
+await scenario('bull', async () => {
   await ev(() => S.fresh('4k3/8/8/8/8/3p4/8/4KB2 w - - 0 1'));
-  await ev(() => { window.__g = 0; BC.game.chor.chooseMove = () => ({ clip: 'attack2', reach: 4.6, fx: 'grenade', deaths: ['launch'] }); const o = BC.game.chor.holyHandGrenade.bind(BC.game.chor); BC.game.chor.holyHandGrenade = (...a) => { window.__g++; return o(...a); }; });
+  await ev(() => { window.__g = 0; BC.game.chor.chooseMove = () => ({ clip: 'attack2', reach: 4.6, fx: 'bull', deaths: ['launch'] }); const o = BC.game.chor.papalBull.bind(BC.game.chor); BC.game.chor.papalBull = (...a) => { window.__g++; return o(...a); }; });
   await ev(() => S.play('f1', 'd3'));
   const r = await ev(() => ({ hist: BC.game.chess.history().join(' '), g: window.__g }));
-  assert(r.hist === 'Bxd3' && r.g === 1, `granat ${JSON.stringify(r)}`);
+  assert(r.hist === 'Bxd3' && r.g === 1, `bannbulla ${JSON.stringify(r)}`);
 });
 
 // ---------------------------------------------------------------- förflyttningar
-await scenario('patsy-silly', async () => {
+await scenario('drummer-dance', async () => {
   await ev(() => S.fresh());
-  await ev(() => { BC.game.chor.sillyChance = 1; window.__walks = []; const P = Object.getPrototypeOf([...BC.game.pieces.values()][0]); if (!P.__smoke) { const w = P.walk; P.walk = function (...a) { window.__walks.push(a[2]?.clip || 'walk'); return w.apply(this, a); }; P.__smoke = 1; } });
+  await ev(() => { BC.game.chor.danceChance = 1; window.__walks = []; const P = Object.getPrototypeOf([...BC.game.pieces.values()][0]); if (!P.__smoke) { const w = P.walk; P.walk = function (...a) { window.__walks.push(a[2]?.clip || 'walk'); return w.apply(this, a); }; P.__smoke = 1; } });
   await ev(() => { window.__f = S.freezeAfter(BC.game.chor, 'move', 0.9); window.__mv = S.play('g1', 'f3'); });
   await ev(() => window.__f);
-  const patsy = await ev(() => { let n = 0; BC.world.scene.traverse((o) => { if (o.name === 'patsy_rig') n++; }); return n; });
+  const drummer = await ev(() => { let n = 0; BC.world.scene.traverse((o) => { if (o.name === 'drummer_rig') n++; }); return n; });
   await ev(() => S.resume()); await ev(() => window.__mv);
   await ev(() => S.play('e7', 'e5'));
   const walks = await ev(() => window.__walks);
-  assert(patsy >= 1, 'ingen Patsy');
-  assert(walks.includes('silly'), `ingen dum gång (${walks})`);
+  assert(drummer >= 1, 'ingen trumpojke');
+  assert(walks.includes('silly'), `ingen hovdans (${walks})`);
 });
 
 // ---------------------------------------------------------------- funktioner

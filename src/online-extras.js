@@ -5,14 +5,14 @@ import './online-extras.css';
 
 /** Glåporden (id:na måste stämma med TAUNTS i server/rooms.js; rösterna ligger under voice.taunter). */
 export const TAUNTS = {
-  fart: 'I fart in your general direction!',
-  hamster: 'Your mother was a hamster…',
-  goaway: 'Now go away, or I shall taunt you a second time!',
-  ni: 'Ni!',
-  really: 'That was your move? Really?',
-  wellplayed: 'Well played. I mean it. Mostly.',
-  expect: 'Nobody expects my next move!',
-  hurry: 'Any century now would be lovely.',
+  dalkarl: 'Det där draget skulle få en dalkarl att gråta.',
+  kanslist: 'Ni spelar som en kanslist en fredagskväll.',
+  regler: 'Har ni läst reglerna, eller bara bläddrat i dem?',
+  marknad: 'Jag har sett vassare drag på marknaden i Uppsala.',
+  riksdag: 'Ni är snabb som en riksdag.',
+  verkligen: 'Var det där ert drag? Verkligen?',
+  beundran: 'Väl spelat. Det menar jag. Nästan.',
+  skynda: 'Någon gång detta sekel vore trevligt.',
 };
 const TAUNT_BURST = 2; // samma hink som servern: två i rad, sedan ett per 4 s
 const TAUNT_MS = 4000;

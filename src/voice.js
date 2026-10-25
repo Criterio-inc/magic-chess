@@ -79,7 +79,7 @@ export class Voice {
     return buf ? this.playBuffer(buf, { gain, loop: true, wet: 0, rate: 1, fade }) : null;
   }
 
-  /** Pjäsens replik (select, move, retreat, attack, hit, fleshwound, death, kill, annoyed, bored, check, grenade).
+  /** Pjäsens replik (select, move, retreat, attack, hit, maimed, death, kill, annoyed, bored, check, bull).
    *  Svarta pjäser låter något mörkare. Returnerar replikens längd i sekunder (0 om den inte är avkodad än). */
   piece(piece, kind) {
     if (this.sound.hushed) return 0;
@@ -101,7 +101,7 @@ export class Voice {
     return 2.6; // okänd längd: en rimlig gissning för väntan (granaten)
   }
 
-  /** En namngiven röst utanför pjäserna (taunter, blackknight). Returnerar längden i sekunder (gissning om ej avkodad). */
+  /** En namngiven röst utanför pjäserna (taunter, karolin). Returnerar längden i sekunder (gissning om ej avkodad). */
   say(who, kind, { gain = 0.9, rate = 1, wet = 0.2 } = {}) {
     const lines = this.manifest.voice[who]?.[kind];
     if (!lines?.length || !this.sound.ok || this.sound.hushed) return 0;

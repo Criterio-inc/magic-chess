@@ -438,7 +438,7 @@ def walk_keys(stance, n=30, swing=24, arm_swing=16, bob=0.025, knee=40, lock_arm
     return keys
 
 
-# ---------------------------------------------------------------- dumma gången (Ministry of Silly Walks)
+# ---------------------------------------------------------------- hovdansen (klippet silly)
 
 def leg_lengths(J, s="L"):
     """(lår, smalben) i meter + benens vilovinklar framåt i radianer (skelettets knä är lite böjt i vila),
@@ -489,11 +489,11 @@ def _loop_spline(pts, x):
 SW_KNEE, SW_KICK, SW_HOLD, SW_DESC, SW_STRIKE = 3 / 36, 7 / 36, 9 / 36, 12 / 36, 15 / 36
 
 
-def silly_keys(stance, n=36, legs=(0.37, 0.36), stride=0.5, dip=0.31, kick=95, lean=1.0, arm_swing=34, staff=(), foot=0.14):
-    """John Cleeses gång: ena benet sparkas rakt och högt framåt (lår ≈ -kick, smalben ≈ 0) medan bålen lutar
-    bakåt och stödbenet sjunker ned i ett djupt knäböj; armarna pendlar stela och kroppen guppar kraftigt.
+def silly_keys(stance, n=36, legs=(0.37, 0.36), stride=0.5, dip=0.31, kick=70, lean=1.0, arm_swing=34, staff=(), foot=0.14):
+    """Hovdansen (klippet heter silly av historiska skäl): ett hoppsasteg där knät lyfts högt med böjt ben och
+    pekad tå (lår ≈ -kick, smalbenet hänger) medan kroppen studsar uppåt och bålen lutar lätt framåt i steget.
     En cykel = vänster spark + höger spark. legs = leg_lengths(J): (lår, smalben) i meter + vilovinklar; stride = steglängd och dip = djupet
-    i knäböjet, båda som andel av benlängden. Stödfoten står still i marken (IK) när pjäsen flyttas med
+    i landningen och höjden på studsen, båda som andel av benlängden. Stödfoten står still i marken (IK) när pjäsen flyttas med
     silly_speed(...). Första och sista nyckeln är identiska.
     staff = sidor vars hand bär en stav som når marken (spjut, kräkla): den armen pendlar inte utan lyfts
     framåt i varje knäböj och staven hålls lodrät, annars borrar dess nedre ände ned i marken.
@@ -503,10 +503,10 @@ def silly_keys(stance, n=36, legs=(0.37, 0.36), stride=0.5, dip=0.31, kick=95, l
     Lg = l1 + l2
     r = stride * Lg                       # steglängd per halv cykel
     base = stance.get("loc", (0, 0, 0))
-    # kroppens sänkning per halv cykel (u): hög när stödbenet passerar under, djupast under sparken
-    drop_pts = [(0.0, 0.045), (2 / 36 * 2, 0.012), (SW_KICK * 2, dip), (SW_HOLD * 2, dip * 0.97),
-                (SW_DESC * 2, dip * 0.55), (SW_STRIKE * 2, 0.09)]
-    # sparkens styrka (bålens bakåtlutning, höftvridning, armarna ut)
+    # kroppens sänkning per halv cykel (u): en kort fjädring i landningen, sedan en studs uppåt när knät lyfts
+    drop_pts = [(0.0, 0.03), (2 / 36 * 2, 0.01), (SW_KICK * 2, -0.12 * dip), (SW_HOLD * 2, -0.1 * dip),
+                (SW_DESC * 2, 0.02), (SW_STRIKE * 2, 0.06)]
+    # stegets styrka (bålens lutning, höftvridning, armarna ut)
     kick_pts = [(0.0, 0.12), (2 / 36 * 2, 0.3), (SW_KICK * 2, 1.0), (SW_HOLD * 2, 1.0), (SW_DESC * 2, 0.6),
                 (SW_STRIKE * 2, 0.15)]
     foot_len = foot * Lg                  # fotled -> trampdyna, för tårullningen
@@ -532,8 +532,8 @@ def silly_keys(stance, n=36, legs=(0.37, 0.36), stride=0.5, dip=0.31, kick=95, l
             return stance_leg(psi, phi_of(psi))
         ctrl = {round(f / n, 6): stance_leg(f / n, phi_of(f / n)) for f in range(int(math.ceil(SW_STRIKE * n - 1e-6)), n)}
         ctrl[round(SW_STRIKE, 6)] = stance_leg(SW_STRIKE, phi_of(SW_STRIKE))
-        ctrl.update({0.0: stance_leg(1.0 - 1e-9, phi_of(1.0)), SW_KNEE: (-50.0, 75.0, 10.0), SW_KICK: (-kick, 0.0, 20.0),
-                     SW_HOLD: (-kick + 6, 2.0, 15.0), SW_DESC: (-55.0, 4.0, 0.0)})
+        ctrl.update({0.0: stance_leg(1.0 - 1e-9, phi_of(1.0)), SW_KNEE: (-45.0, 70.0, 10.0), SW_KICK: (-kick, 0.95 * kick, 25.0),
+                     SW_HOLD: (-kick + 8, 0.9 * kick, 30.0), SW_DESC: (-40.0, 35.0, 5.0)})
         xs = sorted(ctrl)
         return tuple(_loop_spline([(x, ctrl[x][j]) for x in xs], psi) for j in range(3))
 
@@ -553,15 +553,15 @@ def silly_keys(stance, n=36, legs=(0.37, 0.36), stride=0.5, dip=0.31, kick=95, l
             for bone, ang in ((f"thigh.{s}", t1), (f"shin.{s}", t2), (f"foot.{s}", t3)):
                 b = stance.get(bone, (0, 0, 0))
                 p[bone] = (ang, b[1], b[2])
-        a = math.tanh(2.2 * math.cos(math.tau * (phi - SW_KICK))) / math.tanh(2.2)   # stel pendel, +1 = vänster spark
-        lb = 32 * lean * kk - 5 * (1 - kk)                                          # bakåtlutning
+        a = math.tanh(2.2 * math.cos(math.tau * (phi - SW_KICK))) / math.tanh(2.2)   # pendel, +1 = vänster knä uppe
+        lb = -8 * lean * kk                                                          # lätt framåtlutning i steget
         swing = {"L": arm_swing * a, "R": -arm_swing * a}
         for s in staff:
-            swing[s] = -(dip / 0.31) * 26 * kk          # stavarmen höjs när kroppen sjunker
+            swing[s] = -(dip / 0.31) * 18 * kk          # stavarmen följer med i studsen
         p = add(p, {
             "spine": (-0.42 * lb, 0, 0), "chest": (-0.58 * lb, side * 5 * kk, 0), "neck": (0.25 * lb, 0, 0),
             "head": (0.5 * lb, side * 2 * kk, 0), "hips": (0, -side * 7 * kk, 0),
-            "upperarm.L": (swing["L"], 0, -9 * kk), "upperarm.R": (swing["R"], 0, 9 * kk),
+            "upperarm.L": (swing["L"], 0, -18 * kk), "upperarm.R": (swing["R"], 0, 18 * kk),
         })
         # vapnen följer armens sving till hälften men inte bålens lutning; stavar hålls lodräta
         for s in ("L", "R"):
@@ -831,9 +831,8 @@ def build_knight():
               "upperarm.R": (-10, 0, 8), "forearm.R": (-40, 0, 0),
               "thigh.L": (-5, 0, -4), "thigh.R": (4, 0, 4), "shin.L": (7, 0, 0), "shin.R": (4, 0, 0), "chest": (0, -4, 0)}
     stance = aim(stance, "R", 35)
-    # gången: ett studsande låtsasgalopp med tyglarna i handen (kokosnötterna kommer från spelet)
-    reins = aim(merge(stance, {"upperarm.R": (-38, 0, 4), "forearm.R": (-62, 0, 0)}), "R", 60)
-    A = {"idle": idle_keys(stance), "walk": walk_keys(reins, n=22, swing=26, knee=58, bob=0.075, lock_arms=("upperarm.L", "upperarm.R"))}
+    # gången: en stolt marsch med svärdet lugnt i handen och skölden framför bröstet
+    A = {"idle": idle_keys(stance), "walk": walk_keys(stance, n=26, swing=22, knee=42, bob=0.03, lock_arms=("upperarm.R",))}
     # tvåhuggskombination: hugg uppifrån, sedan bakhandshugg
     ready = merge(stance, {"thigh.L": (-24, 0, -4), "shin.L": (20, 0, 0), "thigh.R": (16, 0, 4), "shin.R": (12, 0, 0), "loc": (0, 0, -0.04)})
     wind1 = aim(merge(ready, {"upperarm.R": (-150, 0, 30), "forearm.R": (-40, 0, 0), "chest": (-8, -20, 0), "spine": (-4, -10, 0)}), "R", -70)
@@ -855,7 +854,7 @@ def build_knight():
                     (36, merge(sstrike, {"root": (0, -360, 0)})), (52, merge(stance, {"root": (0, -360, 0)}))]
     ev = {"attack": [27, 53], "attack2": [26], "death": [35]}
     A["silly"], silly_v = silly(stance, J, stride=0.6, lean=0.6)   # manteln hänger i chest upptill: luta mindre
-    return arm, mesh, A, ev, {"height": H, "walkSpeed": walk_speed(H, 26, 22), "sillySpeed": silly_v, "cape": cape_len(J)}
+    return arm, mesh, A, ev, {"height": H, "walkSpeed": walk_speed(H, 22, 26), "sillySpeed": silly_v, "cape": cape_len(J)}
 
 
 # ======================================================================= LÖPARE: biskop med kräkla

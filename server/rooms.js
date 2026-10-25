@@ -12,7 +12,7 @@ const MAX_NAME = 24;
 const MAX_WATCHERS = 50;
 const TAUNT_BURST = 2; // så många glåpord i rad, sedan ett per tauntMs
 // Glåporden som får skickas (texterna och rösterna finns i klienten, src/online-extras.js).
-export const TAUNTS = ['fart', 'hamster', 'goaway', 'ni', 'really', 'wellplayed', 'expect', 'hurry'];
+export const TAUNTS = ['dalkarl', 'kanslist', 'regler', 'marknad', 'riksdag', 'verkligen', 'beundran', 'skynda'];
 
 const other = (c) => (c === 'w' ? 'b' : 'w');
 const winner = (c) => (c === 'w' ? '1-0' : '0-1');

@@ -35,7 +35,7 @@ async function boot() {
   const lib = new PieceLibrary();
   await lib.load(progress);
   lib.loadMinis(); // småstatyer till kyrkogården laddas i bakgrunden
-  lib.loadExtras(); // kaninen, jättefoten och Patsy
+  lib.loadExtras(); // älgen, fältherrens hand och trumpojken
   await voice.load();
   await engine.ready;
   ui.progress(1, null);

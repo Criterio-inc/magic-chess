@@ -173,7 +173,7 @@ export function withFloor(m) {
   return m;
 }
 
-// ------------------------------------------------------------- Patsys kostym (procedurell, utan UV:er)
+// ------------------------------------------------------------- trumpojkens kostym (procedurell, utan UV:er)
 
 const REST_VERT_PARS = /* glsl */ `
 varying vec3 vRestPos;
@@ -247,10 +247,10 @@ export function sackcloth({ color = 0x7a5b3b, cell = 0.0055, contrast = 0.3, mot
 
 /** Kokosnötsskal: mörkbrunt med fibrer längs vilans x (skålarnas axel ungefär, så att de löper pol till pol)
  *  och sheen som ger ett luddigt, hårigt ljus i kanten. */
-export function coconutShell({ color = 0x5a381f, sheenColor = 0xd8b27f, fiber = 170, bump = 0.6 } = {}) {
+export function fibreShell({ color = 0x5a381f, sheenColor = 0xd8b27f, fiber = 170, bump = 0.6 } = {}) {
   const m = new THREE.MeshPhysicalMaterial({ color, roughness: 0.8, metalness: 0, sheen: 1, sheenRoughness: 0.5,
     sheenColor: new THREE.Color(sheenColor), side: THREE.DoubleSide });
-  return restSpace(m, 'coconut', { uFiber: { value: fiber }, uFBump: { value: bump } }, /* glsl */ `
+  return restSpace(m, 'fibre', { uFiber: { value: fiber }, uFBump: { value: bump } }, /* glsl */ `
       vec3 cq = vRestPos * vec3(uFiber * 0.06, uFiber, uFiber);
       float fib = bcNoise(cq) * 0.65 + bcNoise(cq * vec3(2.3, 2.1, 2.1) + 7.0) * 0.35;
       fib = mix(0.5, fib, 1.0 - smoothstep(0.5, 1.2, length(fwidth(cq))));
