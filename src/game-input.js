@@ -1,4 +1,4 @@
-// Klick och tryck på brädet: välja pjäs, dra, avbryta. Kopplas in i Game (game.js).
+// Klick och tryck på brädet: välja pjäs, dra, avbryta, hoppa över en duell och tips. Kopplas in i Game (game.js).
 import * as THREE from 'three';
 
 export const InputMethods = {
@@ -65,6 +65,44 @@ export const InputMethods = {
     } else {
       this.selected = null;
       this.refreshMarks();
+    }
+  },
+
+  // ------------------------------------------------------------------ hoppa över en duell, tips
+
+  /** Duellflaggan styr om ett tryck snabbspolar och om "Skip"-knappen syns. Slutar duellen slutar spolningen. */
+  setInBattle(on) {
+    this.inBattle = on;
+    document.body.classList.toggle('inbattle', on);
+    if (!on) this.endSkip();
+  },
+
+  skipBattle() {
+    if (!this.inBattle || this.world.fast > 1) return;
+    this.world.fast = 8;
+    this.sound.hush?.(true);
+    document.body.classList.add('skipping');
+  },
+
+  endSkip() {
+    if (this.world.fast === 1) return;
+    this.world.fast = 1;
+    this.sound.hush?.(false);
+    document.body.classList.remove('skipping');
+  },
+
+  /** Visa analysmotorns bästa drag som en glödande pil (inte online). */
+  async hint() {
+    if (this.settings.mode === 'online' || this.busy || !this.isHumanTurn() || !this.analyst || this.hinting) return;
+    this.hinting = true;
+    const fen = this.chess.fen();
+    try {
+      const { best } = await this.analyst.evaluate(fen, 700);
+      if (!best || this.chess.fen() !== fen) return;
+      this.board.showArrow(best.slice(0, 2), best.slice(2, 4));
+      this.sound.bank?.sfx('select', { gain: 0.5 });
+    } finally {
+      this.hinting = false;
     }
   },
 };

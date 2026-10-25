@@ -9,12 +9,20 @@ Under dueller kan det hända saker. En karolin vägrar falla utan tillstånd och
 krigskollegium. En älg kliver in från kartan. Biskopen kastar en bannbulla, en trumpojke marscherar efter
 springaren, och ibland tröttnar fältherren och slår ned med handen. Rösterna är svenska.
 
+## Fältslagen
+
+Läget Fältslag spelar slag ur Saeculas epok mot Stockfish: Narva 1700, Breitenfeld 1631, Lützen 1632 och Poltava 1709.
+Kungarna heter som fältherrarna, mantlar och fanor bär riksfärgerna, och kartan visar fälttåget med en nål på slagplatsen.
+Uppställningen följer historien: vid Narva saknar ryssarna dam eftersom tsaren lämnade lägret dagen före, och vid Poltava
+saknar svenskarna torn eftersom kanonerna blev kvar i trossen. Snön yr vid Narva och dimman ligger tät vid Lützen.
+Slagen är vanliga JSON-kort (`src/faltslag/slag.json`) som Saecula kan skriva egna av.
+
 ## Bygger på Marble & Mayhem
 
 Spelet är en vidareutveckling av Anders Bjarbys [Marble & Mayhem](https://github.com/fltman/marble-mayhem),
 och det mesta av maskineriet är hans: Stockfish i en Web Worker, Blender-kedjan som bygger alla figurer i kod,
 filmkameran, onlinespelet, röktestet och den genomtänkta strukturen. Kartrummet, de nya figurerna, rösterna,
-humorn och översättningen är egna. Originalets lån ur Monty Python, Mortal Kombat och andra spel är borttagna.
+humorn, fältslagen och översättningen är egna. Originalets lån ur Monty Python, Mortal Kombat och andra spel är borttagna.
 
 ## Kör
 

@@ -5,6 +5,7 @@ export const OnlineMethods = {
   /** Partiet börjar (eller återupptas) med serverns ställning. */
   async startOnline(state, color, { fanfare = true } = {}) {
     this.settings.mode = 'online';
+    this.dressRoom(); // ett tidigare fältslags fanor och väder bort
     this.myColor = color;
     this.onlineOver = state.over || null;
     this.remoteQueue = [];

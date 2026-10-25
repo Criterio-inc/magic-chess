@@ -434,6 +434,42 @@
   ],
   "hand": [
    "/audio/voice/herald_hand_0_41f0dc03.mp3"
+  ],
+  "slag_narva": [
+   "/audio/voice/herald_slag_narva_0_d8e45a60.mp3"
+  ],
+  "slag_narva_seger": [
+   "/audio/voice/herald_slag_narva_seger_0_436bbb8c.mp3"
+  ],
+  "slag_narva_forlust": [
+   "/audio/voice/herald_slag_narva_forlust_0_c66e6ec5.mp3"
+  ],
+  "slag_breitenfeld": [
+   "/audio/voice/herald_slag_breitenfeld_0_aaf4efb1.mp3"
+  ],
+  "slag_breitenfeld_seger": [
+   "/audio/voice/herald_slag_breitenfeld_seger_0_bcd4d180.mp3"
+  ],
+  "slag_breitenfeld_forlust": [
+   "/audio/voice/herald_slag_breitenfeld_forlust_0_5994c7ca.mp3"
+  ],
+  "slag_lutzen": [
+   "/audio/voice/herald_slag_lutzen_0_d4c68ea5.mp3"
+  ],
+  "slag_lutzen_seger": [
+   "/audio/voice/herald_slag_lutzen_seger_0_9ccd4fd6.mp3"
+  ],
+  "slag_lutzen_forlust": [
+   "/audio/voice/herald_slag_lutzen_forlust_0_900d13a7.mp3"
+  ],
+  "slag_poltava": [
+   "/audio/voice/herald_slag_poltava_0_29ef4b40.mp3"
+  ],
+  "slag_poltava_seger": [
+   "/audio/voice/herald_slag_poltava_seger_0_f52a1789.mp3"
+  ],
+  "slag_poltava_forlust": [
+   "/audio/voice/herald_slag_poltava_forlust_0_9c8720ce.mp3"
   ]
  },
  "sfx": {

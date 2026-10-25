@@ -15,6 +15,7 @@ npm run test:server    # 26 steg mot servern
 npm run build          # dist/ (statisk, base './')
 npm run smoke          # röktest i riktig Chrome mot ett preview-bygge (se nedan)
 npm run check:legends  # legendpartierna är lagliga och slutar i matt
+npm run check:slag     # fältslagens kort: format, uppställning, slagplats bredvid brädet, häroldens repliker
 node tools/shots.mjs   # bilder av titel, dag, skymning, kväll och översikt till docs/stil/spel/, med bildfrekvens
 ```
 
@@ -41,6 +42,24 @@ Varje slumphändelse kan tvingas: `BC.game.chor.handChance = 1`, `.elkChance = 1
 - `overview.js` är översiktsläget (⌖ eller M): kartbordet uppifrån som kopparstick (sepia, korn, konturer kring pjäserna, lampa
   över bordet). Medan det är på returnerar `Director.homePose` översiktsbilden, så regissörens egna flygningar sköter kameran.
   Kopparsticket tonas bort under dueller.
+
+## Fältslagen (src/faltslag/)
+
+Läget Fältslag i menyn spelar historiska slag ur Saeculas epok som parti mot Stockfish: Narva 1700, Breitenfeld 1631,
+Lützen 1632 och Poltava 1709 (i svårighetsordning). Ett fältslag är ett vanligt parti (`mode` white/black) med `settings.slag`
+satt; `game-faltslag.js` läser kortet (`battleCard`, `freshChess`, `sideName`, `dressRoom`, titelkort och häroldens efterord).
+
+- **Slagkortet** (`slagkort.js`, formatet `saecula-slagkort/1`) är vanlig JSON så att Saecula kan skriva egna kort ur en kampanj:
+  rikena med Saeculas land-id, fältherrarna, riksfärgerna, platsen i längd och bredd, Stockfish-styrkan, en valfri uppställning
+  (Narva: ryssarna utan dam, tsaren hade lämnat lägret; Poltava: svenskarna utan torn, kanonerna blev kvar i trossen), vädret
+  och hur det gick i verkligheten. De inbyggda korten ligger i `slag.json`.
+- **Kartan** (`kartrum/atlas.js`): platsen räknas med Saeculas Albers-projektion och atlasens rutnät till kartbilden. Ligger
+  slagplatsen under brädet (Poltava, Narva) visar bladet en inzoomad fälttågskarta (`campaignView`) så att slagnålen hamnar
+  bredvid brädet. Stadsnålarna följer med och göms under brädet.
+- **Rummet** (`scen.js`): två korslagda nålar med rikenas fanor på slagplatsen, väggens fanor och pjäsernas mantlar i
+  riksfärgerna, och vädret (`kartrum/weather.js`): snö som blåser in i fiendens ansikten vid Narva, morgondimma vid Lützen.
+- **Härolden** har repliker per slag: `slag_<id>`, `slag_<id>_seger` och `slag_<id>_forlust`. Ett kort utan egna repliker
+  (från Saecula) får de vanliga.
 
 ## Tillgångskedjan
 
@@ -98,7 +117,7 @@ check (kungen), bull (löparen).
 
 `npm run smoke` bygger till `build/smoke-dist`, startar `vite preview` (port 8250, ingen HMR som laddar om mitt i) och kör Chrome
 genom alla händelser: varje mattfinish, handen, älgen, karolinen, lemlästning, bannbullan, alla dödssätt, trumpojken med hovdans,
-hoppa över, repris, veteran, tips, legendparti, ångra/fotoläge, kvällens lågor och översiktsläget. Felar vid konsolfel.
+hoppa över, repris, veteran, tips, legendparti, ångra/fotoläge, kvällens lågor, översiktsläget och fältslagen. Felar vid konsolfel.
 Bilder i `build/smoke/`. `--no-build`, `--headed`, `--only hand,elk`.
 
 ## Titelskärmen
@@ -135,7 +154,7 @@ Testmotståndare: `node tools/online_bot.mjs KOD [--taunt] [--ask-rematch] [--no
 `materials.js` (triplanar marmor, golvspärr för skinnade pjäser, trumpojkens kostym), `pieces.js`, `capes.js` (mantelfysik),
 `board.js`, `battle.js` (koreografi), `spectacle.js` (karolinen, älgen, bannbullan, matterna, handen), `director.js` (filmkameran),
 `drummer.js`, `fx.js` (partiklar, krossade statyer), `game.js` (chess.js + Stockfish + turordning) med `game-online.js`,
-`game-analysis.js`, `game-save.js`, `game-photo.js` och `game-input.js` inkopplade via Object.assign, `engine.js` (UCI i Web Worker),
+`game-analysis.js`, `game-save.js`, `game-photo.js`, `game-input.js` och `game-faltslag.js` inkopplade via Object.assign, `engine.js` (UCI i Web Worker),
 `audio.js` (synt), `voice.js` (inspelningar), `ui.js`.
 
 ## Fällor (alla upplevda)
@@ -171,3 +190,7 @@ Testmotståndare: `node tools/online_bot.mjs KOD [--taunt] [--ask-rematch] [--no
   kartans sjunker mot noll i översikten.
 - `new SepiaEffect({ intensity: 0 })` ger full sepia; nolla `blendMode.opacity` i stället. OutlineEffect behöver BlendFunction.ALPHA.
 - Appens dolda webbläsarpanel pausar requestAnimationFrame: ta bilder och mät bildfrekvens med `tools/shots.mjs` i riktig Chrome.
+- Platser på kartan räknas ur längd och bredd (`atlasUV` i `kartrum/atlas.js`), aldrig med ögonmått: de första stadsnålarna var
+  uppmätta i bilden och låg upp till två centimeter fel på bordet.
+- `newGame` slår ihop inställningarna (`Object.assign`): ett nytt parti måste skicka `slag: null`, annars lever förra fältslagets
+  uppställning och fanor kvar. `ui.readSettings` och röktestets `S.fresh` gör det.

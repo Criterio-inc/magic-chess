@@ -148,6 +148,29 @@ export function bannerTexture({ field, border }) {
 }
 
 /** Knuten matta: bård, fält, medaljong och hörnstycken, med ullens korn ovanpå. */
+/** Liten tvärfana till kartnålarna: stången till vänster (u = 0), kluven flagg till höger. */
+export function pennantTexture({ field, border }) {
+  const c = canvas(256, 160);
+  const g = c.getContext('2d');
+  const shape = (inset) => {
+    g.beginPath();
+    g.moveTo(inset, inset); g.lineTo(256 - inset, inset); g.lineTo(196 - inset * 0.4, 80);
+    g.lineTo(256 - inset, 160 - inset); g.lineTo(inset, 160 - inset);
+    g.closePath();
+  };
+  g.fillStyle = border;
+  shape(0);
+  g.fill();
+  g.fillStyle = field;
+  shape(14);
+  g.fill();
+  g.fillStyle = border;
+  crown(g, 92, 74, 0.55);
+  const t = texture(c);
+  t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  return t;
+}
+
 export function rugTexture({ field, border, gold, seed = 21 } = {}) {
   const W = 1024, H = 744;
   const c = canvas(W, H);

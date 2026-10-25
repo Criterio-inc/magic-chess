@@ -1,7 +1,7 @@
 // Röktest: bygger spelet, startar `vite preview` (ingen HMR som laddar om mitt i) och spelar igenom alla
 // händelser i en riktig Chrome: varje mattfinish, fältherrens hand, älgen, karolinen, lemlästning, bannbullan,
 // alla dödssätt, trumpojken, hovdansen, repris, hoppa över, tips, veteraner, legendparti, sammanfattning, ångra, fotoläge,
-// kvällens kandelabrar och översiktsläget i kartrummet.
+// kvällens kandelabrar och översiktsläget i kartrummet, och fältslagen (Poltava utan torn, Narva i snöstorm).
 // Felar vid konsolfel, sidfel eller ett påstående som inte håller. Bilder hamnar i build/smoke/.
 //
 //   node tools/smoke.mjs                 # bygg + kör (huvudlöst)
@@ -60,7 +60,7 @@ await page.evaluate(() => {
     /** Nytt tvåspelarparti (valfritt från en FEN), kameran stilla, världen i fyrdubbel fart. */
     async fresh(fen, extra = {}) {
       document.getElementById('over').classList.add('hidden');
-      await g.newGame({ mode: 'hotseat', elo: 1800, battles: 'cinematic', pace: 2.4, ...extra });
+      await g.newGame({ mode: 'hotseat', elo: 1800, battles: 'cinematic', pace: 2.4, slag: null, ...extra });
       g.director.toHome = async () => {};
       if (fen) { g.chess.load(fen); g.syncFromBoard(); }
       Object.assign(g.chor, { handChance: 0, elkChance: 0, danceChance: 0, karolinChance: 0, force: null });
@@ -295,6 +295,41 @@ await scenario('oversikt', async () => {
   await ev(async () => { BC.overview.set(false); await S.until(() => BC.overview.k === 0, 8000); });
   const off = await ev(() => ({ sel: BC.world.outline.selection.size, sepia: BC.world.sepia.blendMode.opacity.value, max: BC.world.controls.maxDistance }));
   assert(off.sel === 0 && off.sepia === 0 && off.max === 46, `översikten städade inte efter sig: ${JSON.stringify(off)}`);
+});
+
+// ---------------------------------------------------------------- fältslagen (src/faltslag/)
+await scenario('faltslag', async () => {
+  const room = () => ev(() => {
+    const g = BC.game, r = BC.world.room.room;
+    const pieces = [...g.pieces.values()].map((p) => p.color + p.type).sort().join('');
+    return { pieces, status: document.getElementById('status').textContent, weather: BC.world.room.weather, pin: r.battlePin.group.visible,
+      s: g.battleCard()?.view.s, cape: g.lib.mats.w.Cloth.color.getHexString(), snow: !!BC.world.room.weatherFx.snow?.visible,
+      card: document.querySelector('#legend-card .lc-title').textContent };
+  });
+  const cape0 = await ev(() => BC.game.lib.mats.w.Cloth.color.getHexString());
+  await ev(() => S.fresh(null, { mode: 'white', slag: 'poltava', elo: 1320 }));
+  let st = await room();
+  assert(!st.pieces.includes('wr') && st.pieces.includes('br'), `Poltava: svenskarna ska sakna torn (${st.pieces})`);
+  assert(/Karl XII/.test(st.status) && /Poltava/.test(st.card), `Poltava: ${st.status} / ${st.card}`);
+  assert(st.pin && st.s < 1 && st.cape !== cape0 && st.weather === 'clear', `Poltava: rummet klädes inte ${JSON.stringify(st)}`);
+  await ev(() => S.home());
+  await page.waitForTimeout(400);
+  await shot('faltslag-poltava');
+  // slutet: slagets historia i slutrutan
+  await ev(() => { BC.game.chess.load('6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1'); BC.game.syncFromBoard(); BC.game.play({ from: 'a1', to: 'a8' }); });
+  await ev(() => S.over());
+  const t = await ev(() => document.getElementById('over-text').textContent);
+  assert(/Karl XII segrar/.test(t) && /Perevolotjna/.test(t), `sluttext ${t}`);
+  await ev(() => S.fresh(null, { mode: 'white', slag: 'narva', elo: 1320 }));
+  st = await room();
+  assert(!st.pieces.includes('bq') && st.weather === 'snow' && st.snow, `Narva: ${JSON.stringify(st)}`);
+  await ev(() => S.home());
+  await page.waitForTimeout(600);
+  await shot('faltslag-narva');
+  // ett vanligt parti klär av rummet
+  await ev(() => S.fresh(null, { mode: 'white' }));
+  st = await room();
+  assert(!st.pin && st.weather === 'clear' && !st.snow && st.cape === cape0 && /Vit/.test(st.status), `rummet klädes inte av: ${JSON.stringify(st)}`);
 });
 
 await browser.close();

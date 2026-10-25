@@ -1,5 +1,4 @@
 // Senaste lokala partiet sparas och kan fortsätta efter omladdning. Kopplas in i Game (game.js).
-import { Chess } from 'chess.js';
 
 export const SaveMethods = {
   /** Spara lokala partier (inte online: där är servern minnet) så att de kan fortsätta efter omladdning. */
@@ -27,7 +26,8 @@ export const SaveMethods = {
     this.ui.setOnline(false);
     this.onlineOver = null;
     this.remoteQueue = [];
-    this.chess = new Chess();
+    this.chess = this.freshChess(); // efter settings: ett fältslag har sin egen uppställning
+    this.dressRoom();
     for (const m of saved.moves) {
       try { this.chess.move(m); } catch { break; }
     }

@@ -12,6 +12,7 @@
     "test:server": "node server/test.mjs",
     "smoke": "node tools/smoke.mjs",
     "check:legends": "node tools/check_legends.mjs",
+    "check:slag": "node tools/check_slag.mjs",
     "deploy": "tools/deploy.sh"
   },
   "license": "UNLICENSED",

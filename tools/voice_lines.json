@@ -41,7 +41,19 @@
       "dance": ["[announcer] Hovdanslärarens kurs bär frukt.", "[amused] Ett litet danssteg för kronan."],
       "replay": ["[excited] En gång till!", "[dramatic] Låt oss se det igen!"],
       "nightfall": ["[solemn] Natten faller över kartrummet. Tänd ljusen."],
-      "hand": ["[booming] Fältherren har tröttnat på väntan!"]
+      "hand": ["[booming] Fältherren har tröttnat på väntan!"],
+      "slag_narva": ["[dramatic] Narva, år sjuttonhundra. En artonårig kung mot en tre gånger så stor armé, och tsaren har just lämnat lägret."],
+      "slag_narva_seger": ["[triumphant] Seger i snöstormen! Någon får skicka bud till tsaren."],
+      "slag_narva_forlust": ["[shocked] Förlorat? Mot en armé utan tsar?"],
+      "slag_breitenfeld": ["[dramatic] Breitenfeld, sextonhundratrettioett. Gustav Adolf möter Tilly, munken i rustning, som är van att vinna."],
+      "slag_breitenfeld_seger": ["[triumphant] Tilly har förlorat! Det hör inte till vanligheterna."],
+      "slag_breitenfeld_forlust": ["[dry] Tilly vann. Han är ju van."],
+      "slag_lutzen": ["[solemn] Lützen, sextonhundratrettiotvå. Dimman ligger tät över fältet när Gustav Adolf möter Wallenstein."],
+      "slag_lutzen_seger": ["[solemn] Fältet är vårt. [hesitant] Har någon sett kungen?"],
+      "slag_lutzen_forlust": ["[solemn] Dimman lättar över ett förlorat fält."],
+      "slag_poltava": ["[solemn] Poltava, sjuttonhundranio. Kungen bärs på bår och kanonerna blev kvar i trossen. [dramatic] Kan du vända Poltava?"],
+      "slag_poltava_seger": ["[awed] Poltava är vänd! Historieböckerna får skrivas om."],
+      "slag_poltava_forlust": ["[solemn] Det gick som det gick då. [dry] Men nära var det. Nästan."]
     },
     "pawn": {
       "select": ["[eager] Ja, herre!", "[determined] Redo för tjänst!", "[nervous] Jag? Genast!", "[eager] Ska bli!", "[nervous] Är det farligt? Det är farligt, va?"],

@@ -1,6 +1,7 @@
 // HUD och menyer.
 import { GLYPH } from './pieces.js';
 import { LEGENDS } from './legends.js';
+import { SLAG, slagById } from './faltslag/slag.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -10,6 +11,11 @@ export class UI {
     this.moveCount = 0;
     $('legend').innerHTML = LEGENDS.map((l, i) => `<button data-v="${l.id}"${i ? '' : ' class="on"'}>${l.title.replace(/^The /, '')}<small>${l.where.split(', ').pop()}</small></button>`).join('');
     this.setupSeg('legend');
+    $('slag').innerHTML = SLAG.map((s, i) => `<button data-v="${s.id}"${i ? '' : ' class="on"'}>${s.place.name}<small>${s.year} · ${s.difficulty}</small></button>`).join('');
+    this.setupSeg('slag');
+    const slagNote = () => { const s = slagById(this.seg('slag')); $('slag-note').textContent = s ? `${s.white.commander} mot ${s.black.commander}. ${s.note}` : ''; };
+    $('slag').addEventListener('click', slagNote);
+    slagNote();
     this.setupSeg('mode');
     this.setupSeg('battles');
     this.setupSeg('pace');
@@ -24,8 +30,9 @@ export class UI {
     $('mode').addEventListener('click', () => {
       const m = this.seg('mode');
       $('strength-field').style.opacity = m === 'hotseat' ? 0.35 : 1;
-      $('strength-field').classList.toggle('hidden', m === 'online' || m === 'legend');
+      $('strength-field').classList.toggle('hidden', m === 'online' || m === 'legend' || m === 'faltslag');
       $('legend-field').classList.toggle('hidden', m !== 'legend');
+      $('slag-field').classList.toggle('hidden', m !== 'faltslag');
       $('online-field').classList.toggle('hidden', m !== 'online');
       $('start').classList.toggle('hidden', m === 'online');
     });
@@ -60,7 +67,7 @@ export class UI {
     $('start').addEventListener('click', () => this.emit('start', this.readSettings()));
     $('continue').addEventListener('click', () => this.emit('continue'));
     this.restoreSettings();
-    for (const id of ['mode', 'battles', 'pace', 'ocolor', 'legend']) $(id).addEventListener('click', () => this.storeSettings());
+    for (const id of ['mode', 'battles', 'pace', 'ocolor', 'legend', 'slag']) $(id).addEventListener('click', () => this.storeSettings());
     $('elo').addEventListener('change', () => this.storeSettings());
     $('menu-close').addEventListener('click', () => this.hide('menu'));
     $('btn-menu').addEventListener('click', () => { $('menu-close').classList.remove('hidden'); this.show('menu'); this.emit('menu'); });
@@ -133,7 +140,7 @@ export class UI {
 
   /** Menyvalen minns mellan besök. */
   storeSettings() {
-    const s = { mode: this.seg('mode'), elo: +$('elo').value, battles: this.seg('battles'), pace: this.seg('pace'), ocolor: this.seg('ocolor'), legend: this.seg('legend') };
+    const s = { mode: this.seg('mode'), elo: +$('elo').value, battles: this.seg('battles'), pace: this.seg('pace'), ocolor: this.seg('ocolor'), legend: this.seg('legend'), slag: this.seg('slag') };
     try { localStorage.setItem('bc.settings', JSON.stringify(s)); } catch { /* privat läge */ }
   }
 
@@ -147,6 +154,7 @@ export class UI {
     if (s.pace) set('pace', s.pace);
     if (s.ocolor) set('ocolor', s.ocolor);
     if (s.legend) set('legend', s.legend);
+    if (s.slag) { set('slag', s.slag); $('slag').dispatchEvent(new Event('click')); }
     if (s.elo) { $('elo').value = s.elo; $('elo').dispatchEvent(new Event('input')); }
     $('mode').dispatchEvent(new Event('click'));
   }
@@ -160,7 +168,8 @@ export class UI {
     const n = Math.ceil(saved.moves.length / 2);
     const m = saved.settings.mode;
     const legend = m === 'legend' && LEGENDS.find((l) => l.id === saved.settings.legend);
-    const who = legend ? legend.title : m === 'hotseat' ? 'Två spelare' : m === 'watch' ? 'Stockfish mot Stockfish'
+    const slag = saved.settings.slag && (m === 'white' || m === 'black') && slagById(saved.settings.slag);
+    const who = slag ? `${slag.name}, ${slag.year}` : legend ? legend.title : m === 'hotseat' ? 'Två spelare' : m === 'watch' ? 'Stockfish mot Stockfish'
       : `Du är ${m === 'white' ? 'vit' : 'svart'} mot Stockfish ${saved.settings.elo >= 3190 ? '(full styrka)' : saved.settings.elo}`;
     $('continue-info').textContent = `Sparat parti: drag ${n} · ${who}`;
   }
@@ -202,7 +211,11 @@ export class UI {
   readSettings() {
     const battles = this.seg('battles');
     $('btn-battle').classList.toggle('off', battles === 'quick');
-    return { mode: this.seg('mode'), elo: +$('elo').value, battles, pace: +this.seg('pace'), legend: this.seg('legend') };
+    const base = { elo: +$('elo').value, battles, pace: +this.seg('pace'), legend: this.seg('legend'), slag: null };
+    const slag = this.seg('mode') === 'faltslag' && slagById(this.seg('slag'));
+    // ett fältslag är ett vanligt parti mot Stockfish, med uppställning och styrka ur slagkortet
+    if (slag) return { ...base, mode: slag.player === 'b' ? 'black' : 'white', elo: slag.strength, slag: slag.id };
+    return { ...base, mode: this.seg('mode') };
   }
 
   progress(frac, label) {
@@ -314,16 +327,18 @@ export class UI {
     this.show('over');
   }
 
-  /** Titelkort för ett berömt parti: namn, plats och år, spelarna. */
+  /** Titelkort för ett berömt parti eller ett fältslag: namn, plats och år, spelarna och (slagen) läget. */
   legendCard(l) {
     const c = $('legend-card');
     c.querySelector('.lc-title').textContent = l.title;
     c.querySelector('.lc-where').textContent = l.where;
     c.querySelector('.lc-players').textContent = `${l.white}  mot  ${l.black}`;
-    c.classList.remove('hidden', 'go');
+    c.querySelector('.lc-note').textContent = l.note || '';
+    c.classList.remove('hidden', 'go', 'long');
     void c.offsetWidth;
     c.classList.add('go');
+    c.classList.toggle('long', !!l.note);
     clearTimeout(this.legendTimer);
-    this.legendTimer = setTimeout(() => c.classList.add('hidden'), 5200);
+    this.legendTimer = setTimeout(() => c.classList.add('hidden'), l.note ? 7400 : 5200);
   }
 }

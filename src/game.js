@@ -11,6 +11,7 @@ import { AnalysisMethods } from './game-analysis.js';
 import { SaveMethods } from './game-save.js';
 import { PhotoMethods } from './game-photo.js';
 import { InputMethods } from './game-input.js';
+import { BattleMethods } from './game-faltslag.js';
 
 
 export class Game {
@@ -84,7 +85,7 @@ export class Game {
   /** Följ varje pjäs genom historiken (identitet = startrutan) och räkna hur många den har slagit. */
   recountKills() {
     const hist = this.chess.history({ verbose: true });
-    const start = hist.length ? new Chess() : this.chess;
+    const start = hist.length ? this.freshChess() : this.chess;
     const id = new Map();
     for (const row of start.board()) for (const c of row) if (c) id.set(c.square, c.square);
     const kills = new Map();
@@ -158,13 +159,15 @@ export class Game {
     this.ui.setOnline(false);
     this.onlineOver = null;
     this.remoteQueue = [];
-    this.chess = new Chess();
+    this.chess = this.freshChess();
+    this.dressRoom();
     this.selected = null;
     this.stats = { captures: 0, lost: { w: 0, b: 0 }, lastCapturer: null, streakPiece: null, streak: 0 };
     this.moveAcc = [];
     this.syncFromBoard();
     this.board.setMarks([]);
     this.ui.reset();
+    this.updateStatus();
     this.saveLocal();
     this.primeAnalysis();
     this.world.setTimeOfDay(this.timeForPly(), true);
@@ -174,10 +177,11 @@ export class Game {
     const side = this.settings.mode === 'black' ? 'b' : 'w';
     await this.director.toHome(side, 2.2);
     if (token !== this.token) return; // ett nyare parti har startats under tiden
-    this.voice?.herald('begin');
-    if (this.settings.mode === 'legend') {
-      this.ui.legendCard(legendById(this.settings.legend));
-      await wait(3.2);
+    const card = this.battleCard();
+    this.voice?.herald((card && this.battleHerald(card)) || 'begin');
+    if (card || this.settings.mode === 'legend') {
+      this.ui.legendCard(card ? this.battleTitle(card) : legendById(this.settings.legend));
+      await wait(card ? 4.5 : 3.2);
       if (token !== this.token) return;
     } else this.ui.toast('Till strid!');
     this.nextTurn();
@@ -217,7 +221,7 @@ export class Game {
     this.thinking = true;
     this.busy = true;
     if (window.BC_DEBUG) console.info('[BC] engine turn', this.chess.turn(), 'mode', this.settings.mode, 'token', token);
-    this.ui.status(`${this.chess.turn() === 'w' ? 'Vit' : 'Svart'} drar, Stockfish funderar…`);
+    this.ui.status(`${this.sideName(this.chess.turn())} drar, Stockfish funderar…`);
     const t0 = performance.now();
     const time = this.settings.mode === 'watch' ? 700 : this.engine.strong ? 1200 : 700;
     const fen = this.chess.fen();
@@ -249,7 +253,7 @@ export class Game {
   }
 
   updateStatus() {
-    const turn = this.chess.turn() === 'w' ? 'Vit' : 'Svart';
+    const turn = this.sideName(this.chess.turn());
     const check = this.chess.inCheck();
     this.ui.status(check ? `${turn} står i schack` : `${turn} drar`, check);
   }
@@ -288,7 +292,7 @@ export class Game {
     this.analyse(res, token);
     const mover = this.pieces.get(res.from);
     this.pieces.delete(res.from);
-    const side = res.color === 'w' ? 'Vit' : 'Svart';
+    const side = this.sideName(res.color);
     this.ui.status(res.captured ? `${side} anfaller` : `${side}: ${res.san}`);
     const flags = res.flags;
     if (flags.includes('k') || flags.includes('q')) {
@@ -394,7 +398,7 @@ export class Game {
     if (c.isCheckmate()) {
       winner = c.turn() === 'w' ? 'b' : 'w';
       title = 'Schack matt';
-      text = `${winner === 'w' ? 'Vit' : 'Svart'} segrar.`;
+      text = `${this.sideName(winner)} segrar.`;
       const ksq = this.findKing(c.turn());
       const king = this.pieces.get(ksq);
       const winners = [...this.pieces.values()].filter((p) => p.color === winner);
@@ -432,6 +436,8 @@ export class Game {
       this.voice?.herald(c.isStalemate() ? 'stalemate' : c.isThreefoldRepetition() ? 'dejaVu' : 'draw');
       this.ui.toast(c.isStalemate() ? 'Patt' : 'Remi');
     }
+    const card = this.battleCard();
+    if (card) text = `${text} ${this.battleOutro(card, winner)}`;
     this.ui.status(title);
     this.saveLocal(true);
     await wait(1.2);
@@ -440,44 +446,6 @@ export class Game {
     const st = await this.summary();
     if (token !== this.token) return;
     this.ui.gameOver(title, text, st);
-  }
-
-  // ------------------------------------------------------------------ hoppa över en duell, tips
-
-  /** Duellflaggan styr om ett tryck snabbspolar och om "Skip"-knappen syns. Slutar duellen slutar spolningen. */
-  setInBattle(on) {
-    this.inBattle = on;
-    document.body.classList.toggle('inbattle', on);
-    if (!on) this.endSkip();
-  }
-
-  skipBattle() {
-    if (!this.inBattle || this.world.fast > 1) return;
-    this.world.fast = 8;
-    this.sound.hush?.(true);
-    document.body.classList.add('skipping');
-  }
-
-  endSkip() {
-    if (this.world.fast === 1) return;
-    this.world.fast = 1;
-    this.sound.hush?.(false);
-    document.body.classList.remove('skipping');
-  }
-
-  /** Visa analysmotorns bästa drag som en glödande pil (inte online). */
-  async hint() {
-    if (this.settings.mode === 'online' || this.busy || !this.isHumanTurn() || !this.analyst || this.hinting) return;
-    this.hinting = true;
-    const fen = this.chess.fen();
-    try {
-      const { best } = await this.analyst.evaluate(fen, 700);
-      if (!best || this.chess.fen() !== fen) return;
-      this.board.showArrow(best.slice(0, 2), best.slice(2, 4));
-      this.sound.bank?.sfx('select', { gain: 0.5 });
-    } finally {
-      this.hinting = false;
-    }
   }
 
   async undo() {
@@ -507,6 +475,6 @@ export class Game {
   glyph(type, color) { return GLYPH[color][type]; }
 }
 
-// online, dragbedömning, sparande, repris och fotoläge samt inmatning bor i game-*.js
-Object.assign(Game.prototype, OnlineMethods, AnalysisMethods, SaveMethods, PhotoMethods, InputMethods);
+// online, dragbedömning, sparande, repris, fotoläge, inmatning och fältslagen bor i game-*.js
+Object.assign(Game.prototype, OnlineMethods, AnalysisMethods, SaveMethods, PhotoMethods, InputMethods, BattleMethods);
 Game.loadLocal = SaveMethods.loadLocal;

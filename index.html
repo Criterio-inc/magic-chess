@@ -52,6 +52,7 @@
           <button data-v="hotseat">Två spelare</button>
           <button data-v="watch">Se på</button>
           <button data-v="legend">Legender</button>
+          <button data-v="faltslag">Fältslag</button>
           <button data-v="online">På nätet</button>
         </div>
       </div>
@@ -73,6 +74,11 @@
       <div class="field hidden" id="legend-field">
         <label>Berömt parti</label>
         <div class="seg seg-wrap" id="legend"></div>
+      </div>
+      <div class="field hidden" id="slag-field">
+        <label>Slag ur Saeculas epok</label>
+        <div class="seg seg-wrap" id="slag"></div>
+        <p id="slag-note" class="small"></p>
       </div>
       <div class="field" id="strength-field">
         <label>Stockfishs styrka <span id="elo-label">1800</span></label>
@@ -148,7 +154,7 @@
     </div>
     <button id="btn-skip" class="pill">Hoppa över ⏭</button>
   </div>
-  <div id="legend-card" class="hidden"><div class="lc-title"></div><div class="lc-where"></div><div class="lc-players"></div></div>
+  <div id="legend-card" class="hidden"><div class="lc-title"></div><div class="lc-where"></div><div class="lc-players"></div><div class="lc-note"></div></div>
 
   <!-- fotoläge -->
   <div id="photobar" class="hidden">

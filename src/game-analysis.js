@@ -1,5 +1,4 @@
 // Dragbedömningen med Stockfish och sammanfattningen efter partiet. Kopplas in i Game (game.js).
-import { Chess } from 'chess.js';
 import { wait } from './util.js';
 
 // vinstchans (%) ur centibönder, som Lichess räknar träffsäkerhet
@@ -90,7 +89,7 @@ export const AnalysisMethods = {
     let mvp = null;
     for (const [uid, k] of kills) if (!mvp || k > mvp.kills) mvp = { uid, kills: k };
     if (mvp) {
-      const c = new Chess().get(mvp.uid);
+      const c = this.freshChess().get(mvp.uid);
       mvp = c ? { ...mvp, name: `${c.color === 'w' ? 'Vit' : 'Svart'} ${SV[c.type]}` } : null;
     }
     return { acc: { w: acc('w'), b: acc('b') }, blunder, mvp, moves: Math.ceil(this.chess.history().length / 2) };

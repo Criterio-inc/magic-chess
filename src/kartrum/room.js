@@ -2,6 +2,7 @@
 // Byggt i kod, som arenan i blender/arena.py. Ljuset och tiden på dygnet sköts av maproom.js. Skala: K spelenheter per meter.
 import * as THREE from 'three';
 import { woodTexture, plasterTexture, bannerTexture, rugTexture, skyTexture, mulberry32 } from './textures.js';
+import { MAP_W, MAP_H, FULL_VIEW, atlasUV, sheetPos, pinVisible } from './atlas.js';
 
 export const K = 30; // en ruta (2 enheter) blir knappt 7 cm: ett halvmetersbräde på ett stort kartbord
 export const ROOM = { W: 6.4 * K, D: 5.2 * K, H: 3.5 * K };
@@ -10,7 +11,6 @@ export const SILL = 0.85 * K, LINTEL = 2.75 * K;
 const WALL_T = 0.32 * K;
 // fönstren sitter i vänsterväggen (x = -W/2): z är mitten, w bredden
 export const WINDOWS = [{ z: -26, w: 1.3 * K }, { z: 28, w: 1.3 * K }];
-const MAP_W = 48, MAP_H = MAP_W * 1548 / 2048;
 // Ljus puts och ek (stilprovets A); Saeculas mörkblått och guld bärs av fanorna och mattans bård.
 export const PALETTE = {
   plaster: '#e2d5ba', ceiling: '#cfc0a2', mullion: '#e9e1cd',
@@ -19,9 +19,6 @@ export const PALETTE = {
   banner: { field: '#1d3a4c', border: '#c4aa73' },
   rug: { field: '#6b1e19', border: '#1d3346', gold: '#c49a4a' },
 };
-/** Plats på kartan (u, v i bilden, v nedåt) till bordets koordinater. */
-const onMap = (u, v) => [(u - 0.5) * MAP_W, (v - 0.5) * MAP_H];
-
 function add(parent, geo, mat, { x = 0, y = 0, z = 0, cast = true, receive = true } = {}) {
   const m = new THREE.Mesh(geo, mat);
   m.position.set(x, y, z);
@@ -185,7 +182,10 @@ function table(g, T, F, M) {
   }
 }
 
-/** Kartan ligger på bordet med lätt uppböjda kortändar; norr (Skandinavien) bort från vit. */
+/**
+ * Kartan ligger på bordet med lätt uppböjda kortändar; norr (Skandinavien) bort från vit. Bladet har en egen kopia av
+ * texturen, så att ett fältslag kan visa sin fälttågskarta (ett utsnitt, se atlas.js) medan globen behåller hela.
+ */
 function mapSheet(g, T, mapTex) {
   const w = MAP_W, h = MAP_H;
   const geo = new THREE.PlaneGeometry(w, h, 120, 6);
@@ -196,30 +196,55 @@ function mapSheet(g, T, mapTex) {
     if (a > 0) p.setY(i, a * a * 0.06);
   }
   geo.computeVertexNormals();
+  const tex = mapTex.clone();
+  tex.needsUpdate = true;
   // papperet något mörkare än bilden: annars bränner solfläcken ut kartan helt
-  add(g, geo, softMip(new THREE.MeshStandardMaterial({ map: mapTex, color: 0xd2c6b0, roughness: 0.9 }), mapBias), { y: T + 0.015, cast: false });
+  add(g, geo, softMip(new THREE.MeshStandardMaterial({ map: tex, color: 0xd2c6b0, roughness: 0.9 }), mapBias), { y: T + 0.015, cast: false });
+  return tex;
+}
+
+/** En mässingsnål med en liten fana. */
+function pinOn(g, T, M, { height = 1.5, flag = [0.95, 0.58], material }) {
+  const pin = new THREE.Group();
+  pin.position.y = T;
+  add(pin, new THREE.CylinderGeometry(0.05, 0.05, height, 6), M.brass, { y: height / 2 });
+  add(pin, new THREE.SphereGeometry(0.13, 10, 8), M.brass, { y: height });
+  add(pin, new THREE.PlaneGeometry(...flag), material, { x: flag[0] / 2 + 0.03, y: height - flag[1] / 2 - 0.01 });
+  g.add(pin);
+  return pin;
+}
+
+/** Slagnålen: två nålar med de stridande rikenas fanor, lutade mot varandra. Fanorna målas av faltslag/scen.js. */
+function battlePin(g, T, M) {
+  const group = new THREE.Group();
+  group.visible = false;
+  g.add(group);
+  const flags = [-1, 1].map((s) => {
+    const material = new THREE.MeshStandardMaterial({ roughness: 0.8, side: THREE.DoubleSide, alphaTest: 0.5 });
+    const pin = pinOn(group, T, M, { height: 2.6, flag: [1.5, 0.95], material });
+    pin.rotation.set(0, 0, -s * 0.3);
+    pin.scale.x = s; // fanan vajar utåt från korset, med stången på rätt sida
+    return material;
+  });
+  return { group, flags };
 }
 
 function tableProps(g, T, M) {
-  // nålar med små fanor på riktiga platser, som på en fälttågskarta (u, v mätta i karta.jpg)
-  const spots = [
-    [0.475, 0.228, '#2a4f78'], // Stockholm
-    [0.42, 0.278, '#a3322b'], // Köpenhamn
-    [0.307, 0.392, '#33508a'], // Paris
-    [0.45, 0.423, '#c49a3a'], // Wien
-    [0.415, 0.53, '#e6dcc4'], // Rom
-    [0.24, 0.52, '#8c2b25'], // Madrid
+  // nålar med små fanor på riktiga städer, som på en fälttågskarta; platsen räknas med Saeculas projektion
+  const cities = [
+    [18.07, 59.33, '#2a4f78'], // Stockholm
+    [12.57, 55.68, '#a3322b'], // Köpenhamn
+    [2.35, 48.86, '#33508a'], // Paris
+    [16.37, 48.21, '#c49a3a'], // Wien
+    [12.5, 41.9, '#e6dcc4'], // Rom
+    [-3.7, 40.42, '#8c2b25'], // Madrid
   ];
-  for (const [u, v, c] of spots) {
-    const [x, z] = onMap(u, v);
-    const pin = new THREE.Group();
-    pin.position.set(x, T, z);
-    pin.rotation.y = x * 0.37;
-    add(pin, new THREE.CylinderGeometry(0.05, 0.05, 1.5, 6), M.brass, { y: 0.75 });
-    add(pin, new THREE.SphereGeometry(0.13, 10, 8), M.brass, { y: 1.5 });
-    add(pin, new THREE.PlaneGeometry(0.95, 0.58), new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, side: THREE.DoubleSide }), { x: 0.5, y: 1.2 });
-    g.add(pin);
-  }
+  const pins = cities.map(([lon, lat, c], i) => {
+    const pin = pinOn(g, T, M, { material: new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, side: THREE.DoubleSide }) });
+    pin.userData.uv = atlasUV(lon, lat);
+    pin.rotation.y = 1.1 - i * 0.37;
+    return pin;
+  });
   // en ihoprullad karta vid bordskanten och en passare på kartan
   const scroll = add(g, new THREE.CylinderGeometry(0.85, 0.85, 12, 20), M.parchment, { x: -19, y: T + 0.85, z: 19.2 });
   scroll.rotation.set(0, 0.12, Math.PI / 2);
@@ -227,6 +252,7 @@ function tableProps(g, T, M) {
   rod(g, V(-15, 1.9, 13.2), V(-16.1, 0.05, 14.3), 0.07, M.brass);
   rod(g, V(-15, 1.9, 13.2), V(-13.6, 0.05, 12.3), 0.07, M.brass);
   add(g, new THREE.SphereGeometry(0.16, 12, 10), M.brass, { x: -15, y: T + 1.95, z: 13.2 });
+  return pins;
 }
 
 function candelabra(g, x, y, z, M, s, flames) {
@@ -270,15 +296,18 @@ function globe(g, x, F, z, M, mapTex) {
   hor.rotation.x = Math.PI / 2;
 }
 
+/** Två fanor på bortre väggen; i ett fältslag bär den vänstra vits rike och den högra svarts. Ger materialen. */
 function banners(g, F, M, pal) {
   const z = -ROOM.D / 2 + 1.2, top = F + ROOM.H - 16;
-  const mat = new THREE.MeshStandardMaterial({ map: bannerTexture(pal.banner), roughness: 0.85, side: THREE.DoubleSide, alphaTest: 0.5 });
-  for (const x of [-80, 80]) {
+  const map = bannerTexture(pal.banner);
+  return [-80, 80].map((x) => {
+    const mat = new THREE.MeshStandardMaterial({ map, roughness: 0.85, side: THREE.DoubleSide, alphaTest: 0.5 });
     add(g, new THREE.PlaneGeometry(20, 40), mat, { x, y: top - 20, z, cast: false });
     const r = add(g, new THREE.CylinderGeometry(0.45, 0.45, 25, 10), M.brass, { x, y: top + 0.5, z: z + 0.4, cast: false });
     r.rotation.z = Math.PI / 2;
     for (const e of [-1, 1]) add(g, new THREE.SphereGeometry(0.9, 12, 10), M.brass, { x: x + e * 12.8, y: top + 0.5, z: z + 0.4, cast: false });
-  }
+    return mat;
+  });
 }
 
 /**
@@ -302,8 +331,20 @@ export function buildRoom(boardBottom, pal, mapTex, { half = 9.4, lift = 0.7, ta
   tg.position.x = tableX;
   g.add(tg);
   table(tg, T, F, M);
-  mapSheet(tg, T, mapTex);
-  tableProps(tg, T, M);
+  const sheet = mapSheet(tg, T, mapTex);
+  const pins = tableProps(tg, T, M);
+  const battle = battlePin(tg, T, M);
+  /** Visa ett utsnitt av kartan (FULL_VIEW = hela). Nålarna följer med; de som hamnar under brädet göms. */
+  const setMapView = (view = FULL_VIEW) => {
+    sheet.repeat.set(view.s, view.s);
+    sheet.offset.set(view.u0, 1 - view.v0 - view.s); // bildens v går nedåt, texturens uppåt
+    for (const p of pins) {
+      const [x, z] = sheetPos(view, ...p.userData.uv);
+      p.position.set(x, T, z);
+      p.visible = pinVisible(x, z);
+    }
+  };
+  setMapView();
   const rug = add(g, new THREE.PlaneGeometry(2.7 * K, 1.95 * K), new THREE.MeshStandardMaterial({ map: rugTexture(pal.rug), roughness: 0.95 }), { y: F + 0.06, cast: false });
   rug.rotation.x = -Math.PI / 2;
   const flames = [];
@@ -311,11 +352,11 @@ export function buildRoom(boardBottom, pal, mapTex, { half = 9.4, lift = 0.7, ta
   candelabra(tg, 26.2, T, -17, M, 0.75, flames);
   candelabra(g, 74, F, -62, M, 4.4, flames);
   globe(g, -58, F, -60, M, mapTex);
-  banners(g, F, M, pal);
+  const bannerMats = banners(g, F, M, pal);
   // himlen och kullarna utanför fönstren: obelyst, färgen sätts efter tiden på dygnet
   const outside = add(g, new THREE.PlaneGeometry(260, 190), new THREE.MeshBasicMaterial({ map: skyTexture(), fog: false }), { x: -ROOM.W / 2 - 70, y: F + 80, cast: false, receive: false });
   outside.rotation.y = Math.PI / 2;
-  return { group: g, T, F, flames, outside };
+  return { group: g, T, F, flames, outside, setMapView, battlePin: battle, banners: bannerMats };
 }
 
 /**

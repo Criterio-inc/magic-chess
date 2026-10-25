@@ -5,8 +5,8 @@ import * as THREE from 'three';
 import { arenaMaterials } from '../materials.js';
 import { tier } from '../quality.js';
 import { buildRoom, buildEnv, mapBias, PALETTE, ROOM, WINDOWS, SILL, LINTEL } from './room.js';
-
-const TABLE_X = -11; // brädet står på kartans östra del, så att Östersjön och Skandinavien ligger fria bredvid
+import { TABLE_X } from './atlas.js'; // brädet står på kartans östra del, så att Östersjön och Skandinavien ligger fria
+import { WEATHER, WeatherFx } from './weather.js';
 const lerp = THREE.MathUtils.lerp;
 const smooth = (a, b, x) => THREE.MathUtils.smoothstep(x, a, b);
 
@@ -17,6 +17,7 @@ const SUN = { warm: new THREE.Color(0xffd2a0), low: new THREE.Color(0xff8a4a), m
 const SKY = [new THREE.Color(2.2, 2.2, 2.2), new THREE.Color(1.6, 1.05, 0.7), new THREE.Color(0.05, 0.08, 0.17)];
 const HEMI = { day: [new THREE.Color(0xfff3df), new THREE.Color(0x4a321c), 0.3], night: [new THREE.Color(0x3a5a72), new THREE.Color(0x1a0f07), 0.2] };
 const FOG = { day: [new THREE.Color(0xcdb894), 0.0018], night: [new THREE.Color(0x0c1820), 0.003] };
+const MIST = new THREE.Color(0xb9bec4), _c = new THREE.Color();
 // kandelabern till höger står nära brädet: full styrka gav en prickrad av speglingar i rutornas fasade kanter
 const CANDLE = { color: 0xffa64d, bases: [650, 320, 3250], key: 1200, keyPos: [14, 12, 21] };
 
@@ -85,6 +86,8 @@ export class MapRoom {
     this.sunDir = new THREE.Vector3(-1, 0.3, -0.25).normalize();
     this.fireBoost = 1;
     this.overview = 0;
+    this.weather = 'clear';
+    this.weatherFx = new WeatherFx(scene, this.T, world.meta?.frameTop ?? this.T + 1.1);
 
     const pmrem = new THREE.PMREMGenerator(renderer);
     this.envDay = pmrem.fromScene(buildEnv(DAY_ENV, this.T, this.room.flames), 0.04, 0.1, 1000).texture;
@@ -194,7 +197,8 @@ export class MapRoom {
       this.sun.color.copy(SUN.moon);
       this.sun.intensity = 0.9 * moonK;
     }
-    this.sun.intensity *= 1 - 0.55 * k;
+    const w = WEATHER[this.weather];
+    this.sun.intensity *= (1 - 0.55 * k) * w.sun;
     // kandelabrarna: varje låga tänds för sig, ljuset följer andelen tända lågor
     this.room.flames.forEach((group, i) => {
       let lit = 0;
@@ -218,15 +222,26 @@ export class MapRoom {
     this.hemi.groundColor.copy(HEMI.day[1]).lerp(HEMI.night[1], dusk);
     this.hemi.intensity = lerp(HEMI.day[2], HEMI.night[2], dusk) * (1 - 0.6 * k);
     this.scene.fog.color.copy(FOG.day[0]).lerp(FOG.night[0], dusk);
-    this.scene.fog.density = lerp(FOG.day[1], FOG.night[1], dusk);
+    this.scene.fog.density = lerp(FOG.day[1], FOG.night[1], dusk) + w.haze * (1 - k);
+    this.scene.fog.color.lerp(_c.copy(MIST).multiplyScalar(1 - 0.9 * dusk), w.grey * 0.6);
     const sky = this.room.outside.material.color;
     if (t < 0.55) sky.copy(SKY[0]).lerp(SKY[1], smooth(0.2, 0.55, t));
     else sky.copy(SKY[1]).lerp(SKY[2], smooth(0.55, 0.85, t));
+    const lum = (sky.r + sky.g + sky.b) / 3; // mulet: samma ljus, ingen färg
+    sky.lerp(_c.setRGB(lum * 0.96, lum, lum * 1.04), w.grey);
     this.fireBoost = lerp(1, 2.6, t);
+  }
+
+  /** Slagets väder: clear, fog eller snow (weather.js). */
+  setWeather(kind) {
+    this.weather = WEATHER[kind] ? kind : 'clear';
+    this.weatherFx.set(this.weather);
+    this.applyTime(this.t ?? 0);
   }
 
   /** Lågorna fladdrar och kandelabrarnas ljus följer dem. */
   update(dt, time) {
+    this.weatherFx.update(dt, 1 - smooth(0.4, 0.9, this.t ?? 0));
     this.candles.forEach((L, i) => {
       const lit = L.userData.lit || 0;
       // lugnt fladder: ett helt bräde som pulserar snabbt upplevs som flimmer
