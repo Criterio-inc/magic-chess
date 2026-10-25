@@ -1,5 +1,7 @@
 # Marble & Mayhem
 
+[![Support me on Patreon](https://img.shields.io/badge/Patreon-Support%20my%20work-FF424D?style=flat&logo=patreon&logoColor=white)](https://www.patreon.com/AndersBjarby)
+
 Chess where every capture is a duel. The pieces are living marble statues — white Carrara with gold, black
 Nero Marquina with silver — standing on a polished board in a sunlit ruined colonnade. When one piece takes
 another, the camera cuts to a cinematic side shot, the attacker strikes (spear, sword, crozier, fists of stone,
@@ -34,7 +36,7 @@ See `CLAUDE.md` for the asset pipeline.
 
 ## Credits and licences
 
-- Stockfish.js (`public/engine/`) — GPL-3.0, https://github.com/nmrugg/stockfish.js
+- Stockfish.js (`public/engine/`) — GPL-3.0 (licence text in `public/engine/Copying.txt`), https://github.com/nmrugg/stockfish.js
 - Textures and HDRI — Poly Haven, CC0
 - Title music — generated with Suno; voices and sound effects — ElevenLabs
 - three.js, postprocessing, n8ao, chess.js — MIT / BSD
